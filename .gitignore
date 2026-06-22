@@ -17,3 +17,31 @@ Thumbs.db
 *.blg
 
 *.pdf
+
+# --- Local editor state ---
+.vscode/
+.idea/
+*.code-workspace
+
+
+# --- Development workspace ---
+development/.pixi/
+development/.venv/
+development/.local/
+development/.pytest_cache/
+development/.ruff_cache/
+development/.mypy_cache/
+development/.coverage
+development/coverage.xml
+development/htmlcov/
+development/node_modules/
+development/apps/web/node_modules/
+development/apps/web/dist/
+development/apps/web/*.tsbuildinfo
+development/artifacts/**
+!development/artifacts/.gitignore
+development/.env
+development/.env.*
+!development/.env.example
+**/__pycache__/
+*.py[cod]
