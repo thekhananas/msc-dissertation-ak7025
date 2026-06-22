@@ -1,0 +1,12 @@
+{
+  "name": "socratic-tutor-development",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"uvicorn apps.api.main:app --reload --host 127.0.0.1 --port 8000\" \"pnpm --dir apps/web dev --host 127.0.0.1\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

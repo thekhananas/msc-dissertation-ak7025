@@ -1,0 +1,4 @@
+name: simple
+version: simple-v1
+mastery_rate: 0.25
+misconception_rate: 0.25

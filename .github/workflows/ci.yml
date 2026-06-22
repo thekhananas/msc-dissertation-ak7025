@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: development
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan repository history for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.9.1
+        with:
+          manifest-path: development/pixi.toml
+          environments: default
+          cache: true
+
+      - name: Install D2 build toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+          cache: false
+
+      - name: Install pinned D2
+        run: go install oss.terrastruct.com/d2@v0.7.1
+
+      - name: Install frontend dependencies
+        run: pixi run install-web
+
+      - name: Run workspace checks
+        run: pixi run check

@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "socratic-tutor"
+version = "0.1.0"
+description = "Socratic tutoring research proof of concept"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "Proprietary research project" }
+dependencies = [
+  "duckdb>=1.3,<2",
+  "fastapi>=0.116,<1",
+  "gymnasium>=1.2,<2",
+  "httpx>=0.28,<1",
+  "hydra-core>=1.3,<2",
+  "langgraph>=0.6,<2",
+  "langgraph-checkpoint-sqlite>=2.0,<4",
+  "numpy>=2.3,<3",
+  "pyarrow>=20,<22",
+  "pydantic>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+  "scipy>=1.16,<2",
+  "uvicorn[standard]>=0.35,<1",
+  "wandb>=0.21,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/socratic_tutor"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["artifacts", ".local", "apps/web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+include = ["src", "apps", "tests", "experiments", "analysis", "scripts"]
+exclude = ["apps/web", "artifacts", ".local"]
+reportMissingTypeStubs = false

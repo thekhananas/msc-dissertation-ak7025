@@ -1,0 +1,4 @@
+name: deterministic
+gymnasium_id: SocraticTutor/POMDP-v0
+max_turns: 8
+template_student: true
