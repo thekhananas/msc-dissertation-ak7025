@@ -38,6 +38,8 @@ development/node_modules/
 development/apps/web/node_modules/
 development/apps/web/dist/
 development/apps/web/*.tsbuildinfo
+development/apps/web/playwright-report/
+development/apps/web/test-results/
 development/artifacts/**
 !development/artifacts/.gitignore
 development/.env
