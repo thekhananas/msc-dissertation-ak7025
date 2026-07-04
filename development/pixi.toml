@@ -38,6 +38,9 @@ cmd = "pytest"
 [tasks.test-web]
 cmd = "pnpm --dir apps/web test --run"
 
+[tasks.test-e2e]
+cmd = "pnpm --dir apps/web test:e2e"
+
 [tasks.lint]
 cmd = "ruff check ."
 
@@ -64,4 +67,4 @@ cmd = "pnpm --dir apps/web build"
 
 [tasks.check]
 cmd = "python -c \"print('All workspace checks passed')\""
-depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "config-smoke", "docs-check", "build-web"]
+depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "docs-check", "build-web"]
