@@ -59,7 +59,11 @@ def _generate(state: TurnGraphState) -> dict[str, str]:
     if decision is None or tracker_after is None:
         raise RuntimeError("Policy and tracker nodes must complete before generation")
     return {
-        "candidate_prompt": generate_prompt(decision, tracker_after.observations),
+        "candidate_prompt": generate_prompt(
+            state["task"],
+            decision,
+            tracker_after.observations,
+        ),
     }
 
 

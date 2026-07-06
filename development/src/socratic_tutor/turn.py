@@ -21,7 +21,7 @@ def run_turn(
     evidence = classify_evidence(task, submission)
     tracker_after = update_tracker(tracker, evidence)
     decision = choose_action(evidence)
-    candidate_prompt = generate_prompt(decision, tracker_after.observations)
+    candidate_prompt = generate_prompt(task, decision, tracker_after.observations)
     guardrail = check_prompt(candidate_prompt)
     return TurnResult(
         evidence=evidence,

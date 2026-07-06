@@ -21,6 +21,30 @@ test("completes the offline tutoring turn", async ({ page }, testInfo) => {
   await page.screenshot({ path: testInfo.outputPath("completed.png"), fullPage: true });
 });
 
+test("changes task and follows different answer paths", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Practice task").selectOption("none-versus-falsy");
+  await expect(page.getByRole("heading", { name: "Missing values and valid zeroes" })).toBeVisible();
+
+  await page
+    .getByLabel("Your reasoning")
+    .fill("It prints score=0 and then missing because the condition is an identity check.");
+  await page.getByRole("button", { name: "Submit response" }).click();
+  await expect(page.getByText("Correct", { exact: true })).toBeVisible();
+  await expect(page.getByText("Transfer", { exact: true })).toBeVisible();
+  await expect(page.getByText(/empty string/i)).toBeVisible();
+
+  await page.getByRole("button", { name: "Reset session" }).click();
+  await expect(page.getByRole("heading", { name: "Missing values and valid zeroes" })).toBeVisible();
+  await page
+    .getByLabel("Your reasoning")
+    .fill("It prints missing twice because both are falsy, like using if not score.");
+  await page.getByRole("button", { name: "Submit response" }).click();
+  await expect(page.getByText("Misconception", { exact: true })).toBeVisible();
+  await expect(page.getByText("Hint", { exact: true })).toBeVisible();
+  await expect(page.getByText(/general truthiness/i)).toBeVisible();
+});
+
 const evidenceCases = [
   {
     name: "misconception",

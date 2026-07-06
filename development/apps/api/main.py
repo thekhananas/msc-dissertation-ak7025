@@ -7,13 +7,19 @@ from fastapi import FastAPI, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict
 
 from socratic_tutor import __version__
-from socratic_tutor.contracts import CreateSessionRequest, SessionSnapshot, SubmitTurnRequest
+from socratic_tutor.contracts import (
+    CreateSessionRequest,
+    SessionSnapshot,
+    SubmitTurnRequest,
+    TaskView,
+)
 from socratic_tutor.sessions import (
     IdempotencyConflictError,
     SessionNotFoundError,
     SessionService,
 )
 from socratic_tutor.settings import Settings
+from socratic_tutor.tasks import list_tasks
 from socratic_tutor.trajectories import JsonlEventStore
 
 
@@ -55,7 +61,16 @@ def create_app(event_log_path: Path | None = None) -> FastAPI:
     async def create_session(  # pyright: ignore[reportUnusedFunction]
         body: CreateSessionRequest, request: Request
     ) -> SessionSnapshot:
-        return _session_service(request).create(body)
+        try:
+            return _session_service(request).create(body)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail="Task not found") from error
+        except IdempotencyConflictError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @application.get("/api/tasks", response_model=list[TaskView])
+    async def get_tasks() -> list[TaskView]:  # pyright: ignore[reportUnusedFunction]
+        return [task.public_view() for task in list_tasks()]
 
     @application.get("/api/sessions/{session_id}", response_model=SessionSnapshot)
     async def get_session(  # pyright: ignore[reportUnusedFunction]

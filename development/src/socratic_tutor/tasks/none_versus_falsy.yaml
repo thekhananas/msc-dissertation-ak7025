@@ -1,0 +1,86 @@
+schema_version: 1
+task_id: none-versus-falsy
+version: "1.0.0"
+title: Missing values and valid zeroes
+concept: none-versus-falsy
+instructions: >-
+  Predict both printed lines, then explain why the function treats zero
+  differently from a missing value.
+starter_code: |-
+  def describe_score(score):
+      if score is None:
+          return "missing"
+      return f"score={score}"
+
+  print(describe_score(0))
+  print(describe_score(None))
+initial_prompt: >-
+  What are the two printed lines? Explain what the condition checks and why
+  zero follows a different branch from `None`.
+evidence_rules:
+  correct_output_markers:
+    - "score=0"
+    - "score = 0"
+  correct_explanation_markers:
+    - "is none"
+    - "identity"
+    - "zero is valid"
+    - "only none"
+  misconception_output_markers:
+    - "missing twice"
+    - "missing, missing"
+    - "missing and missing"
+  misconception_explanation_markers:
+    - "if not score"
+    - "zero is missing"
+    - "0 is missing"
+    - "both are falsy"
+tutor_prompts:
+  transfer:
+    - >-
+      Good reasoning. How would this function behave for an empty string, and
+      when would that be the intended behaviour rather than a missing value?
+    - >-
+      Suppose zero, `False`, and an empty string are all valid inputs. What
+      check would preserve them while still detecting absence?
+    - >-
+      How would using a custom sentinel object change this design when `None`
+      is also a valid input?
+  hint:
+    - >-
+      Look at the condition itself. Does `is None` test general truthiness, or
+      the identity of one specific object?
+    - >-
+      Compare `score is None` with `not score`. Which expression would also
+      match zero?
+    - >-
+      Trace the function once with zero and once with `None`, evaluating only
+      the Boolean condition each time.
+  clarify:
+    - >-
+      Your output and explanation imply different conditions. State whether
+      the code tests identity or truthiness, then trace both calls using that
+      one rule.
+    - >-
+      Separate two questions: is zero falsy, and is zero the `None` object?
+      Which question does this program ask?
+    - >-
+      Choose either `is None` or `not score` as the condition you are tracing,
+      then make your predicted output consistent with that choice.
+  probe:
+    - >-
+      For the first call, what Boolean value does `score is None` produce when
+      `score` is zero?
+    - >-
+      What is the difference between checking an object's identity and
+      checking whether it is truthy?
+    - >-
+      Name one falsy Python value that is not `None`. Which branch would it
+      take here?
+  encourage:
+    - >-
+      Start with the first call only: is the integer zero the same object as
+      `None`?
+    - Try evaluating just `0 is None`, then choose the branch.
+    - >-
+      Take one step: which return statement runs when the condition is false?

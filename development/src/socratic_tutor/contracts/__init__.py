@@ -13,6 +13,7 @@ from socratic_tutor.contracts.models import (
     TrackerState,
     TurnResult,
     TutorAction,
+    TutorPromptTemplates,
 )
 from socratic_tutor.contracts.session import (
     CreateSessionRequest,
@@ -38,4 +39,5 @@ __all__ = [
     "TurnRecord",
     "TurnResult",
     "TutorAction",
+    "TutorPromptTemplates",
 ]

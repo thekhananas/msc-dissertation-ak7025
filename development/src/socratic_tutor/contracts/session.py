@@ -15,9 +15,10 @@ from socratic_tutor.contracts.models import (
 
 
 class CreateSessionRequest(ContractModel):
-    """Idempotent request to start the fixed demonstration task."""
+    """Idempotent request to start one authored demonstration task."""
 
     idempotency_key: str = Field(min_length=8, max_length=128)
+    task_id: str = Field(default="mutable-list-aliasing", min_length=1, max_length=128)
 
 
 class SubmitTurnRequest(ContractModel):
