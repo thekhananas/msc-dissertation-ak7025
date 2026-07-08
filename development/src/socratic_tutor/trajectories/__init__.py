@@ -8,6 +8,7 @@ from socratic_tutor.trajectories.events import (
     StoredEvent,
     TurnCompletedPayload,
 )
+from socratic_tutor.trajectories.repair import prepare_demo_event_log
 
 __all__ = [
     "EventLogCorruptionError",
@@ -16,4 +17,5 @@ __all__ = [
     "SessionCreatedPayload",
     "StoredEvent",
     "TurnCompletedPayload",
+    "prepare_demo_event_log",
 ]
