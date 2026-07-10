@@ -12,4 +12,8 @@
 .DS_Store
 Thumbs.db
 
+# BibTeX build artifacts
+*.bbl
+*.blg
+
 *.pdf
