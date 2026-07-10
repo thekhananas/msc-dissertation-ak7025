@@ -1,0 +1,160 @@
+schema_version: 1
+schema_id: benchmark.manifest.v1
+benchmark_version: dev-v0
+status: draft
+frozen_at_utc: null
+parent_version: null
+manifest_hash: null
+conditions:
+  - dialogue_only
+  - probe_informed
+  - unrelated_probe
+  - corrupted_probe
+cases:
+  - public:
+      schema_version: 1
+      schema_id: benchmark.case_public.v1
+      benchmark_version: dev-v0
+      case_id: dev-aliasing-001
+      task_family: dev-list-identity
+      split: development
+      target_concept: list-aliasing-and-copying
+      public_fixture_ref: public/aliasing-dialogue.md
+      evidence_probe_ref: evidence/aliasing-prompt.md
+      evidence_test_ref: evidence/aliasing-tests.yaml
+      initial_tracker_ref: public/initial-tracker.json
+      initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+      unrelated_control_ref: controls/unrelated.yaml
+      corruption_spec_ref: controls/corruption.yaml
+      case_content_hash: f47b5ca4bdfc38782fcb81dfefcf448c4da47d86fdff3066bb489999bee83718
+    criterion:
+      schema_version: 1
+      schema_id: benchmark.criterion_spec.v1
+      benchmark_version: dev-v0
+      case_id: dev-aliasing-001
+      misconception_id: assignment-copies-mutable-list
+      transfer_case_id: snapshot-after-mutation
+      evidence_pattern: false_public_mastery
+      criterion_probe_id: dev-aliasing-snapshot-criterion-001
+      criterion_prompt_ref: evaluator/criterion/aliasing-prompt.md
+      test_bundle_ref: evaluator/criterion/aliasing-tests.yaml
+      test_bundle_sha256: 7d09142aa533bdd98d4d3b75e6078212288c0e713662c00875ab0a1088b3e914
+      rubric_ref: evaluator/criterion/aliasing-rubric.yaml
+      rubric_sha256: eae5c298f872c888e3b9e1e8daed09bbff17421a26789164ea8a400fce75b189
+      label_rationale_ref: evaluator/criterion/aliasing-label-rationale.md
+      review_record_ref: evaluator/reviews/aliasing.yaml
+      structural_difference_record_ref: evaluator/structural/aliasing.md
+  - public:
+      schema_version: 1
+      schema_id: benchmark.case_public.v1
+      benchmark_version: dev-v0
+      case_id: dev-none-falsy-001
+      task_family: dev-missing-values
+      split: development
+      target_concept: none-versus-falsy-values
+      public_fixture_ref: public/none-falsy-dialogue.md
+      evidence_probe_ref: evidence/none-falsy-prompt.md
+      evidence_test_ref: evidence/none-falsy-tests.yaml
+      initial_tracker_ref: public/initial-tracker.json
+      initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+      unrelated_control_ref: controls/unrelated.yaml
+      corruption_spec_ref: controls/corruption.yaml
+      case_content_hash: fa29612be1262203a29b47dd1e1db3364914f35e2b39299e3dffde4d66f5c6a0
+    criterion:
+      schema_version: 1
+      schema_id: benchmark.criterion_spec.v1
+      benchmark_version: dev-v0
+      case_id: dev-none-falsy-001
+      misconception_id: broad-falsiness-means-missing
+      transfer_case_id: preserve-empty-string-label
+      evidence_pattern: underconfidence
+      criterion_probe_id: dev-none-falsy-label-criterion-001
+      criterion_prompt_ref: evaluator/criterion/none-falsy-prompt.md
+      test_bundle_ref: evaluator/criterion/none-falsy-tests.yaml
+      test_bundle_sha256: 26bd77e84dc1173a7292d51fe7e492b20d13db6c8c2c55add9ec57922060dcbe
+      rubric_ref: evaluator/criterion/none-falsy-rubric.yaml
+      rubric_sha256: 7772d00ce9fd3843f24c91a18f74e8fa03ad95a196ac0cd3d4db0cd894868c9b
+      label_rationale_ref: evaluator/criterion/none-falsy-label-rationale.md
+      review_record_ref: evaluator/reviews/none-falsy.yaml
+      structural_difference_record_ref: evaluator/structural/none-falsy.md
+splits:
+  - schema_version: 1
+    schema_id: benchmark.split.v1
+    split: development
+    task_families:
+      - dev-list-identity
+      - dev-missing-values
+files:
+  - {path: public/aliasing-dialogue.md, artifact_class: public_fixture, schema_id: benchmark.public_fixture.v1, sha256: 65589789c145280b91ffbdae79730ac9d5b7dcf52e0f36804929b359ad5eae12, byte_size: 237}
+  - {path: public/none-falsy-dialogue.md, artifact_class: public_fixture, schema_id: benchmark.public_fixture.v1, sha256: 7de266ddbf05e297947e92fa18422a3e52d8de277a385fb67f777118b738b390, byte_size: 255}
+  - {path: public/initial-tracker.json, artifact_class: initial_tracker, schema_id: benchmark.initial_tracker.v1, sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb, byte_size: 109}
+  - {path: evidence/aliasing-prompt.md, artifact_class: evidence_probe, schema_id: benchmark.evidence_probe.v1, sha256: 4b16ca25bcafaf04cc1fb0497b232e60400e7006d99ba6de462472dd36d129ff, byte_size: 297}
+  - {path: evidence/aliasing-tests.yaml, artifact_class: evidence_test, schema_id: benchmark.authored_tests.v1, sha256: 6c19ddeb1d19ecc5eb50eb0029d8cb0a5a358cad01d4f34a913966c1181b3a59, byte_size: 355}
+  - {path: evidence/none-falsy-prompt.md, artifact_class: evidence_probe, schema_id: benchmark.evidence_probe.v1, sha256: ffb97f5052fddcee05a72ec0340b78cd59a4feb2cb64f31a13e70e5e0872c728, byte_size: 223}
+  - {path: evidence/none-falsy-tests.yaml, artifact_class: evidence_test, schema_id: benchmark.authored_tests.v1, sha256: 268215279941ed488daccf1756bd0c4d4d7df4a809d5a0d7e74a94b71deac2a1, byte_size: 256}
+  - {path: controls/unrelated.yaml, artifact_class: control, schema_id: benchmark.unrelated_control.v1, sha256: 7a1f3be6b0df0885a0232b3f619995ef19403fec3d12dbb5fb28b3a614ab3482, byte_size: 201}
+  - {path: controls/corruption.yaml, artifact_class: control, schema_id: benchmark.corruption_control.v1, sha256: 6be4bbded2f71f2bc8eff071b5a3a6bcbeb1e296ff14b833dc9bafecd6df9456, byte_size: 161}
+  - {path: splits.yaml, artifact_class: split, schema_id: benchmark.split_inventory.v1, sha256: 35d5508575c1ac88003ae07991907dddbf01f7a8510b52637e05aa701122ce65, byte_size: 112}
+  - {path: limitations.md, artifact_class: limitations, schema_id: benchmark.limitations.v1, sha256: ca476ac239def3ce29226dc02312577ad635e670f6e7c11cbf82883e9fcf1535, byte_size: 254}
+  - {path: evaluator/criterion/aliasing-prompt.md, artifact_class: criterion_probe, schema_id: benchmark.criterion_probe.v1, sha256: 1a98dd3cea222237630ad2a1aaaeddfabfc408938dbaad755bb4c7c446ab9454, byte_size: 328}
+  - {path: evaluator/criterion/aliasing-tests.yaml, artifact_class: criterion_test, schema_id: benchmark.authored_tests.v1, sha256: 7d09142aa533bdd98d4d3b75e6078212288c0e713662c00875ab0a1088b3e914, byte_size: 317}
+  - {path: evaluator/criterion/aliasing-rubric.yaml, artifact_class: criterion_rubric, schema_id: benchmark.criterion_rubric.v1, sha256: eae5c298f872c888e3b9e1e8daed09bbff17421a26789164ea8a400fce75b189, byte_size: 197}
+  - {path: evaluator/criterion/aliasing-label-rationale.md, artifact_class: label_rationale, schema_id: benchmark.label_rationale.v1, sha256: 7748c6b75c1338d7fecb36428df0662f43bdbce145febd52c616314953f15c25, byte_size: 231}
+  - {path: evaluator/structural/aliasing.md, artifact_class: structural_difference, schema_id: benchmark.structural_difference.v1, sha256: 419710ae736c80516f2650acd15d3e82e08f9f2537e98c2f09a87f8b6b8101f6, byte_size: 327}
+  - {path: evaluator/reviews/aliasing.yaml, artifact_class: review, schema_id: benchmark.review_file.v1, sha256: 8e7163a2ff454e8395cfa4616f98f698f2487da418519861cb43053a217ddf5a, byte_size: 288}
+  - {path: evaluator/criterion/none-falsy-prompt.md, artifact_class: criterion_probe, schema_id: benchmark.criterion_probe.v1, sha256: 73a9bcfa48df76ef38d6752f70b9b699c7334cfe84c413d3e13939c5b6bd689f, byte_size: 277}
+  - {path: evaluator/criterion/none-falsy-tests.yaml, artifact_class: criterion_test, schema_id: benchmark.authored_tests.v1, sha256: 26bd77e84dc1173a7292d51fe7e492b20d13db6c8c2c55add9ec57922060dcbe, byte_size: 331}
+  - {path: evaluator/criterion/none-falsy-rubric.yaml, artifact_class: criterion_rubric, schema_id: benchmark.criterion_rubric.v1, sha256: 7772d00ce9fd3843f24c91a18f74e8fa03ad95a196ac0cd3d4db0cd894868c9b, byte_size: 202}
+  - {path: evaluator/criterion/none-falsy-label-rationale.md, artifact_class: label_rationale, schema_id: benchmark.label_rationale.v1, sha256: 6d1d4e41cabd6519fd566311b76c991cdca5abeda21079dedc15bd099f6abeb5, byte_size: 215}
+  - {path: evaluator/structural/none-falsy.md, artifact_class: structural_difference, schema_id: benchmark.structural_difference.v1, sha256: 3b4ce413bc68a8f48ba2fd451ff8218308aa78c7cd0ac06f1b7ee974f6514d0e, byte_size: 357}
+  - {path: evaluator/reviews/none-falsy.yaml, artifact_class: review, schema_id: benchmark.review_file.v1, sha256: 5d140d383f332ae6912129f606a82c815511f1954d0db9952e691faaa0a2b630, byte_size: 290}
+reviews:
+  - schema_version: 1
+    schema_id: benchmark.review.v1
+    review_id: dev-review-aliasing-001
+    case_id: dev-aliasing-001
+    author: Anas Khan
+    reviewer: independent-reviewer-tbd
+    reviewed_at_utc: null
+    decision: pending
+    concerns: []
+    adjudication: null
+    reviewed_files:
+      - {path: evidence/aliasing-prompt.md, sha256: 4b16ca25bcafaf04cc1fb0497b232e60400e7006d99ba6de462472dd36d129ff}
+      - {path: evidence/aliasing-tests.yaml, sha256: 6c19ddeb1d19ecc5eb50eb0029d8cb0a5a358cad01d4f34a913966c1181b3a59}
+      - {path: evaluator/criterion/aliasing-prompt.md, sha256: 1a98dd3cea222237630ad2a1aaaeddfabfc408938dbaad755bb4c7c446ab9454}
+      - {path: evaluator/criterion/aliasing-tests.yaml, sha256: 7d09142aa533bdd98d4d3b75e6078212288c0e713662c00875ab0a1088b3e914}
+      - {path: evaluator/criterion/aliasing-rubric.yaml, sha256: eae5c298f872c888e3b9e1e8daed09bbff17421a26789164ea8a400fce75b189}
+      - {path: evaluator/criterion/aliasing-label-rationale.md, sha256: 7748c6b75c1338d7fecb36428df0662f43bdbce145febd52c616314953f15c25}
+      - {path: evaluator/structural/aliasing.md, sha256: 419710ae736c80516f2650acd15d3e82e08f9f2537e98c2f09a87f8b6b8101f6}
+  - schema_version: 1
+    schema_id: benchmark.review.v1
+    review_id: dev-review-none-falsy-001
+    case_id: dev-none-falsy-001
+    author: Anas Khan
+    reviewer: independent-reviewer-tbd
+    reviewed_at_utc: null
+    decision: pending
+    concerns: []
+    adjudication: null
+    reviewed_files:
+      - {path: evidence/none-falsy-prompt.md, sha256: ffb97f5052fddcee05a72ec0340b78cd59a4feb2cb64f31a13e70e5e0872c728}
+      - {path: evidence/none-falsy-tests.yaml, sha256: 268215279941ed488daccf1756bd0c4d4d7df4a809d5a0d7e74a94b71deac2a1}
+      - {path: evaluator/criterion/none-falsy-prompt.md, sha256: 73a9bcfa48df76ef38d6752f70b9b699c7334cfe84c413d3e13939c5b6bd689f}
+      - {path: evaluator/criterion/none-falsy-tests.yaml, sha256: 26bd77e84dc1173a7292d51fe7e492b20d13db6c8c2c55add9ec57922060dcbe}
+      - {path: evaluator/criterion/none-falsy-rubric.yaml, sha256: 7772d00ce9fd3843f24c91a18f74e8fa03ad95a196ac0cd3d4db0cd894868c9b}
+      - {path: evaluator/criterion/none-falsy-label-rationale.md, sha256: 6d1d4e41cabd6519fd566311b76c991cdca5abeda21079dedc15bd099f6abeb5}
+      - {path: evaluator/structural/none-falsy.md, sha256: 3b4ce413bc68a8f48ba2fd451ff8218308aa78c7cd0ac06f1b7ee974f6514d0e}
+primary_metric:
+  name: paired_brier_difference
+  favourable_direction: positive
+  aggregation_unit: case
+  interval_method: paired_case_bootstrap
+  missingness_rule: exclude_missing_criterion_and_report_denominator
+generation:
+  provider: recorded_fixture
+  model: authored-deterministic
+  repeats_per_case: 1
+  temperature: 0.0
+  max_output_tokens: 512
+limitations_ref: limitations.md

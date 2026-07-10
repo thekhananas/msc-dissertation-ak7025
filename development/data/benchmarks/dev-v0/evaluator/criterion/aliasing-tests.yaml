@@ -1,0 +1,11 @@
+schema_id: benchmark.authored_tests.v1
+function: snapshot_then_append
+checks:
+  - input_items: [alpha]
+    value: beta
+    expected_snapshot: [alpha]
+    expected_original_after: [alpha, beta]
+    snapshot_must_be_distinct: true
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute

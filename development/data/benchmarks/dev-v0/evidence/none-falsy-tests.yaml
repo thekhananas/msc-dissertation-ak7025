@@ -1,0 +1,12 @@
+schema_id: benchmark.authored_tests.v1
+function: display_score
+checks:
+  - input: null
+    expected: missing
+  - input: 0
+    expected: "0"
+  - input: 7
+    expected: "7"
+scoring:
+  demonstrated: all_checks_pass
+  misconception: zero_is_treated_as_missing

@@ -1,0 +1,5 @@
+schema_id: benchmark.unrelated_control.v1
+assignments:
+  dev-aliasing-001: dev-none-falsy-001
+  dev-none-falsy-001: dev-aliasing-001
+rule: use_the_other_cases_evidence_summary_without_criterion_access
