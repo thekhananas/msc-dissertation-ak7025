@@ -1,1143 +1,1133 @@
-<!-- docs/LLD.md -->
-
 # Low-Level Design
 
-## Socratic Multi-Agent Tutoring and Evaluation Platform
+## Master's POC: Socratic Tutoring and RL Evaluation
 
 | Field | Value |
 |---|---|
-| Status | Draft for engineering review |
-| Design level | Components, interfaces, algorithms, and runtime sequences |
+| Status | Approved POC component design |
+| Revision date | 2026-07-12 |
 | Product requirements | `docs/PRD.md` |
 | High-level architecture | `docs/HLD.md` |
-| Language baseline | Python 3.12, Pydantic v2 |
+| Engineering strategy | `docs/engineering-plan.md` |
+| Python package | `src/socratic_tutor` |
+| Gymnasium environment | `SocraticTutor/POMDP-v0` |
 | Public schema version | `1` |
-| Gymnasium environment ID | `SocraticTutor/POMDP-v0` |
 
-## 1. Purpose
+> **Sequential-rescope status:** this LLD is aligned with the revised PRD, engineering plan, and HLD. `docs/data-flow-and-schema.md` and `docs/implementation-plan.md` remain on the earlier enterprise design until their separate revision stages.
 
-This document specifies the component-level design required to implement the platform described by the PRD and HLD. It defines package dependencies, classes and protocols, state schemas, LangGraph nodes, Gymnasium behavior, mathematical execution order, API operations, idempotency, failure handling, and test seams.
+## 1. Purpose and Scope
 
-Database entities and physical data layouts are introduced only where needed to define component behavior. Their complete schemas, relationships, indexes, and retention rules are deferred to `docs/data-flow-and-schema.md`.
+This document turns the POC architecture into implementable Python and TypeScript boundaries. It specifies the critical-path classes, data contracts, graph nodes, environment timing, mathematical updates, APIs, local persistence behavior, experiment loops, and tests.
 
-## 2. Package and Dependency Design
-
-### 2.1 Python Package Layout
+The first implementation target is deliberately narrow:
 
 ```text
-packages/
+one authored Python task
+-> one submitted explanation
+-> one LangGraph turn
+-> deterministic evidence
+-> simple tracker update
+-> heuristic directive
+-> safe template prompt
+-> one JSONL event
+-> one React state update
+```
+
+The following do not belong on that path: SMC, learned policies, OpenRouter, W&B, arbitrary code execution, streaming, distributed workers, or human-study data.
+
+Database entity details and physical Parquet layouts are finalized in `docs/data-flow-and-schema.md`. This document defines only the contracts those stores must preserve.
+
+## 2. Implementation Principles
+
+1. **Pure domain first.** Evidence, tracker, policy, CBFM, and simulator functions work without FastAPI or LangGraph.
+2. **One owner per state field.** Graph nodes return validated deltas and cannot mutate another component's fields.
+3. **No privileged policy path.** Simulator truth has a private type and is projected into an explicit policy-safe observation.
+4. **Offline is the reference mode.** Templates and deterministic fixtures are the test oracle.
+5. **Exactly one logical turn event.** API retries cannot create two committed events for the same turn.
+6. **Local files are canonical.** W&B reports runs but does not own the only reproducible copy.
+7. **Complexity is gated.** BKT precedes reduced SMC; heuristics precede bandit and Q-learning.
+
+## 3. Source Layout and Dependency Rules
+
+### 3.1 POC Source Layout
+
+All paths in this section are relative to the repository's `development/` Pixi workspace.
+
+```text
+apps/
+|-- api/
+|   |-- main.py
+|   |-- dependencies.py
+|   `-- routes/
+|       |-- health.py
+|       `-- sessions.py
+`-- web/
+    `-- src/
+        |-- api/client.ts
+        |-- components/
+        |-- pages/TutorPage.tsx
+        `-- types.ts
+src/socratic_tutor/
 |-- contracts/
-|   |-- identifiers.py
-|   |-- enums.py
-|   |-- policy.py
+|   |-- common.py
 |   |-- evidence.py
-|   |-- graph.py
-|   |-- trajectory.py
-|   `-- errors.py
-|-- cognitive_model/
+|   |-- policy.py
+|   |-- session.py
+|   `-- trajectory.py
+|-- tasks/
+|   |-- loader.py
+|   `-- schema.py
+|-- graph/
+|   |-- state.py
+|   |-- nodes.py
+|   |-- builder.py
+|   `-- service.py
+|-- evidence/
+|   `-- deterministic.py
+|-- tracking/
+|   |-- protocol.py
+|   |-- simple.py
+|   |-- bkt.py
+|   `-- smc.py
+|-- policies/
+|   |-- protocol.py
+|   |-- heuristic.py
+|   |-- bandit.py
+|   `-- q_learning.py
+|-- generation/
+|   |-- protocol.py
+|   |-- templates.py
+|   `-- openrouter.py
+|-- guardrails/
+|   `-- leakage.py
+|-- cognitive/
 |   |-- features.py
-|   |-- dynamics.py
-|   |-- calibration.py
-|   `-- diagnostics.py
+|   `-- dynamics.py
 |-- simulator/
 |   |-- private_state.py
 |   |-- env.py
-|   |-- profiles.py
 |   |-- transitions.py
-|   |-- rewards.py
 |   `-- registration.py
-|-- epistemic_tracker/
-|   |-- particles.py
-|   |-- likelihood.py
-|   |-- smc.py
-|   |-- summaries.py
-|   `-- baselines.py
-|-- policies/
-|   |-- protocol.py
-|   |-- static.py
-|   |-- heuristic.py
-|   |-- bandit.py
-|   |-- q_learning.py
-|   |-- discretization.py
-|   `-- artifact.py
-|-- generation/
-|   |-- gateway.py
-|   |-- providers/
-|   |-- tutor.py
-|   |-- student.py
-|   `-- prompts.py
-|-- guardrails/
-|   |-- protocol.py
-|   |-- leakage.py
-|   |-- rewrite.py
-|   `-- fallback.py
-|-- sandbox/
-|   |-- gateway.py
-|   |-- e2b.py
-|   |-- modal.py
-|   `-- trusted_fake.py
-|-- tutor_graph/
-|   |-- state.py
-|   |-- ownership.py
-|   |-- nodes/
-|   |-- routing.py
-|   |-- builder.py
-|   `-- runtime.py
 |-- trajectories/
-|   |-- builder.py
-|   |-- validator.py
-|   |-- writer.py
-|   `-- reader.py
-|-- training/
-|   |-- manifests.py
-|   |-- coordinator.py
+|   |-- jsonl.py
+|   |-- parquet.py
+|   `-- validation.py
+|-- experiments/
+|   |-- config.py
 |   |-- rollout.py
-|   |-- trainers.py
-|   `-- registry.py
-`-- evaluation/
-    |-- gates.py
-    |-- metrics.py
-    |-- statistics.py
-    |-- judges.py
-    `-- reports.py
+|   |-- train.py
+|   `-- evaluate.py
+`-- sandbox/
+    |-- protocol.py
+    `-- external.py
 ```
 
-### 2.2 Dependency Rules
+The root `experiments/*.py` commands may be thin entry points. Reusable logic stays under `src/socratic_tutor` and is tested there.
+
+### 3.2 Dependency Diagram
 
 ```d2
 direction: right
 
-safe: "Policy-Safe Packages" {
+interface: "POC Interfaces" {
+  web: "React Client"
+  api: "FastAPI Routes"
+  graph: "LangGraph Turn Service"
+}
+
+domain: "Policy-Safe Domain" {
   contracts: "contracts"
-  cognitive: "cognitive_model"
-  tracker: "epistemic_tracker"
+  tasks: "tasks"
+  evidence: "evidence"
+  tracking: "tracking"
   policies: "policies"
   generation: "generation"
   guardrails: "guardrails"
-  sandbox: "sandbox"
+  cognitive: "cognitive"
+}
+
+research: "Offline Research" {
+  simulator: "simulator"
+  private_state: "simulator.private_state"
+  experiments: "experiments"
   trajectories: "trajectories"
 }
 
-private: "Privileged Simulator Boundary" {
-  simulator: "simulator"
-  true_state: "simulator.private_state"
+optional: "Optional Adapters" {
+  openrouter: "OpenRouter Adapter"
+  sandbox: "External Sandbox Adapter"
+  wandb: "W&B Sink"
 }
 
-orchestration: "Orchestration" {
-  graph: "tutor_graph"
-}
+interface.web -> interface.api: "typed HTTP"
+interface.api -> interface.graph: "session commands"
+interface.graph -> domain.contracts: "validated state"
+interface.graph -> domain.evidence: "extract"
+interface.graph -> domain.tracking: "update"
+interface.graph -> domain.policies: "act"
+interface.graph -> domain.generation: "render"
+interface.graph -> domain.guardrails: "check"
 
-research: "Research Jobs" {
-  training: "training"
-  evaluation: "evaluation"
-}
+domain.contracts -> domain.evidence
+domain.contracts -> domain.tracking
+domain.contracts -> domain.policies
+domain.tasks -> domain.evidence
+domain.tasks -> domain.generation
+domain.cognitive -> research.simulator
+research.private_state -> research.simulator: "private ownership"
+research.simulator -> research.experiments: "Gymnasium factory"
+domain.tracking -> research.experiments: "tracker factory"
+domain.policies -> research.experiments: "policy factory"
+research.experiments -> research.trajectories: "validated records"
 
-contracts -> cognitive: "typed inputs and outputs"
-contracts -> tracker: "evidence and summaries"
-contracts -> policies: "PolicyObservation / PolicyDecision"
-contracts -> generation: "generation requests"
-contracts -> guardrails: "guardrail results"
-contracts -> sandbox: "execution contracts"
-contracts -> trajectories: "trajectory schemas"
+domain.generation -> optional.openrouter: "optional call"
+interface.graph -> optional.sandbox: "optional probe"
+research.experiments -> optional.wandb: "metrics only"
 
-cognitive -> simulator: "true fast-state dynamics"
-cognitive -> tracker: "subjective fast-state dynamics"
-true_state -> simulator: "private state only"
-simulator -> graph: "environment adapter"
-
-tracker -> graph: "belief updates"
-policies -> graph: "policy adapter"
-generation -> graph: "tutor and student generation"
-guardrails -> graph: "prompt decision"
-sandbox -> graph: "execution evidence"
-trajectories -> graph: "turn commit"
-
-simulator -> training: "local environment factory"
-policies -> training: "trainable implementations"
-trajectories -> training: "public trajectory reader"
-trajectories -> evaluation: "controlled readers"
-policies -> evaluation: "candidate evaluation"
-
-true_state -> policies: "FORBIDDEN" {
+research.private_state -> domain.policies: "FORBIDDEN" {
   style.stroke: "#c62828"
   style.stroke-dash: 4
 }
-true_state -> generation: "FORBIDDEN" {
+research.private_state -> interface.graph: "FORBIDDEN" {
   style.stroke: "#c62828"
   style.stroke-dash: 4
 }
 ```
 
-The two red dashed edges document prohibited dependencies. CI shall enforce them with an import-boundary test. `policies`, `generation`, public API code, and human-mode graph nodes may not import `simulator.private_state`.
+CI shall reject imports from `socratic_tutor.simulator.private_state` in `policies`, `graph`, `generation`, `apps/api`, or frontend code. The simulator may depend on policy-safe contracts; policy code may not depend on the simulator package.
 
-### 2.3 Dependency Injection
+## 4. Shared Contracts
 
-Construct runtimes through factories rather than module-level singletons:
+### 4.1 Contract Base Types
 
-```python
-@dataclass(frozen=True)
-class RuntimeDependencies:
-    policy_resolver: PolicyResolver
-    model_gateway: ModelGateway
-    guardrail: Guardrail
-    sandbox_gateway: SandboxGateway
-    tracker_factory: TrackerFactory
-    trajectory_writer: TrajectoryWriter
-    artifact_store: ArtifactStore
-    clock: Clock
-```
-
-Tests inject deterministic fakes. Production factories resolve providers from validated settings and fail startup when required dependencies are unavailable or unsafe for the selected mode.
-
-## 3. Core Types and Invariants
-
-### 3.1 Identifier Types
-
-Identifiers are opaque UUIDv7 strings serialized as text:
-
-- `ExperimentId`
-- `ShardId`
-- `SessionId`
-- `ThreadId`
-- `EpisodeId`
-- `TurnId`
-- `TaskId`
-- `ProfileId`
-- `PolicyId`
-- `ArtifactId`
-
-Identifiers are generated once at command acceptance. Retries reuse the same identifier.
-
-### 3.2 Enums
+All externally persisted or transmitted models extend a strict base:
 
 ```python
-class RunMode(StrEnum):
-    DETERMINISTIC = "deterministic"
-    LLM_SIMULATION = "llm_simulation"
-    GLASS_BOX = "glass_box"
-    HUMAN = "human"
+from pydantic import BaseModel, ConfigDict
 
-class Split(StrEnum):
-    CALIBRATION = "calibration"
-    POLICY_SELECTION = "policy_selection"
-    VALIDATION = "validation"
-    HELD_OUT_TEST = "held_out_test"
-
-class PedagogicalDirective(StrEnum):
-    DECONSTRUCT_CODE = "deconstruct_code"
-    PRESENT_ANALOGY = "present_analogy"
-    PROMPT_PREDICTION = "prompt_prediction"
-    ASK_COUNTERFACTUAL = "ask_counterfactual"
-    EXPLAIN_CONCEPT = "explain_concept"
-    MINIMAL_HINT = "minimal_hint"
-
-class TerminationReason(StrEnum):
-    MASTERY_COMPLETE = "mastery_complete"
-    TASK_COMPLETE = "task_complete"
-    MAX_TURNS = "max_turns"
-    BUDGET_EXCEEDED = "budget_exceeded"
-    PROVIDER_UNAVAILABLE = "provider_unavailable"
-    SAFETY_ABORT = "safety_abort"
-    CANCELLED = "cancelled"
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
 ```
 
-Directive changes require an action-space version increment. Enum order is never used as a stored action index; artifacts persist an explicit directive-to-index mapping.
+Bounded numeric aliases must reject NaN and infinity. IDs are opaque UUID strings at external boundaries. Timestamps are timezone-aware UTC values. Enum member names, never ordinal positions, are persisted.
 
-### 3.3 Unit-Interval Values
+### 4.2 Task and Evidence
 
-All mastery, probability, bandwidth, and friction fields validate as finite values in `[0,1]`. NaN and infinity are rejected before graph commit or trajectory write.
+```python
+class TaskFixture(StrictModel):
+    schema_version: Literal[1]
+    task_id: str
+    version: str
+    title: str
+    source_code: str
+    target_concept: str
+    prerequisite_concepts: tuple[str, ...]
+    misconception_id: str
+    initial_prompt: str
+    evidence_rules: tuple[EvidenceRule, ...]
+    templates: dict[PedagogicalDirective, str]
 
-### 3.4 Core Class Diagram
+class ObservationEvidence(StrictModel):
+    schema_version: Literal[1]
+    correctness: float          # finite [0, 1]
+    confidence: float           # finite [0, 1]
+    misconception_present: bool
+    uncertainty_reason: str | None
+    active_concepts: tuple[str, ...]
+    extractor_version: str
+```
+
+The deterministic extractor normalizes case and whitespace, applies task-owned positive and misconception rules, and emits a structured result. It must not infer incorrectness for concepts absent from `active_concepts`.
+
+### 4.3 Tracker and Policy
+
+```python
+class TrackerState(StrictModel):
+    schema_version: Literal[1]
+    mastery: float
+    misconception_probability: float
+    uncertainty: float
+    estimated_bandwidth: float | None = None
+    estimated_friction: float | None = None
+    tracker_version: str
+
+class PolicyObservation(StrictModel):
+    schema_version: Literal[1]
+    target_concept: str
+    tracker: TrackerState
+    repeated_failures: int
+    turn_index: int
+
+class PolicyDecision(StrictModel):
+    schema_version: Literal[1]
+    directive: PedagogicalDirective
+    target_concept: str
+    policy_version: str
+    propensity: float | None = None
+    fallback_used: bool = False
+```
+
+`PolicyObservation` is an allowlist. Adding a field requires a schema-version decision and a feature-parity audit across every compared policy.
+
+### 4.4 Generation and Guardrail
+
+```python
+class GenerationRequest(StrictModel):
+    directive: PedagogicalDirective
+    task_id: str
+    task_version: str
+    target_concept: str
+    observable_evidence: ObservationEvidence
+    template_fallback: str
+    prompt_version: str
+
+class GenerationResult(StrictModel):
+    text: str
+    renderer: Literal["template", "openrouter"]
+    model: str | None
+    provider: str | None
+    prompt_hash: str
+    latency_ms: int
+    token_usage: TokenUsage | None
+
+class GuardrailResult(StrictModel):
+    accepted: bool
+    reason_codes: tuple[str, ...]
+    guardrail_version: str
+```
+
+No generation request contains simulator truth, particles, hidden model reasoning, credentials, or full prior transcripts unless a later experiment explicitly versions that context choice.
+
+### 4.5 Core Class Diagram
 
 ```d2
 direction: right
 
-contracts: "Policy-Safe Contracts" {
-  policy_observation: "PolicyObservation" {
+contracts: "Contracts" {
+  task: "TaskFixture" {
     shape: class
-    schema_version: "Literal[1]"
+    task_id: "str"
     target_concept: "str"
-    target_mastery: "UnitFloat"
-    prerequisite_mastery_min: "UnitFloat"
-    misconception_probability: "UnitFloat"
-    estimated_bandwidth: "UnitFloat"
-    estimated_friction: "UnitFloat"
-    posterior_uncertainty: "PosteriorUncertainty"
-    counters: "TurnCounters"
-    execution_summary: "ExecutionSummary | None"
+    evidence_rules: "tuple[EvidenceRule]"
+    templates: "dict[Directive, str]"
   }
-
-  policy_decision: "PolicyDecision" {
-    shape: class
-    directive: "PedagogicalDirective"
-    target_concept: "str"
-    policy_id: "PolicyId"
-    policy_version: "str"
-    propensity: "UnitFloat | None"
-  }
-
-  tutor_control: "TutorControl" {
-    shape: class
-    decision: "PolicyDecision"
-    rendered_prompt: "str"
-    prompt_features: "PromptLoadFeatures"
-    estimated_difficulty: "UnitFloat"
-    prompt_template_version: "str"
-    generator_model: "str"
-  }
-
   evidence: "ObservationEvidence" {
     shape: class
-    student_text: "str"
-    execution: "ExecutionSummary | None"
-    probe: "ProbeResult | None"
-    guardrail: "GuardrailEvent"
-    load_proxy: "LoadProxySignals"
-    active_masks: "EvidenceMasks"
+    correctness: "UnitFloat"
+    confidence: "UnitFloat"
+    misconception_present: "bool"
+    active_concepts: "tuple[str]"
   }
-
-  estimates: "TrackerEstimates" {
+  tracker_state: "TrackerState" {
     shape: class
-    mastery: "dict[str, UnitFloat]"
-    misconception_marginals: "dict[str, UnitFloat]"
-    cognitive: "CognitiveEstimate"
-    effective_sample_size: "float"
-    posterior_uncertainty: "PosteriorUncertainty"
+    mastery: "UnitFloat"
+    misconception_probability: "UnitFloat"
+    uncertainty: "UnitFloat"
+    estimated_bandwidth: "UnitFloat?"
+    estimated_friction: "UnitFloat?"
+  }
+  observation: "PolicyObservation" {
+    shape: class
+    target_concept: "str"
+    tracker: "TrackerState"
+    repeated_failures: "int"
+    turn_index: "int"
+  }
+  decision: "PolicyDecision" {
+    shape: class
+    directive: "PedagogicalDirective"
+    policy_version: "str"
+    propensity: "float?"
   }
 }
 
-private: "Simulator-Private Types" {
-  true_state: "TrueStudentState" {
+ports: "Protocols" {
+  extractor: "EvidenceExtractor" {
     shape: class
-    mastery: "dict[str, UnitFloat]"
-    misconceptions: "dict[str, bool]"
-    bandwidth: "UnitFloat"
-    overload_friction: "UnitFloat"
-    underchallenge: "UnitFloat"
+    extract(response, task): "ObservationEvidence"
   }
-
-  particle: "BeliefParticle" {
+  tracker: "BeliefTracker" {
     shape: class
-    state: "LatentStateHypothesis"
-    log_weight: "float"
+    initial(task): "TrackerState"
+    update(previous, evidence): "TrackerState"
   }
-}
-
-services: "Domain Services" {
-  env: "SocraticTutorEnv" {
-    shape: class
-    +reset: "(seed, options) -> (PolicyObservation, EpisodeInfo)"
-    +step: "(action) -> StepResult"
-    -true_state: "TrueStudentState"
-    -tracker: "EpistemicTracker"
-  }
-
-  tracker: "EpistemicTracker" {
-    shape: class
-    +initialize: "(prior, seed) -> TrackerEstimates"
-    +update: "(control, evidence) -> TrackerEstimates"
-    +snapshot_ref: "() -> ArtifactRef | None"
-  }
-
   policy: "TutorPolicy" {
     shape: class
-    +act: "(PolicyObservation, PolicyContext) -> PolicyDecision"
-    +metadata: "() -> PolicyMetadata"
+    act(observation, rng): "PolicyDecision"
   }
-
-  graph: "TutorGraphRuntime" {
+  renderer: "PromptRenderer" {
     shape: class
-    +start: "(SessionCommand) -> GraphResult"
-    +resume: "(ThreadId, ResumeCommand) -> GraphResult"
-    +stream: "(ThreadId) -> AsyncIterator[GraphEvent]"
+    render(request): "GenerationResult"
   }
-
-  writer: "TrajectoryWriter" {
+  writer: "TurnEventWriter" {
     shape: class
-    +append_turn: "(TurnEnvelope) -> CommitReceipt"
-    +finalize_episode: "(EpisodeSummary) -> ArtifactRef"
+    append_once(event): "WriteResult"
   }
 }
 
-contracts.policy_decision -> contracts.tutor_control: "embedded in"
-contracts.tutor_control -> contracts.evidence: "causes observable"
-contracts.evidence -> services.tracker: "corrects belief"
-services.tracker -> contracts.estimates: "produces"
-contracts.estimates -> contracts.policy_observation: "projected to"
-contracts.policy_observation -> services.policy: "input"
-services.policy -> contracts.policy_decision: "output"
+implementations: "Initial Implementations" {
+  rules: "DeterministicEvidenceExtractor" { shape: class }
+  simple: "SimpleBeliefTracker" { shape: class }
+  heuristic: "HeuristicTutorPolicy" { shape: class }
+  templates: "TemplatePromptRenderer" { shape: class }
+  jsonl: "JsonlTurnEventWriter" { shape: class }
+}
 
-private.true_state -> services.env: "owned by"
-private.particle -> services.tracker: "owned by"
-services.env -> services.tracker: "invokes subjective update"
-services.env -> services.writer: "commits trajectory"
-services.graph -> services.env: "drives in synthetic mode"
-services.graph -> services.writer: "commits live turns"
+service: "TutorSessionService" {
+  shape: class
+  create_session(task_id): "SessionView"
+  submit_turn(command): "TurnResponse"
+}
+
+contracts.task -> ports.extractor
+ports.extractor -> contracts.evidence
+contracts.evidence -> ports.tracker
+ports.tracker -> contracts.tracker_state
+contracts.tracker_state -> contracts.observation
+contracts.observation -> ports.policy
+ports.policy -> contracts.decision
+
+implementations.rules -> ports.extractor: "implements"
+implementations.simple -> ports.tracker: "implements"
+implementations.heuristic -> ports.policy: "implements"
+implementations.templates -> ports.renderer: "implements"
+implementations.jsonl -> ports.writer: "implements"
+
+service -> ports.extractor
+service -> ports.tracker
+service -> ports.policy
+service -> ports.renderer
+service -> ports.writer
 ```
 
-## 4. Public Contract Specifications
+## 5. Initial Task Fixture
 
-### 4.1 `PolicyObservation`
-
-The observation is the only input accepted by a policy:
+The first repository fixture is `data/tasks/python_mutable_aliasing_v1.yaml`:
 
 ```python
-class PolicyObservation(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    schema_version: Literal["1"] = "1"
-    target_concept: str
-    target_mastery: UnitFloat
-    prerequisite_mastery_min: UnitFloat
-    misconception_probability: UnitFloat
-    estimated_bandwidth: UnitFloat
-    estimated_friction: UnitFloat
-    mastery_entropy: NonNegativeFloat
-    bandwidth_variance: UnitFloat
-    repeated_failures: NonNegativeInt
-    hints_used: NonNegativeInt
-    turn_index: NonNegativeInt
-    recent_guardrail_events: NonNegativeInt
-    execution_summary: ExecutionSummary | None = None
+items = [1, 2]
+alias = items
+alias.append(3)
 ```
 
-The policy adapter constructs this object from `TrackerEstimates`, task context, and counters. `extra="forbid"` prevents accidental privileged fields from being ignored silently.
+The learner explains the final values and why mutation is visible through both names. The fixture contains:
 
-### 4.2 `PolicyDecision`
+- Target concept `python.reference_aliasing`.
+- Prerequisite `python.mutable_list`.
+- Misconception `assignment_copies_list`.
+- Positive evidence rules for shared identity and in-place mutation.
+- Misconception evidence rules for independent copies.
+- Safe templates for every directive.
+- A versioned rubric and authored test responses.
 
-```python
-class PolicyDecision(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+The loader validates fixtures at startup and rejects duplicate `(task_id, version)` pairs, unknown directives, missing templates, or unversioned evidence rules.
 
-    directive: PedagogicalDirective
-    target_concept: str
-    policy_id: PolicyId
-    policy_version: str
-    propensity: UnitFloat | None
-    action_space_version: Literal["1"] = "1"
-```
+## 6. Vertical-Slice Algorithms
 
-Deterministic policies set `propensity=None` and `is_deterministic=true` in policy metadata. Stochastic policies must provide the probability assigned to the chosen action.
+### 6.1 Deterministic Evidence Extraction
 
-### 4.3 `PromptLoadFeatures`
+The initial extractor uses authored rules, not an LLM classifier:
 
-```python
-class PromptLoadFeatures(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+1. Normalize Unicode, case, and repeated whitespace without altering the stored raw response.
+2. If the response is empty, emit correctness `0.0`, confidence `1.0`, and reason `empty_response`.
+3. Evaluate positive and misconception rules from the task fixture.
+4. Map an unambiguous positive match to correctness `1.0`.
+5. Map a misconception match without positive evidence to correctness `0.0` and set `misconception_present`.
+6. Map conflicting or absent evidence to correctness `0.5` with reduced confidence.
+7. Activate only the target concept and any explicitly observed prerequisite.
 
-    token_count_normalized: UnitFloat
-    code_span_normalized: UnitFloat
-    ast_depth_normalized: UnitFloat
-    concept_novelty_normalized: UnitFloat
-    entropy_normalized: UnitFloat
-    concept_count: NonNegativeInt
-    aggregate_load: UnitFloat
-    normalizer_version: str
-```
+Rule results and versions are logged. The extractor is a deterministic fixture-based measurement instrument, not a general natural-language understanding claim.
 
-Features are computed from the final guardrail-approved prompt, not the rejected candidate.
+### 6.2 Simple Tracker
 
-### 4.4 `ObservationEvidence`
-
-```python
-class ObservationEvidence(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    student_text: str
-    execution: ExecutionSummary | None
-    probe: ProbeResult | None
-    guardrail_event: GuardrailEvent
-    load_proxy: LoadProxySignals
-    concept_probabilities: dict[str, UnitFloat]
-    misconception_probabilities: dict[str, UnitFloat]
-    active_concepts: frozenset[str]
-    active_misconceptions: frozenset[str]
-```
-
-Empty active sets yield a neutral likelihood update. They do not imply failure or non-mastery.
-
-### 4.5 `StepResult`
-
-The Gymnasium tuple is assembled from:
-
-```python
-class StepResult(BaseModel):
-    observation: PolicyObservation
-    reward: FiniteFloat
-    terminated: bool
-    truncated: bool
-    info: TurnInfo
-```
-
-`TurnInfo` is not passed to the policy. Privileged fields are nested under a separate evaluation-only structure and are removed by the policy wrapper.
-
-## 5. LangGraph State and Nodes
-
-### 5.1 Graph State
-
-```python
-class TutorGraphState(TypedDict, total=False):
-    schema_version: Literal["1"]
-    session: SessionContext
-    task: TaskContext
-    tracker_estimates: TrackerEstimates
-    latest_policy_observation: PolicyObservation
-    latest_policy_decision: PolicyDecision
-    latest_tutor_control: TutorControl
-    latest_evidence: ObservationEvidence
-    latest_guardrail_result: GuardrailResult
-    counters: TurnCounters
-    budget: BudgetState
-    artifact_refs: ArtifactRefs
-    termination: TerminationState
-    pending_human_prompt: HumanPrompt | None
-```
-
-Synthetic `TrueStudentState` is held by the environment instance referenced through runtime context, not serialized into the policy-safe graph-state contract. An optional privileged snapshot reference may be attached to `artifact_refs` for authorized evaluation.
-
-### 5.2 Field Ownership
-
-| Field group | Single writer | Readers |
-|---|---|---|
-| `session`, `task` | `initialize_session` | All nodes |
-| `tracker_estimates` | `update_tracker` | Policy, tutor, UI projection |
-| `latest_policy_observation` | `select_policy_action` adapter | Policy and trajectory writer |
-| `latest_policy_decision` | `select_policy_action` | Tutor, environment, trajectory writer |
-| `latest_tutor_control` | `compute_prompt_intervention` | Student/environment, tracker, writer |
-| `latest_guardrail_result` | `check_guardrail` | Rewrite router and writer |
-| `latest_evidence` | `collect_evidence` | Tracker and writer |
-| `counters`, `budget` | `persist_turn` | Routing and API projection |
-| `termination` | `terminate_episode` | Runtime and client projection |
-| `pending_human_prompt` | `await_human_input` | Runtime and WebSocket adapter |
-
-The ownership validator receives the current node name and state delta. It rejects keys outside the node's allowlist before checkpoint persistence.
-
-### 5.3 Node Contracts
-
-| Node | Required inputs | Writes | Side effects |
-|---|---|---|---|
-| `initialize_session` | Validated start command | Session, task, initial tracker state, counters, budget | Resolve frozen policy; create session metadata |
-| `update_tracker` | Previous control and evidence, or prior | Tracker estimates | Optional particle artifact snapshot |
-| `select_policy_action` | Tracker estimates, task, counters | Policy observation and decision | Load frozen policy artifact if not cached |
-| `generate_tutor_candidate` | Decision, task, safe context | Candidate held in node-local result | Model call or template lookup |
-| `check_guardrail` | Candidate and task leakage fixture | Guardrail result | Guardrail classifier call if configured |
-| `rewrite_or_fallback` | Rejected result and bounded retry count | New candidate or fallback marker | Bounded model call or template lookup |
-| `compute_prompt_intervention` | Accepted prompt and decision | Tutor control | Feature extraction only |
-| `simulate_student` | Tutor control and environment handle | Raw student/probe results in runtime context | Model and sandbox calls |
-| `collect_evidence` | Raw results and guardrail event | Observation evidence | Structured classifier call if configured |
-| `persist_turn` | Complete turn envelope | Counters, budget, artifact refs | Atomic trajectory append and metadata update |
-| `terminate_episode` | State and environment terminal status | Termination state | Finalize trajectory and summary |
-| `await_human_input` | Approved tutor control | Pending prompt then resumed raw input | Dynamic interrupt; no pre-interrupt non-idempotent write |
-
-### 5.4 Routing Rules
+The first tracker is a hand-checkable exponential update. For prior mastery `m_t`, observed correctness `e_t`, confidence `q_t`, mastery rate `eta_m`, prior misconception probability `u_t`, and misconception indicator `z_t`:
 
 ```text
-initialize_session
-  -> update_tracker
-  -> select_policy_action
-  -> generate_tutor_candidate
-  -> check_guardrail
-
-check_guardrail.accepted
-  -> compute_prompt_intervention
-
-check_guardrail.rejected AND rewrites_remaining
-  -> rewrite_or_fallback
-  -> check_guardrail
-
-check_guardrail.rejected AND no_rewrites_remaining
-  -> rewrite_or_fallback.safe_template
-  -> compute_prompt_intervention
-
-compute_prompt_intervention
-  -> simulate_student       [synthetic]
-  -> await_human_input      [human]
-
-simulate_student OR await_human_input.resume
-  -> collect_evidence
-  -> persist_turn
-  -> terminate_episode      [terminal/truncated]
-  -> update_tracker         [continue]
+m_(t+1) = clip(m_t + eta_m * q_t * (e_t - m_t), 0, 1)
+u_(t+1) = clip(u_t + eta_u * q_t * (z_t - u_t), 0, 1)
+c_t     = q_t * abs(2 * e_t - 1)
+h_(t+1) = clip(1 - c_t, 0, 1)
 ```
 
-All loops are bounded by manifest values. Routing evaluates budget exhaustion before issuing another external call.
+where `h_(t+1)` is uncertainty. Defaults are fixture/config values, not learned parameters. Empty evidence may update uncertainty but must not silently update inactive concepts. Tests use decimal fixtures with expected values stated explicitly.
 
-## 6. Synthetic Episode Sequence
+This tracker is a POC baseline, not Bayesian Knowledge Tracing. BKT is introduced only after this component and the complete vertical slice pass their gates.
+
+### 6.3 Heuristic Policy
+
+The versioned action set is:
+
+```python
+class PedagogicalDirective(StrEnum):
+    ASK_PREDICTION = "ask_prediction"
+    REQUEST_TRACE = "request_trace"
+    PROBE_ALIASING = "probe_aliasing"
+    ASK_COUNTERFACTUAL = "ask_counterfactual"
+    MINIMAL_HINT = "minimal_hint"
+```
+
+Rules are evaluated top to bottom:
+
+| Condition | Directive |
+|---|---|
+| `estimated_bandwidth < low_threshold` when available | `MINIMAL_HINT` |
+| misconception probability at or above threshold | `PROBE_ALIASING` |
+| high uncertainty | `REQUEST_TRACE` |
+| repeated failures at or above limit | `MINIMAL_HINT` |
+| mastery below target | `ASK_PREDICTION` |
+| otherwise | `ASK_COUNTERFACTUAL` |
+
+The heuristic stores a semantic `policy_version` and always reports propensity `1.0`. Unknown or invalid observations fail closed to the versioned `MINIMAL_HINT` fallback and log the reason.
+
+### 6.4 Template Rendering
+
+`TemplatePromptRenderer` retrieves the template keyed by `(task version, directive)` and substitutes only an allowlisted context. Missing templates are startup errors. Templates ask one question, avoid full code solutions, and have golden snapshots.
+
+### 6.5 Rule-First Guardrail
+
+The initial guardrail rejects:
+
+- A complete final output plus explanation.
+- A corrected full program.
+- Direct answer markers defined by the fixture.
+- Prompts exceeding the configured size.
+
+Template prompts are prevalidated. An OpenRouter candidate receives at most one rewrite attempt; a second rejection returns the deterministic template. Rejected text is available only in restricted debugging output and never sent to the browser.
+
+## 7. Interactive LangGraph Design
+
+### 7.1 Graph State
+
+```python
+class TutorGraphState(TypedDict):
+    schema_version: Literal[1]
+    session_id: str
+    task: TaskFixture
+    turn_index: int
+    pending_turn_id: str | None
+    student_response: str | None
+    evidence: ObservationEvidence | None
+    tracker: TrackerState
+    pending_tracker_before: TrackerState | None
+    pending_tracker_after: TrackerState | None
+    policy_observation: PolicyObservation | None
+    decision: PolicyDecision | None
+    generation: GenerationResult | None
+    guardrail: GuardrailResult | None
+    visible_prompt: str
+    repeated_failures: int
+    committed_turn_ids: tuple[str, ...]
+    degraded_reasons: tuple[str, ...]
+```
+
+Simulator truth and SMC particles are prohibited. The graph checkpointer contains only interactive state. `tracker` is the last committed estimate. `validate_turn` snapshots it into `pending_tracker_before`, `update_tracker` computes `pending_tracker_after`, and `commit_turn` promotes the latter to `tracker`. Pending snapshots may remain until their owning nodes overwrite them on the next valid turn; they are ignored unless `pending_turn_id` identifies an uncommitted turn.
+
+### 7.2 Node Order and Ownership
+
+| Node | Reads | Sole writes |
+|---|---|---|
+| `validate_turn` | command, session state | `pending_turn_id`, `student_response`, `pending_tracker_before` |
+| `extract_evidence` | response, task | `evidence` |
+| `update_tracker` | pending tracker before, evidence | `pending_tracker_after` |
+| `project_observation` | pending tracker after, turn counters | `policy_observation` |
+| `select_directive` | policy observation | `decision` |
+| `render_prompt` | task, evidence, decision | `generation` |
+| `check_prompt` | generation | `guardrail`, safe `visible_prompt` |
+| `commit_turn` | complete pending state | `tracker`, event append, counters, committed ID |
+
+Every node returns a Pydantic-validated delta. `commit_turn` refuses incomplete state. The graph has no autonomous agent loop; one API request causes at most one policy decision and one committed turn.
+
+### 7.3 Interactive Turn Sequence
 
 ```d2
-synthetic_episode: "Synthetic Episode Turn" {
-  shape: sequence_diagram
+shape: sequence_diagram
 
-  client: "Client / Rollout Worker"
-  graph: "TutorGraphRuntime"
-  tracker: "EpistemicTracker"
-  policy: "TutorPolicy"
-  tutor: "TutorGenerator"
-  guardrail: "Guardrail"
-  env: "SocraticTutorEnv"
-  student: "StudentGenerator"
-  sandbox: "SandboxGateway"
-  writer: "TrajectoryWriter"
-  checkpoint: "Postgres Checkpointer"
+browser: "React Client"
+api: "FastAPI"
+service: "TutorSessionService"
+graph: "LangGraph"
+extractor: "Evidence Extractor"
+tracker: "Simple Tracker"
+policy: "Heuristic Policy"
+renderer: "Template / OpenRouter"
+guardrail: "Rule Guardrail"
+log: "JSONL Writer"
+checkpoint: "SQLite Checkpointer"
 
-  client -> graph: "start or continue episode"
-  graph -> tracker: "initialize prior or update(previous control, evidence)"
-  tracker -> graph: "TrackerEstimates"
-  graph -> policy: "act(PolicyObservation)"
-  policy -> graph: "PolicyDecision"
-  graph -> tutor: "render(decision, safe context)"
-  tutor -> graph: "candidate prompt"
-  graph -> guardrail: "check(candidate, task policy)"
-  guardrail -> graph: "accepted, rejected, or fallback instruction"
-  graph -> env: "realize TutorControl from accepted prompt"
-  env -> env: "compute prompt load, F_t, and B_t"
-  env -> student: "generate bounded-context response and probe attempt"
-  student -> sandbox: "execute diagnostic code with idempotency key"
-  sandbox -> student: "normalized ExecutionSummary"
-  student -> env: "public response and private probe evidence"
-  env -> env: "apply slow mastery and misconception transition"
-  env -> graph: "ObservationEvidence, reward parts, terminal status"
-  graph -> tracker: "stage evidence for next belief update"
-  graph -> writer: "append immutable TurnEnvelope"
-  writer -> graph: "CommitReceipt"
-  graph -> checkpoint: "commit graph state and artifact reference"
-  checkpoint -> graph: "checkpoint id"
-  graph -> client: "committed turn event"
-}
+browser -> api: "POST /sessions/{id}/turns"
+api -> service: "SubmitTurnCommand"
+service -> graph: "invoke(thread_id=session_id)"
+graph -> extractor: "extract(response, task)"
+extractor -> graph: "ObservationEvidence"
+graph -> tracker: "update(previous, evidence)"
+tracker -> graph: "TrackerState"
+graph -> policy: "act(PolicyObservation, rng)"
+policy -> graph: "PolicyDecision"
+graph -> renderer: "render(GenerationRequest)"
+renderer -> graph: "GenerationResult or failure"
+graph -> guardrail: "check(candidate)"
+guardrail -> graph: "accepted or template fallback"
+graph -> log: "append_once(TurnEvent)"
+log -> graph: "event hash"
+graph -> checkpoint: "commit graph state"
+checkpoint -> graph: "checkpoint id"
+graph -> service: "committed projection"
+service -> api: "TurnResponse"
+api -> browser: "200 JSON"
 ```
 
-The trajectory commit occurs before the turn is announced as committed. A client disconnect after commit is recovered through checkpoint history rather than by rerunning the turn.
+### 7.4 Commit and Idempotency
 
-## 7. Gymnasium Environment Design
+The client creates a UUID `turn_id` and reuses it on retry. The server enforces:
 
-### 7.1 Construction
+- A turn ID can belong to only one session and turn index.
+- If `turn_id` is already committed, return the prior response without another tracker update or log append.
+- If a different turn ID targets an already committed index, return `409 turn_conflict`.
+- A turn is acknowledged only after the JSONL event is durably appended and graph state is checkpointed.
 
-```python
-class SocraticTutorEnv(gymnasium.Env[PolicyObservation, int]):
-    metadata = {"render_modes": ["ansi"], "render_fps": 1}
+The local POC cannot atomically commit JSONL and SQLite in one transaction. Recovery therefore treats the JSONL event key `(session_id, turn_id)` as the idempotency record and rebuilds/repairs the checkpoint from that event when necessary. This limitation must be exercised by a crash-between-writes integration test.
 
-    def __init__(self, config: EnvironmentConfig) -> None: ...
+## 8. FastAPI and React Contracts
 
-    def reset(
-        self,
-        *,
-        seed: int | None = None,
-        options: dict[str, Any] | None = None,
-    ) -> tuple[PolicyObservation, EpisodeInfo]: ...
+### 8.1 Endpoints
 
-    def step(
-        self,
-        action: int,
-    ) -> tuple[PolicyObservation, float, bool, bool, TurnInfo]: ...
+```text
+GET  /api/health
+POST /api/sessions
+GET  /api/sessions/{session_id}
+POST /api/sessions/{session_id}/turns
 ```
 
-The policy-facing registered environment uses a discrete action index mapped through the versioned action-space manifest. Internal graph code may use `PolicyDecision` directly through an adapter.
+`POST /api/sessions` accepts a task ID and mode, creates the tracker and frozen policy selection, and returns the authored initial prompt. The initial version supports `mode="demo"` only.
 
-### 7.2 `reset` Algorithm
+`POST /turns` is synchronous. WebSockets and token streaming are deferred because they add state and retry complexity without improving the one-turn research demonstration.
 
-1. Call `super().reset(seed=seed)`.
-2. Validate `EpisodeOptions` and split authorization.
-3. Derive environment, transition, observation, policy-exploration, and generation seeds.
-4. Load or sample the profile, task, prerequisite DAG, initial misconceptions, and private state.
-5. Initialize CBFM state with configured `B_0` and `F_0`.
-6. Initialize the tracker from its subjective prior; do not copy private truth unless the manifest explicitly defines a controlled oracle baseline.
-7. Resolve the initial target concept.
-8. Project `TrackerEstimates` into `PolicyObservation`.
-9. Return observation and non-policy `EpisodeInfo`.
-
-### 7.3 `step` Transaction
-
-1. Reject calls after termination until `reset`.
-2. Resolve the action index to a directive and validate target selection.
-3. Render and guardrail the final tutor prompt.
-4. Compute `PromptLoadFeatures` from the final prompt.
-5. Compute fast true-state projection:
-   - ZPD mismatch and overload friction.
-   - Underchallenge diagnostic.
-   - Bandwidth drain, recovery, and optional seeded noise.
-6. Emit public and private student evidence from the post-prompt state.
-7. Apply the slow private mastery/misconception transition.
-8. Compute decomposed simulator reward.
-9. Update the subjective tracker using control and evidence.
-10. Build the next policy observation from tracker summaries only.
-11. Evaluate termination and truncation independently.
-12. Build `TurnInfo`, keeping privileged data outside the policy wrapper.
-13. Return the Gymnasium tuple.
-
-An exception before the slow transition leaves the in-memory environment turn uncommitted. Batch orchestration retries the whole deterministic turn with the same seed and idempotency keys.
-
-### 7.4 Reward Decomposition
+### 8.2 API Models
 
 ```python
-class RewardComponents(BaseModel):
-    mastery_gain: float
-    overload_penalty: float
-    bandwidth_penalty: float
-    leakage_penalty: float
-    optional_efficiency_penalty: float = 0.0
+class CreateSessionRequest(StrictModel):
+    task_id: str
+    mode: Literal["demo"] = "demo"
 
-    @property
-    def total(self) -> float:
-        return (
-            self.mastery_gain
-            - self.overload_penalty
-            - self.bandwidth_penalty
-            - self.leakage_penalty
-            - self.optional_efficiency_penalty
-        )
+class SubmitTurnRequest(StrictModel):
+    turn_id: UUID
+    response_text: str = Field(max_length=4000)
+    expected_turn_index: NonNegativeInt
+
+class TurnResponse(StrictModel):
+    session_id: UUID
+    turn_id: UUID
+    turn_index: NonNegativeInt
+    next_prompt: str
+    evidence: ObservationEvidence
+    tracker: TrackerState
+    decision: PolicyDecision
+    session_status: Literal["active", "complete", "degraded"]
+    degraded_reasons: tuple[str, ...]
 ```
 
-Reward weights are immutable within an experiment. Every component is stored separately. Held-out diagnostic outcomes remain distinct from simulator reward.
+Errors use `{code, message, request_id}` with HTTP `400`, `404`, `409`, `422`, or `503`. Internal traces and rejected model text are not returned.
 
-## 8. Cognitive Model Design
+### 8.3 React State
 
-### 8.1 Prompt Feature Pipeline
+The page owns only presentation state:
 
-`PromptLoadExtractor.extract(prompt, task, demonstrated_concepts)` performs:
-
-1. Tokenization with a pinned tokenizer version.
-2. Code-span detection and normalized code volume.
-3. AST parsing of displayed Python snippets; parse failure is recorded and uses a configured conservative feature value.
-4. Concept extraction against the versioned domain ontology.
-5. Novelty calculation relative to demonstrated tracker-visible concepts for the subjective model and true demonstrated concepts for the simulator model.
-6. Lexical/syntactic entropy calculation.
-7. Calibration-normalizer application.
-8. Weighted aggregate computation with non-negative weights summing to one.
-
-Raw and normalized features are both retained in the scientific trajectory, while only normalized features enter `TutorControl`.
-
-### 8.2 CBFM Interface
-
-```python
-class CognitiveDynamics(Protocol):
-    def project_fast(
-        self,
-        prior: CognitiveState,
-        prompt: PromptLoadFeatures,
-        tutor_difficulty: float,
-        student_difficulty: float,
-        rng: numpy.random.Generator,
-    ) -> CognitiveProjection: ...
+```typescript
+type TutorPageState = {
+  session: SessionView | null;
+  responseText: string;
+  pendingTurnId: string | null;
+  submitting: boolean;
+  error: ApiError | null;
+};
 ```
 
-`CognitiveProjection` contains `bandwidth`, `overload_friction`, `underchallenge`, `overload_probability`, and decomposed drain/recovery terms.
+The browser preserves `pendingTurnId` across a retry, disables duplicate submission while a request is active, and renders:
 
-The implementation clips only the final bandwidth result. Diagnostics record pre-projection values so excessive clipping is detectable during calibration.
+- Task title and source code.
+- Conversation prompts and submitted responses.
+- Text response input and submit command.
+- Session status.
+- Expandable evidence, tracker estimate, and directive inspection.
 
-### 8.3 Calibration Artifacts
+The UI never computes mastery or policy decisions. Simulator truth is not part of this demo endpoint.
 
-The calibrator produces an immutable artifact containing:
+## 9. Persistence Contracts
 
-- Feature-normalizer version and fitted statistics.
-- CBFM coefficients and constraints.
-- Calibration split hash.
-- Objective and optimizer configuration.
-- Fit diagnostics and convergence state.
-- Monotonicity, recovery, sensitivity, and negative-control outcomes.
+### 9.1 JSONL Turn Event
 
-Policy-selection and held-out runs accept only a frozen calibration artifact ID.
+One successfully committed turn produces one immutable `TurnEventV1` containing:
 
-## 9. Epistemic Tracker Design
+- Schema, session, turn, task, graph, tracker, policy, prompt, and guardrail versions.
+- UTC event time and deterministic/non-deterministic mode.
+- Raw student response for the non-research local demo only.
+- Structured evidence.
+- Tracker before and after.
+- Policy observation and decision.
+- Realized prompt plus renderer/model metadata.
+- Degraded/fallback reasons.
+- Latency, token, and cost fields when applicable.
+- Previous event hash and current canonical event hash.
 
-### 9.1 Tracker Protocol
+`JsonlTurnEventWriter.append_once` serializes one compact UTF-8 JSON object, writes one newline, flushes, and calls `fsync` in demo mode. It scans or indexes existing event keys at startup. A partial final line is quarantined during recovery; earlier lines remain valid.
+
+### 9.2 SQLite Checkpoint
+
+Use the supported LangGraph SQLite checkpointer. Application code stores only thread/checkpoint IDs and must not couple to provider-managed table internals. Schema migrations for those internal tables are outside application code.
+
+### 9.3 Canonical Research Files
+
+Offline experiments write:
+
+```text
+artifacts/runs/{run_id}/resolved_config.yaml
+artifacts/runs/{run_id}/manifest.json
+artifacts/runs/{run_id}/public/trajectories.parquet
+artifacts/runs/{run_id}/privileged/truth.parquet
+artifacts/runs/{run_id}/policies/{policy_hash}.npz
+artifacts/runs/{run_id}/metrics.json
+```
+
+Public and privileged rows share opaque episode/turn keys but are written through separate schemas and readers. Training code receives only the public reader unless the algorithm is part of the simulator itself.
+
+## 10. Gymnasium Environment
+
+### 10.1 Registration and Spaces
+
+Register `SocraticTutor/POMDP-v0` through the package entry point. `reset(seed=seed)` calls `super().reset(seed=seed)` and derives named random generators from the episode seed.
+
+The action space is `Discrete(5)` with an artifact-persisted directive mapping. The observation space is a `Dict` containing only finite numeric encodings of:
+
+- Tracker mastery, misconception probability, and uncertainty.
+- Estimated bandwidth/friction or explicit missing-value masks.
+- Repeated failures and normalized turn index.
+- Target concept/task feature IDs from a frozen encoder.
+
+Text is not part of the learning observation. Human-readable values remain in `info` only when they are policy-safe.
+
+### 10.2 Private True State
 
 ```python
-class EpistemicTracker(Protocol):
-    def initialize(
-        self,
-        prior: TrackerPrior,
-        rng: numpy.random.Generator,
-    ) -> TrackerEstimates: ...
+@dataclass(frozen=True, slots=True)
+class SimulatorState:
+    mastery: np.ndarray
+    misconceptions: np.ndarray
+    bandwidth: float
+    friction: float
+    turn_index: int
+```
+
+This type lives in `simulator/private_state.py`. The environment owns it. It is never accepted by `TutorPolicy.act` or serialized into public trajectories.
+
+### 10.3 Step Timing
+
+For state `S_t` and directive `a_t`, `step(a_t)` executes exactly:
+
+1. Validate `a_t` and resolve its prompt/intervention features.
+2. Compute normalized prompt load and ZPD diagnostics.
+3. Update true fast state `B_(t+1)` and `F_(t+1)`.
+4. Generate observable response evidence from pre-learning mastery, misconceptions, and updated fast state.
+5. Update the selected tracker from observable evidence only.
+6. Apply the slow mastery/misconception learning transition to produce the rest of `S_(t+1)`.
+7. Compute each reward component and aggregate reward.
+8. Evaluate `terminated` and `truncated` independently.
+9. Project the next policy-safe observation.
+10. Return `(observation, reward, terminated, truncated, info)`.
+
+This order avoids using learning caused by the current prompt to generate the response that supposedly preceded that learning. Order-spy tests assert every transition boundary.
+
+### 10.4 Environment Step Sequence
+
+```d2
+shape: sequence_diagram
+
+runner: "Rollout Runner"
+policy: "Tutor Policy"
+env: "Gymnasium Env"
+cbfm: "CBFM Dynamics"
+student: "Student Kernel"
+tracker: "Belief Tracker"
+learning: "Learning Kernel"
+reward: "Reward Model"
+projector: "Observation Projector"
+writer: "Parquet Writer"
+
+runner -> policy: "act(policy-safe observation)"
+policy -> runner: "directive and propensity"
+runner -> env: "step(action)"
+env -> cbfm: "prompt features and private state"
+cbfm -> env: "next bandwidth and friction"
+env -> student: "sample evidence before learning"
+student -> env: "observable evidence"
+env -> tracker: "update from evidence"
+tracker -> env: "belief summary"
+env -> learning: "apply slow transition"
+learning -> env: "next mastery and misconceptions"
+env -> reward: "compute named components"
+reward -> env: "reward breakdown"
+env -> projector: "allowlisted tracker features"
+projector -> env: "next observation"
+env -> runner: "obs, reward, terminated, truncated, info"
+runner -> writer: "public and privileged rows"
+```
+
+### 10.5 Termination
+
+`terminated=True` represents a task-domain terminal state such as mastery target or task completion. `truncated=True` represents an external bound such as maximum turns or invalid experiment budget. `info` contains one typed reason. The environment never returns both without an explicit precedence rule and test.
+
+The environment must pass Gymnasium `check_env`, deterministic reset/step replay, finite-value checks, and action/observation containment in CI.
+
+## 11. Cognitive Bandwidth and Friction
+
+### 11.1 Prompt Features
+
+`PromptLoadExtractor` computes declared, versioned features such as normalized token count, code density, concept count, nesting, novelty, and directive complexity. Normalizers are fit on calibration data only and then frozen.
+
+Let normalized aggregate load be `L_t in [0,1]`, task difficulty `d_t in [0,1]`, mastery `m_t in [0,1]`, and scaffold credit `s(a_t) in [0,1]`:
+
+```text
+z_t = max(0, d_t - m_t - s(a_t))       # overload mismatch
+k_t = max(0, m_t - d_t)                # underchallenge diagnostic
+```
+
+Underchallenge `k_t` is logged separately and is not relabeled as cognitive friction.
+
+### 11.2 Bounded Dynamics
+
+For non-negative configured coefficients:
+
+```text
+F_(t+1) = clip(
+    (1 - rho_F) * F_t
+    + alpha_F * z_t
+    + beta_F * max(0, L_t - B_t),
+    0, 1
+)
+
+B_(t+1) = clip(
+    B_t
+    + rho_B * (1 - B_t) * (1 - L_t)
+    - delta_B * L_t
+    - gamma_B * F_(t+1),
+    0, 1
+)
+```
+
+Constraints are validated at configuration load:
+
+```text
+0 <= rho_F, rho_B <= 1
+alpha_F, beta_F, delta_B, gamma_B >= 0
+```
+
+Clipping guarantees range, not scientific validity. Property tests cover boundedness, positive-overload monotonicity, low-load recovery in expectation, deterministic replay, and sensitivity. The complete ablation bypasses the recurrence and fixes `B_t=1`, `F_t=0`, removes estimates from policy features, and emits an ablation flag.
+
+### 11.3 Construct Evaluation Boundary
+
+CBFM is calibrated against external synthetic load proxies or later approved instruments, never the same aggregate reward it helps define. Evaluation compares:
+
+- `M0`: mastery/misconception features.
+- `M1`: `M0` plus observable prompt-load features.
+- `M2`: `M1` plus CBFM state/history.
+
+If `M2` does not improve held-out Brier score or negative log-likelihood over `M1`, CBFM is rejected as a useful policy input. It remains a simulator construct and is never described as a direct measurement of human fatigue.
+
+## 12. Tracker Implementations
+
+### 12.1 Protocol
+
+```python
+class BeliefTracker(Protocol):
+    version: str
+
+    def initial(self, task: TaskFixture) -> TrackerState: ...
 
     def update(
         self,
-        control: TutorControl,
+        previous: TrackerState,
         evidence: ObservationEvidence,
-        rng: numpy.random.Generator,
-    ) -> TrackerEstimates: ...
+        *,
+        rng: np.random.Generator,
+    ) -> TrackerState: ...
 ```
 
-### 9.2 SMC Update
+All trackers consume identical observable evidence and expose summaries only.
 
-For each particle, `SMCTracker.update` performs:
+### 12.2 Delivery Order
 
-1. **Fast projection:** Apply subjective `CognitiveDynamics`; mastery and misconception remain unchanged.
-2. **Active extraction:** Validate active masks against known concept and misconception IDs.
-3. **Likelihood:** Compute masked mastery and misconception likelihood terms in log space.
-4. **Smoothing:** Apply the configured likelihood floor using stable log-add-exp operations.
-5. **Normalization:** Subtract `logsumexp`; reject an all-non-finite posterior.
-6. **Diagnostics:** Compute ESS, weight entropy, marginal entropy, and bandwidth variance before resampling.
-7. **Resampling:** Apply systematic resampling when ESS is below the threshold and reset weights uniformly.
-8. **Slow propagation:** Apply subjective learning and misconception transitions after correction.
-9. **Summary:** Produce posterior means and marginals for the next turn.
+1. `SimpleBeliefTracker`: vertical-slice baseline defined in Section 6.2.
+2. `BKTBeliefTracker`: active-concept mastery using configured learn, guess, slip, and optional forget probabilities.
+3. `ReducedSMCTracker`: optional, active concept plus one or two misconception flags and estimated `B_t`, `F_t`.
 
-### 9.3 Numerical Failure Policy
+SMC uses log weights, log-sum-exp normalization, finite checks, effective sample size, and seeded systematic resampling. Inactive evidence masks contribute neutral likelihood. Particle arrays remain internal and never enter graph checkpoints, API responses, policy observations, or public trajectories.
 
-- A single invalid likelihood term fails the evidence update with a typed `TrackerNumericalError`.
-- The tracker never silently replaces a failed posterior with simulator truth.
-- Configurable recovery may retain the prior with an explicit degraded-status flag, but primary experiments treat such events as run failures unless preregistered otherwise.
-- Particle snapshots are stored only for selected diagnostics because they are large and privileged.
+SMC is retained only if it is numerically stable and improves held-out calibration or decision utility over BKT. Otherwise, BKT remains the final advanced tracker.
 
-### 9.4 Baseline Trackers
+## 13. Policies and Training
 
-- `BKTTracker` maintains per-concept learned/unlearned probabilities with slip, guess, learn, and optional forget parameters.
-- `LastObservationTracker` updates only active dimensions from the latest evidence.
-- `OracleTracker` is permitted only as a clearly labeled simulator upper-bound ablation and cannot be selected in production or primary policy comparisons.
-
-All trackers return `TrackerEstimates` so policies remain unchanged.
-
-## 10. Policy Design
-
-### 10.1 Policy Protocol
+### 13.1 Policy Protocol
 
 ```python
 class TutorPolicy(Protocol):
+    version: str
+
     def act(
         self,
         observation: PolicyObservation,
-        context: PolicyContext,
-        rng: numpy.random.Generator,
+        *,
+        rng: np.random.Generator,
+        explore: bool,
     ) -> PolicyDecision: ...
-
-    def metadata(self) -> PolicyMetadata: ...
 ```
 
-### 10.2 Implementations
+Compared policies receive the same `PolicyObservation` schema and action mapping. Demo sessions set `explore=False` and freeze one policy artifact for the episode.
 
-| Policy | State use | Update behavior | Unseen-state behavior |
-|---|---|---|---|
-| Static | Target concept only | None | Fixed directive |
-| Expert heuristic | Observation fields and authored rules | None | Ordered safe rule fallback |
-| BKT plus heuristic | BKT-derived observation and rules | None | Same heuristic fallback |
-| Contextual bandit | Current discretized context | Offline fit or simulator training | Heuristic fallback or optimistic initialized values, fixed by manifest |
-| Tabular Q-learning | Compact discretized state | Offline simulator episodes | Heuristic fallback, never arbitrary table default |
+### 13.2 Baselines
 
-### 10.3 Discretization
+- **Heuristic:** versioned rule table and deterministic fallback.
+- **Contextual bandit:** NumPy linear value estimates with epsilon-greedy action selection; logs exact chosen-action propensity.
+- **Tabular Q-learning:** compact documented bins, epsilon-greedy training, unseen-state heuristic fallback, and explicit state-action visitation counts.
 
-`StateDiscretizerV1` maps:
+There is no PPO, DQN, recurrent policy, neural network, Ray, or RLlib requirement.
 
-- Target mastery: low, medium, high.
-- Minimum prerequisite mastery: low, medium, high, or no-prerequisite sentinel.
-- Active misconception: below/above threshold.
-- Estimated bandwidth: low, medium, high.
-- Estimated friction: low, medium, high.
-- Repeated failures: `0`, `1`, `2+`.
-- Hints used: `0`, `1`, `2+`.
-- Turn index: early, middle, late.
-
-Bin boundaries are artifact metadata. Values at boundaries use left-closed/right-open bins except the final closed bin. The discretizer is shared by bandit and Q-learning.
-
-### 10.4 Q-Learning Update
-
-Terminal updates omit the bootstrapped value:
+### 13.3 Local Training Loop
 
 ```python
-target = reward if terminated else reward + gamma * max(Q[next_state])
-Q[state, action] += alpha * (target - Q[state, action])
+for episode_spec in manifest.episodes:
+    observation, info = env.reset(seed=episode_spec.environment_seed)
+    policy_rng = np.random.default_rng(episode_spec.policy_seed)
+    done = False
+    while not done:
+        decision = policy.act(observation, rng=policy_rng, explore=True)
+        next_observation, reward, terminated, truncated, info = env.step(
+            action_map.to_index(decision.directive)
+        )
+        trainer.observe(observation, decision, reward, next_observation, terminated)
+        writer.append(build_rows(...))
+        observation = next_observation
+        done = terminated or truncated
+    trainer.end_episode()
 ```
 
-Truncation bootstrapping behavior is explicit in the training manifest. Budget and maximum-turn truncations default to bootstrapping from the final observation; safety aborts do not.
+The environment is constructed in process. The loop imports no FastAPI, React, LangGraph, OpenRouter, sandbox, or W&B requirement. W&B calls occur through an optional sink after local artifacts are written.
 
-## 11. Generation, Guardrail, and Sandbox Interfaces
-
-### 11.1 Model Gateway
-
-```python
-class ModelGateway(Protocol):
-    async def generate(
-        self,
-        request: GenerationRequest,
-        *,
-        idempotency_key: str,
-        budget: CallBudget,
-    ) -> GenerationResult: ...
-```
-
-The gateway enforces timeout, retry, concurrency, allowed model, token budget, response-size limit, structured-output validation, and usage capture. Provider adapters do not decide pedagogical actions.
-
-### 11.2 Guardrail
-
-```python
-class Guardrail(Protocol):
-    async def check(
-        self,
-        candidate: TutorCandidate,
-        policy: LeakagePolicy,
-    ) -> GuardrailResult: ...
-```
-
-`GuardrailResult` contains `accepted`, reason codes, confidence where calibrated, matched rule IDs, a rewrite brief, and evaluator metadata. A schema failure is a rejection. The graph owns retry counting and fallback selection.
-
-### 11.3 Sandbox
-
-```python
-class SandboxGateway(Protocol):
-    async def execute(
-        self,
-        request: ExecutionRequest,
-        *,
-        idempotency_key: str,
-    ) -> ExecutionResult: ...
-```
-
-`ExecutionRequest` includes source code, test-bundle artifact reference, language/runtime version, CPU, memory, wall-time, process, filesystem, network, and output limits. Production adapters reject any request that enables outbound network or exceeds the service policy.
-
-## 12. Trajectory Commit Design
-
-### 12.1 Turn Envelope
-
-`TurnEnvelope` groups:
-
-- Identity and provenance.
-- Public policy observation and decision.
-- Realized tutor control.
-- Observation evidence.
-- Tracker summaries before and after the turn.
-- Reward components.
-- Termination/truncation state.
-- Provider, sandbox, latency, token, and cost metadata.
-- Optional privileged-state artifact reference.
-
-### 12.2 Atomicity
-
-The writer follows a prepare/publish protocol:
-
-1. Validate public and privileged schemas independently.
-2. Compute canonical content and checksum.
-3. Write to a temporary content-addressed object key.
-4. Verify size and checksum.
-5. Atomically publish or write a completion marker.
-6. Upsert the turn index in PostgreSQL using `(episode_id, turn_index)` as the idempotency constraint.
-7. Return `CommitReceipt` containing object reference and checksum.
-8. Allow LangGraph to checkpoint the receipt.
-
-Duplicate content is idempotent. Conflicting content for an existing episode turn raises `TrajectoryConflictError` and stops the episode.
-
-## 13. Batch Training Sequence
+### 13.4 Training and Evaluation Sequence
 
 ```d2
-batch_training: "Batch Rollout, Training, and Promotion" {
-  shape: sequence_diagram
+shape: sequence_diagram
 
-  researcher: "Researcher CLI"
-  api: "Experiment API"
-  coordinator: "ExperimentCoordinator"
-  queue: "Redis Streams"
-  rollout: "RolloutWorker"
-  object_store: "Object Storage"
-  trainer: "PolicyTrainer"
-  registry: "MLflow Policy Registry"
-  evaluator: "EvaluationWorker"
-  operator: "Authorized Operator"
+command: "Pixi Command"
+hydra: "Hydra Config"
+runner: "Local Runner"
+env: "Gymnasium Env"
+policy: "Trainable Policy"
+parquet: "Parquet Writer"
+artifact: "Local Artifact Store"
+wandb: "Optional W&B Sink"
+evaluator: "DuckDB Evaluator"
 
-  researcher -> api: "submit signed ExperimentManifest"
-  api -> coordinator: "validate manifest, splits, budgets, and versions"
-  coordinator -> queue: "publish deterministic shard commands"
-  queue -> rollout: "claim shard through consumer group"
-  rollout -> rollout: "construct local Gymnasium environments"
-  rollout -> object_store: "publish validated trajectory partition"
-  rollout -> queue: "acknowledge shard after artifact commit"
-  coordinator -> trainer: "start training with approved partition refs"
-  object_store -> trainer: "read policy-safe trajectory columns"
-  trainer -> registry: "register candidate artifact and diagnostics"
-  registry -> evaluator: "candidate policy and lineage"
-  object_store -> evaluator: "held-out partitions and gate fixtures"
-  evaluator -> registry: "attach feature audit, replay, safety, and quality gates"
-  registry -> operator: "present promotion decision record"
-  operator -> registry: "explicit promote, reject, or roll back"
-  registry -> api: "publish immutable serving alias change event"
-  api -> researcher: "final experiment and policy status"
-}
+command -> hydra: "compose experiment"
+hydra -> runner: "resolved config and hash"
+runner -> artifact: "save config and manifest before rollout"
+runner -> env: "construct locally"
+runner -> env: "reset(matched seed)"
+runner -> policy: "act(observation, explore=true)"
+runner -> env: "step(action)"
+env -> runner: "transition and reward components"
+runner -> policy: "observe transition"
+runner -> parquet: "append validated rows"
+runner -> artifact: "save candidate policy and checksums"
+runner -> wandb: "metrics and local artifact references"
+parquet -> evaluator: "query frozen partitions"
+artifact -> evaluator: "read frozen config and policy hashes"
+evaluator -> artifact: "write tables, figures, gate result"
 ```
 
-The trainer cannot write the serving alias. The evaluator cannot retune the candidate. The operator cannot promote a candidate with missing mandatory gate records.
+## 14. Experiment Configuration and Seeds
 
-## 14. API and Event Design
+Hydra config groups are `env`, `tracker`, `policy`, `cbfm`, `generation`, and `experiment`. Before the first episode, the runner writes the fully resolved YAML plus a canonical SHA-256 hash.
 
-### 14.1 Command Endpoints
-
-| Method and path | Request | Response | Idempotency |
-|---|---|---|---|
-| `POST /v1/sessions` | `CreateSessionRequest` | `202 SessionAccepted` | Required header; reuses session ID |
-| `GET /v1/sessions/{id}` | None | `SessionView` | Naturally idempotent |
-| `POST /v1/sessions/{id}/resume` | `ResumeSessionRequest` | `202 ResumeAccepted` | Required per human turn |
-| `POST /v1/sessions/{id}/cancel` | `CancelSessionRequest` | `202 CancelAccepted` | Repeated cancel returns current terminal state |
-| `POST /v1/experiments/validate` | `ExperimentManifest` | `ManifestValidationResult` | Content hash |
-| `POST /v1/experiments` | Validated manifest reference | `202 ExperimentAccepted` | Manifest hash plus caller scope |
-| `GET /v1/experiments/{id}` | None | `ExperimentView` | Naturally idempotent |
-| `POST /v1/experiments/{id}/cancel` | Reason | `202 CancelAccepted` | Repeated cancel is safe |
-| `GET /v1/policies/{id}` | None | `PolicyView` | Naturally idempotent |
-| `POST /v1/policies/{id}/promote` | `PromotionCommand` | `PromotionReceipt` | Candidate plus target alias |
-| `POST /v1/policies/{id}/reject` | `RejectionCommand` | `PolicyView` | Candidate plus decision version |
-
-All error responses use `ProblemDetails` with stable code, correlation ID, retryability, and safe detail. Validation errors never echo secrets, hidden answers, or privileged state.
-
-### 14.2 WebSocket Events
-
-Server events share an envelope:
-
-```python
-class GraphEvent(BaseModel):
-    event_id: UUID
-    session_id: SessionId
-    checkpoint_id: str | None
-    sequence: NonNegativeInt
-    event_type: GraphEventType
-    occurred_at: datetime
-    payload: GraphEventPayload
-```
-
-Event types include `session_started`, `tutor_prompt_ready`, `turn_committed`, `execution_result`, `session_interrupted`, `session_completed`, `session_truncated`, and `session_failed`. Reconnecting clients provide the last acknowledged sequence; the API reconstructs durable state and may replay safe events.
-
-Token-level model streaming is advisory and never considered a committed tutor prompt. Only a guardrail-approved `tutor_prompt_ready` event may be acted upon.
-
-## 15. Future Human Interrupt Sequence
-
-```d2
-human_turn: "Future Human Turn with Durable Interrupt" {
-  shape: sequence_diagram
-
-  student: "Student Browser"
-  websocket: "WebSocket Hub"
-  api: "FastAPI Gateway"
-  graph: "TutorGraphRuntime"
-  checkpoint: "Postgres Checkpointer"
-  sandbox: "SandboxGateway"
-  tracker: "EpistemicTracker"
-  writer: "TrajectoryWriter"
-
-  graph -> graph: "generate and guardrail TutorControl"
-  graph -> checkpoint: "persist pre-interrupt graph state"
-  graph -> graph: "interrupt(HumanPrompt)"
-  graph -> websocket: "publish tutor_prompt_ready with checkpoint cursor"
-  websocket -> student: "deliver approved prompt"
-  student -> websocket: "submit text/code and turn idempotency key"
-  websocket -> api: "forward authenticated ResumeSessionRequest"
-  api -> graph: "resume same thread with validated input"
-  graph -> sandbox: "execute code when present"
-  sandbox -> graph: "normalized ExecutionResult"
-  graph -> tracker: "update from observable evidence"
-  tracker -> graph: "TrackerEstimates"
-  graph -> writer: "append human turn without simulator truth"
-  writer -> graph: "CommitReceipt"
-  graph -> checkpoint: "persist committed turn state"
-  graph -> websocket: "publish turn_committed or next prompt"
-  websocket -> student: "update session view"
-}
-```
-
-The interrupt node performs no non-idempotent operation before calling `interrupt()`. On resume, the node restarts and obtains the persisted resume value through LangGraph's command mechanism.
-
-## 16. Error Model
-
-### 16.1 Error Categories
-
-| Category | Examples | Retry policy |
-|---|---|---|
-| Validation | Invalid schema, unknown directive, split overlap | Never retry without changed input |
-| Authorization | Privileged artifact access, human mode disabled | Never retry automatically |
-| Budget | Token, cost, time, turn limit | Truncate with typed reason |
-| Transient provider | Timeout, 429, temporary 5xx | Bounded exponential backoff with jitter |
-| Permanent provider | Unsupported model, invalid credentials | Fail dependency or use preregistered fallback |
-| Guardrail | Rejected prompt, malformed classifier output | Bounded rewrite then safe fallback |
-| Sandbox | Timeout, memory limit, policy rejection | Return structured evidence; no host fallback |
-| Tracker numerical | Non-finite likelihood, invalid posterior | Fail run or explicit degraded mode per manifest |
-| Artifact conflict | Checksum or turn-content mismatch | Stop; requires investigation |
-| Infrastructure | Database or object-store outage | Stop acceptance or retry from durable boundary |
-
-### 16.2 Retry Identity
-
-Idempotency keys use:
+One root seed derives stable named streams with `numpy.random.SeedSequence`:
 
 ```text
-{scope_id}:{episode_id}:{turn_index}:{node}:{operation}:{logical_attempt}
+root
+|-- episode assignment
+|-- environment initialization
+|-- transition sampling
+|-- tracker sampling
+|-- policy exploration
+`-- generation sampling
 ```
 
-Provider transport retries reuse the same logical attempt key. A pedagogically requested rewrite increments `logical_attempt` because it is a new candidate, not a transport retry.
+Episode seeds derive from stable episode keys, not worker order. Reordering or resuming jobs therefore leaves completed episode trajectories unchanged. LLM generation seeds are recorded separately and never substitute for environment seeds.
 
-## 17. Configuration Design
+The manifest includes Git commit, dirty flag, Pixi lock hash, resolved config hash, task/profile/split hashes, schema versions, action map, and output paths. Split overlap or a mutable held-out configuration aborts before rollout.
 
-Settings are split into:
+## 15. Trajectory and W&B Boundaries
 
-- **Deployment settings:** database, queue, object store, telemetry, provider endpoints, secrets references.
-- **Experiment manifest:** policies, prompts, models, profiles, tasks, splits, seeds, CBFM/tracker parameters, reward, budgets, repetitions, and gates.
-- **Immutable artifacts:** calibration, action space, discretizer, policy, test bundles, and data splits.
+### 15.1 Parquet Rows
 
-Precedence is `built-in safe defaults < deployment configuration < signed manifest`, except deployment security policy may only tighten manifest limits. Environment variables cannot silently alter scientific parameters after manifest signing.
+Each turn emits:
+
+- A public policy row with identifiers, split, seeds, policy observation, decision, propensity, observable evidence, tracker summaries, reward components, termination, versions, and costs.
+- A privileged truth row with the matching key and simulator state before/after.
+
+Writers reject non-finite values, duplicate `(run_id, episode_id, turn_index)` keys, unknown schema versions, missing reward components, or invalid termination combinations. Completed output is written to a temporary file and renamed only after schema and row-count validation.
+
+### 15.2 W&B Sink
+
+The sink records resolved configuration, aggregate metrics, selected example tables, and references or approved copies of local artifacts. Tests and reference experiments support `WANDB_MODE=offline` or a null sink. A W&B outage never invalidates locally completed trajectories.
+
+W&B Sweeps may operate on policy-selection or validation data only. Held-out metrics are unavailable to sweep controllers.
+
+## 16. OpenRouter and Sandbox Adapters
+
+### 16.1 OpenRouter
+
+`OpenRouterRenderer` implements `PromptRenderer` through a typed local gateway. Requests set:
+
+- Pinned model and provider routing for experiments.
+- Explicit temperature, maximum tokens, timeout, and retry count.
+- Structured output when supported.
+- A request/prompt hash and operation ID.
+
+Returned model/provider metadata, usage, latency, and cost are normalized. The interactive graph permits one bounded retry/rewrite and then uses `TemplatePromptRenderer`. Training never calls this adapter.
+
+### 16.2 Optional Code Sandbox
+
+The vertical slice uses text and authored probes, so no arbitrary execution is required. If enabled later, `SandboxGateway` sends only code, tests, limits, and an operation ID to one external isolation provider. It returns normalized pass/fail/timeout/resource-limit evidence.
+
+There is no host-process fallback. A provider outage yields typed unavailable evidence and leaves the text interaction usable.
+
+## 17. Failure Semantics
+
+| Failure | Required behavior | Test oracle |
+|---|---|---|
+| Invalid or oversized response | Typed `422`; no state advance | Event count unchanged |
+| Duplicate committed turn ID | Return prior result | Same event hash and turn index |
+| Conflicting turn index | Typed `409` | Tracker unchanged |
+| Evidence rule failure | Typed uncertain evidence or `500` in strict tests | Never silently mark incorrect |
+| Tracker non-finite output | Reject delta and use last valid state in degraded mode | No NaN in API/log |
+| Unknown policy state/bin | Versioned heuristic fallback | Coverage miss logged |
+| OpenRouter timeout/malformed output | Deterministic template | Turn remains usable |
+| Guardrail rejects candidate twice | Deterministic template | Rejected candidate absent from API |
+| JSONL append failure | Do not acknowledge turn | Retry does not double update |
+| SQLite checkpoint failure | Return explicit non-resumable failure | JSONL recovery path tested |
+| W&B unavailable | Continue locally | Artifact hashes still complete |
+| Invalid Parquet partition | Mark run incomplete and exclude | Evaluator rejects partition |
+| Sandbox unavailable | Typed unavailable evidence | No host execution |
+
+All loops are bounded: one turn per request, one OpenRouter retry, one guardrail rewrite, configured episode length, and configured API/provider timeouts.
 
 ## 18. Test Design
 
-### 18.1 Contract Tests
+### 18.1 Gate 1: Vertical Slice
 
-- JSON Schema snapshots for all public version-1 contracts.
-- `extra="forbid"`, finite-number, unit-interval, and enum validation.
-- Forward/backward compatibility checks for stored artifacts.
-- Policy feature audit proving true-state fields are impossible to deserialize.
+- Task fixture schema and version tests.
+- Correct, misconception, uncertain, and empty evidence fixtures.
+- Hand-calculated simple-tracker fixtures.
+- Heuristic rule-table branch coverage.
+- Template snapshot and leakage tests.
+- LangGraph node-order and single-writer tests.
+- JSONL append, duplicate, partial-line, and crash-recovery tests.
+- FastAPI contract and idempotency tests.
+- Playwright browser test completing one turn offline.
 
-### 18.2 Mathematical Tests
+### 18.2 Simulator and Mathematics
 
-- CBFM boundedness, monotonicity, low-load recovery, clipping-rate, ablation, and seeded-noise tests.
-- Prompt-feature parser failure and normalizer-version tests.
-- SMC log-weight stability, active-mask neutrality, ESS threshold, systematic resampling, posterior contraction, and parameter-misspecification tests.
-- Reward decomposition and terminal/truncation bootstrap tests.
+- Gymnasium `check_env`.
+- Reset/step deterministic replay.
+- Observation/action space containment.
+- Timing order spies.
+- Bounded and finite transition property tests.
+- CBFM monotonicity, recovery, sensitivity, and complete-ablation tests.
+- Reward decomposition and termination/truncation tests.
+- Recursive policy-feature leakage audit.
 
-### 18.3 Graph Tests
+### 18.3 Trackers and Policies
 
-- Golden synthetic turn ordering.
-- Node field-ownership violations.
-- Guardrail accept, bounded rewrite, malformed output, and safe fallback paths.
-- Checkpoint recovery after every node boundary.
-- Duplicate external-call and trajectory-commit idempotency.
-- Terminal and all truncation routes.
-- Human interrupt/resume with node restart.
+- Shared tracker and policy protocol suites.
+- BKT hand calculations and calibration fixtures.
+- Reduced-SMC log-weight, ESS, resampling, misspecification, and neutral-mask tests.
+- Matched-observation parity across policies.
+- Contextual-bandit propensity checks.
+- Q-learning bin boundaries, update equation, coverage, and unseen-state fallback.
+- Frozen-policy episode tests.
 
-### 18.4 Environment and Policy Tests
+### 18.4 Experiment Integrity
 
-- Gymnasium `check_env` in CI.
-- Repeatable reset and full template trajectory by seed.
-- Policy parity over the same observation/action spaces.
-- Discretizer boundary fixtures and Q-table unseen-state fallback.
-- Q-table coverage accounting and action-propensity logging.
-- Import-boundary test preventing simulator-private dependencies.
+- Hydra resolved-config snapshot and hash.
+- Split overlap rejection.
+- Stable seed derivation under job reordering.
+- Public/privileged schema separation.
+- Parquet uniqueness, finite values, completion marker, and checksums.
+- W&B-disabled reproduction.
+- Held-out access prohibition during tuning.
+- DuckDB report reproduction from local artifacts.
 
-### 18.5 Integration Tests
+### 18.5 Demo Reliability
 
-- API to graph to checkpoint to trajectory commit.
-- Rollout shard claim, artifact publish, acknowledgement, and reclaim.
-- Candidate training, gate attachment, explicit promotion, and rollback.
-- Model-provider timeout/rate-limit fallback with cost accounting.
-- MicroVM timeout, memory, output, network, and normalization behavior.
-- WebSocket disconnect and cursor-based recovery.
+- OpenRouter success, timeout, malformed output, and provider mismatch.
+- Guardrail rejection and template fallback.
+- Backend restart and session recovery.
+- Duplicate browser submission.
+- No-credential startup.
+- No-hidden-reasoning and no-simulator-truth API scans.
 
-## 19. Requirement Traceability
+## 19. Implementation Order and Stop Rules
+
+| Order | Component | Entry condition | Exit gate |
+|---:|---|---|---|
+| 1 | Workspace, contracts, task fixture | Revised docs approved | Pixi tasks and schema tests pass |
+| 2 | Evidence, simple tracker, heuristic, templates | Contracts frozen | Hand fixtures pass |
+| 3 | LangGraph, JSONL, FastAPI, React | Pure components pass | Offline browser vertical slice passes |
+| 4 | Gymnasium simulator and Parquet | Gate 1 passed | `check_env` and replay pass |
+| 5 | CBFM | Simulator timing frozen | Construct tests and ablation pass |
+| 6 | OpenRouter and guardrail evaluation | Offline demo stable | Failure fallback and leakage tests pass |
+| 7 | BKT | Evidence schema stable | Calibration baseline passes |
+| 8 | Reduced SMC | BKT baseline complete | Retain/reject gate recorded |
+| 9 | Contextual bandit | Heuristic trajectories reproducible | Matched evaluation passes |
+| 10 | Tabular Q-learning | Bandit baseline complete | Coverage and retain/reject gate recorded |
+| 11 | Final experiments and demo hardening | Config/splits frozen | Reports and rehearsal pass |
+
+Stop rules:
+
+- If the vertical slice is not complete, do not begin Gymnasium/RL work.
+- If BKT is sufficient, reduced SMC may be rejected without threatening the dissertation.
+- If heuristic or bandit performance is sufficient, Q-learning may be a negative result.
+- If OpenRouter is unreliable, demonstrate templates and report the renderer comparison separately.
+- If sandbox work threatens the schedule, omit arbitrary code execution.
+- Human pilot engineering remains deferred until separate approval.
+
+## 20. Requirement Traceability
 
 | LLD area | Primary PRD requirements |
 |---|---|
-| Package boundaries and contracts | FR-SIM-002, FR-SIM-006, FR-POL-002, FR-TRJ-002, NFR-MNT-001 |
-| Graph state and nodes | FR-GRF-001 through FR-GRF-007 |
-| Gymnasium environment | FR-SIM-001 through FR-SIM-008 |
+| Contracts and thin slice | FR-VS-001 through FR-VS-010, NFR-MNT-001 through NFR-MNT-003 |
+| LangGraph and API | FR-GRF-001 through FR-GRF-005, FR-UI-001 through FR-UI-006 |
+| Simulator | FR-SIM-001 through FR-SIM-008, NFR-SEC-002 |
 | CBFM | FR-CBFM-001 through FR-CBFM-009 |
-| SMC and tracker baselines | FR-TRK-001 through FR-TRK-009 |
-| Policies and Q-learning | FR-POL-001 through FR-POL-009 |
-| Generation and guardrail | FR-GEN-001 through FR-GRD-006 |
-| Student and sandbox | FR-STU-001 through FR-STU-007, SEC-SBX-001 through SEC-SBX-005 |
-| Trajectories and training | FR-TRJ-001 through FR-RL-005 |
-| API, events, and human interrupt | FR-UI-001, FR-UI-005, FR-GRF-006, NFR-REL-001 |
-| Tests and reproducibility | FR-EXP-001 through FR-EXP-006, NFR-REP-001 through NFR-REP-005 |
+| Trackers | FR-TRK-001 through FR-TRK-009 |
+| Policies and local RL | FR-POL-001 through FR-POL-009 |
+| OpenRouter and guardrail | FR-GEN-001 through FR-GRD-003 |
+| Persistence and experiments | FR-EXP-001 through FR-EXP-006, FR-TRJ-001 through FR-TRJ-006 |
+| Optional sandbox | SEC-SBX-001 through SEC-SBX-004 |
+| Reproducibility and privacy | NFR-REP-001 through NFR-REP-005, NFR-SEC-001 through NFR-PRV-002 |
 
-## 20. LLD Acceptance Criteria
+## 21. LLD Acceptance Criteria
 
-The implementation design is complete when:
+This design is implementation-ready when:
 
-- Public and simulator-private types are separated by enforceable package boundaries.
-- Every graph-state field has one declared writer.
-- Every node has typed inputs, writes, side effects, retry behavior, and routing.
-- The Gymnasium reset/step transaction preserves the proposal's fast-evidence-slow timing.
-- CBFM and SMC algorithms define numerical, calibration, and failure behavior.
-- All policies implement one observation/decision protocol and a documented unseen-state fallback.
-- External model, guardrail, sandbox, artifact, and registry interfaces are provider-neutral.
-- Trajectory commit and all external side effects have deterministic idempotency behavior.
-- Training and promotion cannot mutate serving state without completed gates and operator action.
-- Human interrupts are resumable and contain no simulator truth.
-- Contract, mathematical, graph, policy, integration, recovery, and security tests are specified.
-- Every D2 class, dependency, and sequence diagram compiles successfully.
+- The first task, evidence rules, tracker update, heuristic rules, and templates are deterministic and hand-checkable.
+- Graph state contains no simulator truth and each mutable field has one node owner.
+- One request causes at most one policy action and one committed event.
+- API retry/idempotency and JSONL/SQLite crash behavior are explicit.
+- React contains presentation logic only and supports the complete offline turn.
+- Gymnasium timing distinguishes prompt effects, response evidence, and slow learning.
+- CBFM recurrence, constraints, ablation, and rejection criterion are specified.
+- BKT and reduced SMC are sequenced as gated additions rather than critical-path dependencies.
+- Bandit and Q-learning use direct local Gymnasium loops and the same policy-safe interface.
+- Hydra, Parquet, local artifacts, DuckDB, and W&B have non-overlapping responsibilities.
+- OpenRouter and sandbox adapters have deterministic failure behavior and cannot block the demo.
+- Human data collection remains outside the POC.
+- Every D2 diagram compiles and all referenced PRD requirement IDs resolve.
