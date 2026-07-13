@@ -1,0 +1,67 @@
+[workspace]
+name = "socratic-tutor-development"
+version = "0.1.0"
+description = "Master's POC workspace for Socratic tutoring and RL evaluation"
+authors = ["Anas Khan"]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[dependencies]
+python = "3.12.*"
+nodejs = "22.*"
+pnpm = ">=10,<11"
+
+[pypi-dependencies]
+socratic-tutor = { path = ".", editable = true }
+hatchling = ">=1.27,<2"
+pytest = ">=8.4,<9"
+pytest-cov = ">=6.2,<7"
+hypothesis = ">=6.135,<7"
+ruff = ">=0.12,<1"
+pyright = ">=1.1.403,<2"
+
+[tasks.install-web]
+cmd = "pnpm install --frozen-lockfile"
+
+[tasks.dev-api]
+cmd = "uvicorn apps.api.main:app --reload --host 127.0.0.1 --port 8000"
+
+[tasks.dev-web]
+cmd = "pnpm --dir apps/web dev --host 127.0.0.1"
+
+[tasks.dev]
+cmd = "pnpm dev"
+
+[tasks.test]
+cmd = "pytest"
+
+[tasks.test-web]
+cmd = "pnpm --dir apps/web test --run"
+
+[tasks.lint]
+cmd = "ruff check ."
+
+[tasks.format-check]
+cmd = "ruff format --check ."
+
+[tasks.typecheck-python]
+cmd = "pyright src apps tests experiments analysis scripts"
+
+[tasks.typecheck-web]
+cmd = "pnpm --dir apps/web typecheck"
+
+[tasks.typecheck]
+depends-on = ["typecheck-python", "typecheck-web"]
+
+[tasks.config-smoke]
+cmd = "python experiments/compose_config.py --cfg job --resolve"
+
+[tasks.docs-check]
+cmd = "python scripts/check_docs.py"
+
+[tasks.build-web]
+cmd = "pnpm --dir apps/web build"
+
+[tasks.check]
+cmd = "python -c \"print('All workspace checks passed')\""
+depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "config-smoke", "docs-check", "build-web"]

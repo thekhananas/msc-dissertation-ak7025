@@ -1,0 +1,5 @@
+name: smoke
+split: development
+episodes: 1
+save_trajectories: false
+wandb_mode: disabled

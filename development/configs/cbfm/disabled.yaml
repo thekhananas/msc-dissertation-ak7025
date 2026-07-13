@@ -1,0 +1,4 @@
+name: disabled
+enabled: false
+bandwidth: 1.0
+friction: 0.0
