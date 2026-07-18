@@ -44,5 +44,8 @@ jobs:
       - name: Install frontend dependencies
         run: pixi run install-web
 
+      - name: Install Playwright Chromium
+        run: pixi run pnpm --dir apps/web exec playwright install --with-deps chromium
+
       - name: Run workspace checks
         run: pixi run check
