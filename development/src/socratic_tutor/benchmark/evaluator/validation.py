@@ -59,6 +59,15 @@ def validate_manifest_structure(manifest: AuthoredBenchmarkManifest) -> None:
         (split.split.value, family) for split in manifest.splits for family in split.task_families
     }
     reviews_by_case = {review.case_id: review for review in manifest.reviews}
+    generation_prompt_entry = inventory.get(manifest.generation.system_prompt_ref)
+    if (
+        generation_prompt_entry is None
+        or generation_prompt_entry.artifact_class is not ArtifactClass.PROMPT
+    ):
+        violations.append("generation-prompt-ref")
+    elif generation_prompt_entry.sha256 != manifest.generation.system_prompt_sha256:
+        violations.append("generation-prompt-hash")
+
     for item in manifest.cases:
         public = item.public
         private = item.criterion
@@ -93,8 +102,13 @@ def validate_manifest_structure(manifest: AuthoredBenchmarkManifest) -> None:
             violations.append(f"missing-review:{public.case_id}")
             continue
         required_review_paths = {
+            public.public_fixture_ref,
             public.evidence_probe_ref,
             public.evidence_test_ref,
+            public.initial_tracker_ref,
+            public.unrelated_control_ref,
+            public.corruption_spec_ref,
+            manifest.generation.system_prompt_ref,
             private.criterion_prompt_ref,
             private.test_bundle_ref,
             private.rubric_ref,
