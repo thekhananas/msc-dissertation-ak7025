@@ -32,6 +32,8 @@ class ProviderResponseMetadata(ContractModel):
     generation_id: str | None = None
     provider_id: str | None = None
     model_id: str | None = None
+    resolved_provider_id: str | None = None
+    resolved_model_id: str | None = None
     finish_reason: str | None = None
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
@@ -57,6 +59,16 @@ class RecordedGenerationResponse(ContractModel):
     def validate_response_hash(self) -> "RecordedGenerationResponse":
         if self.captured_at_utc.tzinfo is None:
             raise ValueError("Recorded response timestamp must include a timezone")
+        route = self.request.model_route
+        metadata = self.provider_metadata
+        if metadata.provider_id is not None and metadata.provider_id != route.provider:
+            raise ValueError("Recorded provider does not match requested provider")
+        if metadata.model_id is not None and metadata.model_id != route.model:
+            raise ValueError("Recorded model does not match requested model")
+        if self.original_source is OriginalGenerationSource.OPENROUTER and (
+            metadata.provider_id is None or metadata.model_id is None
+        ):
+            raise ValueError("OpenRouter recordings require requested provider and model metadata")
         expected_hash = recorded_response_content_hash(self)
         if self.response_hash != expected_hash:
             raise ValueError("Recorded response hash does not match response content")

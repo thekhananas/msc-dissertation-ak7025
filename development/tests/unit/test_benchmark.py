@@ -37,6 +37,7 @@ from socratic_tutor.benchmark.generation import (
     SamplingConfig,
     StudentGenerationRequest,
 )
+from socratic_tutor.benchmark.hashing import file_sha256
 from socratic_tutor.benchmark.public import (
     EXPECTED_CONDITIONS,
     BenchmarkCaseView,
@@ -57,13 +58,18 @@ from socratic_tutor.benchmark.replay import (
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_ROOT = WORKSPACE_ROOT / "data" / "benchmarks" / "dev-v0"
 MANIFEST_PATH = BENCHMARK_ROOT / "manifest.yaml"
+SYSTEM_PROMPT = (
+    "Act as the student for one isolated Python task. Return only the final response or code."
+)
 
 
-def generation_spec() -> GenerationRequestSpec:
+def generation_spec(*, system_prompt: str = SYSTEM_PROMPT) -> GenerationRequestSpec:
     return GenerationRequestSpec(
         run_id="dev-run-001",
         sample_id="sample-001",
         system_prompt_version="student-simulator-v1",
+        system_prompt=system_prompt,
+        system_prompt_sha256=file_sha256(system_prompt.encode("utf-8")),
         model_route=ModelRoute(provider="recorded_fixture", model="authored-deterministic"),
         sampling=SamplingConfig(temperature=0.0, max_output_tokens=512, seed=20260725),
     )
@@ -274,6 +280,13 @@ def test_generation_request_hash_is_stable_and_validated() -> None:
     assert first == second
     assert first.request_hash == second.request_hash
 
+    changed_prompt = builder.build_public(
+        case_id="dev-none-falsy-001",
+        spec=generation_spec(system_prompt=f"{SYSTEM_PROMPT} Do not guess."),
+    )
+    assert changed_prompt.system_prompt_version == first.system_prompt_version
+    assert changed_prompt.request_hash != first.request_hash
+
     tampered_hash = first.model_dump(mode="json")
     tampered_hash["request_hash"] = "0" * 64
     with pytest.raises(ValidationError, match="hash does not match"):
@@ -283,6 +296,11 @@ def test_generation_request_hash_is_stable_and_validated() -> None:
     wrong_namespace["cache_namespace"] = "benchmark-student-generation/evidence/v1"
     with pytest.raises(ValidationError, match="namespace"):
         StudentGenerationRequest.model_validate(wrong_namespace)
+
+    wrong_prompt_hash = first.model_dump(mode="json")
+    wrong_prompt_hash["system_prompt_sha256"] = "0" * 64
+    with pytest.raises(ValidationError, match="System prompt hash"):
+        StudentGenerationRequest.model_validate(wrong_prompt_hash)
 
 
 def test_public_request_rejects_evaluator_field_injection() -> None:
@@ -326,6 +344,8 @@ def test_recorded_response_gateway_replays_exact_request_without_network(tmp_pat
         provider_metadata=ProviderResponseMetadata(
             provider_id="recorded_fixture",
             model_id="authored-deterministic",
+            resolved_provider_id="local_fixture",
+            resolved_model_id="authored-deterministic-v1",
             output_tokens=11,
         ),
         captured_at_utc=datetime(2026, 7, 25, tzinfo=UTC),
@@ -373,6 +393,10 @@ def test_recorded_response_file_rejects_tampering(tmp_path: Path) -> None:
         request=request,
         original_source=OriginalGenerationSource.OPENROUTER,
         final_response="Original response",
+        provider_metadata=ProviderResponseMetadata(
+            provider_id=request.model_route.provider,
+            model_id=request.model_route.model,
+        ),
     )
     payload = record.model_dump(mode="json")
     payload["final_response"] = "Changed after recording"
@@ -382,6 +406,37 @@ def test_recorded_response_file_rejects_tampering(tmp_path: Path) -> None:
         RecordedResponseGateway.from_jsonl(
             response_file,
             allowed_channels=frozenset({request.channel}),
+        )
+
+
+def test_recorded_response_rejects_provider_or_model_mismatch() -> None:
+    authored = load_and_verify_manifest(MANIFEST_PATH)
+    public_manifest = project_public_manifest(authored)
+    request = PublicChannelRequestBuilder(BENCHMARK_ROOT, public_manifest).build_public(
+        case_id="dev-aliasing-001",
+        spec=generation_spec(),
+    )
+
+    with pytest.raises(ValidationError, match="provider does not match"):
+        create_recorded_response(
+            request=request,
+            original_source=OriginalGenerationSource.OPENROUTER,
+            final_response="Response from the wrong route",
+            provider_metadata=ProviderResponseMetadata(
+                provider_id="different-provider",
+                model_id=request.model_route.model,
+            ),
+        )
+
+    with pytest.raises(ValidationError, match="model does not match"):
+        create_recorded_response(
+            request=request,
+            original_source=OriginalGenerationSource.OPENROUTER,
+            final_response="Response from the wrong model",
+            provider_metadata=ProviderResponseMetadata(
+                provider_id=request.model_route.provider,
+                model_id="different-model",
+            ),
         )
 
 
