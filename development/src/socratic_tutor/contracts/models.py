@@ -15,6 +15,7 @@ class EvidenceCategory(StrEnum):
     """Small, explicit evidence vocabulary used by the first vertical slice."""
 
     CORRECT = "correct"
+    INCORRECT = "incorrect"
     MISCONCEPTION = "misconception"
     CONFLICTING = "conflicting"
     UNCERTAIN = "uncertain"

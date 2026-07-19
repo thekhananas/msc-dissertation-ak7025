@@ -6,6 +6,7 @@ export type HealthResponse = {
 
 export type EvidenceCategory =
   | "correct"
+  | "incorrect"
   | "misconception"
   | "conflicting"
   | "uncertain"

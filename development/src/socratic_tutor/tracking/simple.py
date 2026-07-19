@@ -4,6 +4,7 @@ from socratic_tutor.contracts import Evidence, EvidenceCategory, TrackerState
 
 _EVIDENCE_DELTAS: dict[EvidenceCategory, float] = {
     EvidenceCategory.CORRECT: 0.20,
+    EvidenceCategory.INCORRECT: -0.20,
     EvidenceCategory.MISCONCEPTION: -0.20,
     EvidenceCategory.CONFLICTING: -0.10,
     EvidenceCategory.UNCERTAIN: 0.0,
