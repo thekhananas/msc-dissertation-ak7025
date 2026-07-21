@@ -1,0 +1,39 @@
+schema_version: 1
+schema_id: benchmark.offline_criterion_plan.v1
+mode: development_offline
+run_id: dev-v0-offline-smoke-001
+model_route:
+  provider: recorded_fixture
+  model: authored-deterministic
+sampling:
+  temperature: 0.0
+  max_output_tokens: 512
+  seed: 20260812
+system_prompt_version: student-system-v1
+system_prompt_ref: prompts/student-system-v1.md
+system_prompt_sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+tracker_version: simple-v1
+calibration_status: uncalibrated_score
+policy_threshold: 0.6
+calibration_outcomes: [true, true, false, false]
+calibration_owner: researcher
+scorer_version: scorer-v1
+constant_baseline_version: constant-prevalence-v1
+probe_baseline_version: probe-only-simple-v1
+aggregation_version: case-mean-v1
+created_at_utc: 2026-08-12T08:00:00Z
+cases:
+  - case_id: dev-aliasing-001
+    criterion_response: |-
+      def snapshot_then_append(items, value):
+          snapshot = items
+          items.append(value)
+          return snapshot
+    criterion_passed: 0
+    criterion_failed: 1
+  - case_id: dev-none-falsy-001
+    criterion_response: |-
+      def choose_label(label, default):
+          return default if label is None else label
+    criterion_passed: 3
+    criterion_failed: 0

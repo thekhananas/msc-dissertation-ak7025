@@ -1,0 +1,15 @@
+schema_version: 1
+schema_id: benchmark.sensitivity_plan.v1
+case_count: 24
+repeats_per_case: 3
+simulation_count: 500
+true_effects: [0.0, 0.1, 0.2]
+between_case_sd: 0.12
+within_case_sd: 0.08
+repeat_missing_probability: 0.1
+minimum_interpretable_effect: 0.1
+minimum_power: 0.7
+maximum_false_positive_rate: 0.1
+minimum_mean_eligible_cases: 20.0
+seed: 20260812
+created_at_utc: 2026-08-12T08:00:00Z

@@ -65,7 +65,22 @@ depends-on = ["typecheck-python", "typecheck-web"]
 cmd = "python experiments/compose_config.py --cfg job --resolve"
 
 [tasks.benchmark-validate]
-cmd = "python scripts/validate_benchmark.py data/benchmarks/dev-v0/manifest.yaml"
+cmd = "python scripts/benchmark_cli.py validate --manifest data/benchmarks/dev-v0/manifest.yaml"
+
+[tasks.benchmark-smoke]
+cmd = "python scripts/benchmark_cli.py smoke --manifest data/benchmarks/dev-v0/manifest.yaml --decision-plan configs/benchmark/dev-v0-decision.yaml --criterion-plan configs/benchmark/dev-v0-criterion.yaml --output-root artifacts/benchmark-smoke/dev-v0"
+
+[tasks.benchmark-shortcuts]
+cmd = "python scripts/benchmark_cli.py shortcuts --input configs/benchmark/dev-v0-shortcuts.yaml --output artifacts/benchmark-checks/dev-v0-shortcuts.json"
+
+[tasks.benchmark-sensitivity]
+cmd = "python scripts/benchmark_cli.py sensitivity --input configs/benchmark/dev-v0-sensitivity.yaml --output artifacts/benchmark-checks/dev-v0-sensitivity.json"
+
+[tasks.benchmark-generate]
+cmd = "python scripts/benchmark_generate.py"
+
+[tasks.benchmark-evaluate]
+cmd = "python scripts/benchmark_cli.py evaluate"
 
 [tasks.docs-check]
 cmd = "python scripts/check_docs.py"

@@ -1,0 +1,312 @@
+"""Command-level benchmark workflow and failure-exit tests."""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import yaml
+from pytest import CaptureFixture
+
+from socratic_tutor.benchmark.cli import main
+
+WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
+BENCHMARK_ROOT = WORKSPACE_ROOT / "data" / "benchmarks" / "dev-v0"
+MANIFEST = BENCHMARK_ROOT / "manifest.yaml"
+DECISION_PLAN = WORKSPACE_ROOT / "configs" / "benchmark" / "dev-v0-decision.yaml"
+CRITERION_PLAN = WORKSPACE_ROOT / "configs" / "benchmark" / "dev-v0-criterion.yaml"
+SHORTCUT_PLAN = WORKSPACE_ROOT / "configs" / "benchmark" / "dev-v0-shortcuts.yaml"
+SENSITIVITY_PLAN = WORKSPACE_ROOT / "configs" / "benchmark" / "dev-v0-sensitivity.yaml"
+
+
+def test_smoke_command_publishes_and_replays_complete_two_case_artifact(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    output = tmp_path / "smoke"
+    arguments = [
+        "smoke",
+        "--manifest",
+        str(MANIFEST),
+        "--decision-plan",
+        str(DECISION_PLAN),
+        "--criterion-plan",
+        str(CRITERION_PLAN),
+        "--output-root",
+        str(output),
+    ]
+
+    assert main(arguments) == 0
+    first = json.loads(capsys.readouterr().out)
+    assert first["status"] == "ok"
+    smoke_hash = first["result"]["smoke_hash"]
+    evaluation = json.loads((output / "evaluation_summary.json").read_text(encoding="utf-8"))
+    assert evaluation["row_counts"] == {
+        "baseline_results": 4,
+        "case_aggregates": 10,
+        "condition_predictions": 8,
+        "criterion_records": 2,
+        "repeat_metrics": 12,
+    }
+    assert evaluation["demonstrated_count"] == 1
+    assert evaluation["not_demonstrated_count"] == 1
+    assert (output / "decision" / "commitment_manifest.json").exists()
+    assert (output / "decision" / "recorded_responses.jsonl").exists()
+    assert (output / "criterion" / "recorded_responses.jsonl").exists()
+
+    assert main(arguments) == 0
+    second = json.loads(capsys.readouterr().out)
+    assert second["result"]["smoke_hash"] == smoke_hash
+
+
+def test_explicit_generate_phases_and_evaluate_command(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    projected = tmp_path / "projected"
+    assert (
+        main(
+            [
+                "smoke",
+                "--manifest",
+                str(MANIFEST),
+                "--decision-plan",
+                str(DECISION_PLAN),
+                "--criterion-plan",
+                str(CRITERION_PLAN),
+                "--output-root",
+                str(projected),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    output = tmp_path / "phased"
+    decision_arguments = [
+        "generate",
+        "decision",
+        "--public-manifest",
+        str(projected / "public_manifest.json"),
+        "--benchmark-root",
+        str(BENCHMARK_ROOT),
+        "--plan",
+        str(DECISION_PLAN),
+        "--output-root",
+        str(output),
+    ]
+    decision_process = _run_generate(decision_arguments[1:])
+    assert decision_process.returncode == 0, decision_process.stderr
+    decision_result = json.loads(decision_process.stdout)
+    assert decision_result["result"]["prediction_count"] == 8
+
+    criterion_arguments = [
+        "generate",
+        "criterion",
+        "--public-manifest",
+        str(projected / "public_manifest.json"),
+        "--evaluator-manifest",
+        str(projected / "evaluator_manifest.json"),
+        "--benchmark-root",
+        str(BENCHMARK_ROOT),
+        "--plan",
+        str(CRITERION_PLAN),
+        "--output-root",
+        str(output),
+    ]
+    criterion_process = _run_generate(criterion_arguments[1:])
+    assert criterion_process.returncode == 0, criterion_process.stderr
+    criterion_result = json.loads(criterion_process.stdout)
+    assert criterion_result["result"]["criterion_count"] == 2
+
+    report_path = output / "rebuilt-evaluation.json"
+    assert (
+        main(
+            [
+                "evaluate",
+                "--dataset-root",
+                str(output / "datasets"),
+                "--output",
+                str(report_path),
+            ]
+        )
+        == 0
+    )
+    evaluation_result = json.loads(capsys.readouterr().out)
+    assert evaluation_result["result"]["row_counts"]["case_aggregates"] == 10
+    assert report_path.exists()
+
+
+def test_research_check_commands_emit_gate_status_and_nonzero_failure(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    shortcut_output = tmp_path / "shortcuts.json"
+    assert (
+        main(
+            [
+                "shortcuts",
+                "--input",
+                str(SHORTCUT_PLAN),
+                "--output",
+                str(shortcut_output),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["result"]["surface_accuracy"] == 0.5
+
+    strict = yaml.safe_load(SHORTCUT_PLAN.read_text(encoding="utf-8"))
+    strict["maximum_surface_accuracy"] = 0.25
+    strict_path = tmp_path / "strict-shortcuts.yaml"
+    strict_path.write_text(yaml.safe_dump(strict, sort_keys=False), encoding="utf-8")
+    assert (
+        main(
+            [
+                "shortcuts",
+                "--input",
+                str(strict_path),
+                "--output",
+                str(tmp_path / "strict-output.json"),
+            ]
+        )
+        == 2
+    )
+    assert json.loads(capsys.readouterr().out)["status"] == "gate_failed"
+
+    assert (
+        main(
+            [
+                "sensitivity",
+                "--input",
+                str(SENSITIVITY_PLAN),
+                "--output",
+                str(tmp_path / "sensitivity.json"),
+            ]
+        )
+        == 0
+    )
+    sensitivity = json.loads(capsys.readouterr().out)["result"]
+    assert sensitivity["gate_passed"] is True
+    assert sensitivity["case_count"] == 24
+
+
+def test_commands_fail_closed_for_draft_or_invalid_inputs(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    assert (
+        main(
+            [
+                "validate",
+                "--manifest",
+                str(MANIFEST),
+                "--require-frozen",
+            ]
+        )
+        == 1
+    )
+    validation_error = json.loads(capsys.readouterr().err)
+    assert validation_error["status"] == "error"
+    assert "frozen benchmark" in validation_error["message"]
+
+    invalid = tmp_path / "invalid.yaml"
+    invalid.write_text("schema_id: wrong\n", encoding="utf-8")
+    assert (
+        main(
+            [
+                "sensitivity",
+                "--input",
+                str(invalid),
+                "--output",
+                str(tmp_path / "never-created.json"),
+            ]
+        )
+        == 1
+    )
+    input_error = json.loads(capsys.readouterr().err)
+    assert input_error["status"] == "error"
+    assert input_error["error_type"] == "ValidationError"
+
+
+def test_smoke_does_not_persist_evaluator_inputs_before_decision_seal(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    output = tmp_path / "stopped-after-decision"
+
+    assert (
+        main(
+            [
+                "smoke",
+                "--manifest",
+                str(MANIFEST),
+                "--decision-plan",
+                str(DECISION_PLAN),
+                "--criterion-plan",
+                str(tmp_path / "missing-criterion-plan.yaml"),
+                "--output-root",
+                str(output),
+            ]
+        )
+        == 1
+    )
+    capsys.readouterr()
+    assert (output / "decision" / "commitment_manifest.json").exists()
+    assert (output / "decision_summary.json").exists()
+    assert not (output / "evaluator_manifest.json").exists()
+    assert not (output / "offline_criterion_plan.json").exists()
+
+
+def test_offline_generation_rejects_held_out_projection(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    projected = tmp_path / "projected"
+    assert (
+        main(
+            [
+                "smoke",
+                "--manifest",
+                str(MANIFEST),
+                "--decision-plan",
+                str(DECISION_PLAN),
+                "--criterion-plan",
+                str(CRITERION_PLAN),
+                "--output-root",
+                str(projected),
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+    public = json.loads((projected / "public_manifest.json").read_text(encoding="utf-8"))
+    public["cases"][0]["split"] = "held_out"
+    held_out = tmp_path / "held-out-public.json"
+    held_out.write_text(json.dumps(public), encoding="utf-8")
+
+    process = _run_generate(
+        [
+            "decision",
+            "--public-manifest",
+            str(held_out),
+            "--benchmark-root",
+            str(BENCHMARK_ROOT),
+            "--plan",
+            str(DECISION_PLAN),
+            "--output-root",
+            str(tmp_path / "held-out-output"),
+        ]
+    )
+    assert process.returncode == 1
+    failure = json.loads(process.stderr)
+    assert "held-out generation is disabled" in failure["message"]
+
+
+def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "scripts/benchmark_generate.py", *arguments],
+        cwd=WORKSPACE_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )

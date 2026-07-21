@@ -2,7 +2,7 @@
 
 import fcntl
 import os
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -274,12 +274,18 @@ class _StagingIndex(_StagingIndexContent):
 class FilesystemConditionCommitStore:
     """Atomic filesystem implementation of per-sample prediction commitments."""
 
-    def __init__(self, root: Path) -> None:
+    def __init__(
+        self,
+        root: Path,
+        *,
+        clock: Callable[[], datetime] | None = None,
+    ) -> None:
         self.root = root
         self._records_dir = root / "records"
         self._staging_dir = root / "staging"
         self._sets_dir = root / "sets"
         self._locks_dir = root / "locks"
+        self._clock = clock or _utc_now
         self._lock = RLock()
         for directory in (
             self._records_dir,
@@ -320,7 +326,7 @@ class FilesystemConditionCommitStore:
             state = self._load_state(key)
             if state is None:
                 raise IncompleteConditionSetError("Cannot seal a sample with no predictions")
-            commit_set = seal_condition_records(state, sealed_at_utc=datetime.now(UTC))
+            commit_set = seal_condition_records(state, sealed_at_utc=self._clock())
             self._atomic_write_model(self._set_path(key), commit_set)
             return commit_set
 
@@ -441,7 +447,7 @@ class FilesystemConditionCommitStore:
                 _ConditionRecordRef(condition=record.condition, record_hash=record.record_hash)
                 for record in state.records
             ),
-            updated_at_utc=datetime.now(UTC),
+            updated_at_utc=self._clock(),
         )
         index = _StagingIndex.model_validate(
             {
@@ -569,3 +575,7 @@ def _fsync_directory(path: Path) -> None:
         os.fsync(descriptor)
     finally:
         os.close(descriptor)
+
+
+def _utc_now() -> datetime:
+    return datetime.now(UTC)

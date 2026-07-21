@@ -452,6 +452,7 @@ def baseline_arrow_row(record: BaselineResult) -> dict[str, object]:
         "record_hash": record.record_hash,
     }
 
+
 def repeat_metric_arrow_row(record: RepeatMetric) -> dict[str, object]:
     return {
         "schema_version": record.schema_version,
