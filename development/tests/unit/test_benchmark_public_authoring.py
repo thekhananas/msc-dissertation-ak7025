@@ -10,13 +10,12 @@ DESIGN_PATH = WORKSPACE_ROOT / "data" / "benchmark-design" / "v1" / "case-alloca
 BENCHMARK_ROOT = WORKSPACE_ROOT / "data" / "benchmarks" / "v1"
 
 
-def test_c1_public_and_evidence_files_are_separate_and_policy_safe() -> None:
+def test_authored_public_and_evidence_files_are_separate_and_policy_safe() -> None:
     plan = load_design(DESIGN_PATH)
-    cases = tuple(
-        case for case in plan.held_out_cases if case.concept_id == "assignment-evaluation"
-    )
+    authored_concepts = {"assignment-evaluation", "object-aliasing"}
+    cases = tuple(case for case in plan.held_out_cases if case.concept_id in authored_concepts)
 
-    assert len(cases) == 6
+    assert len(cases) == 12
     for case in cases:
         public = _read(f"public/{case.case_id}-dialogue.md")
         evidence = _read(f"evidence/{case.case_id}-prompt.md")

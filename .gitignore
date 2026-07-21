@@ -42,6 +42,7 @@ development/apps/web/playwright-report/
 development/apps/web/test-results/
 development/artifacts/**
 !development/artifacts/.gitignore
+
 development/.env
 development/.env.*
 !development/.env.example
