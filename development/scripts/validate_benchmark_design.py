@@ -7,7 +7,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from socratic_tutor.benchmark.design import load_and_verify_design
+from socratic_tutor.benchmark.design import load_design
 from socratic_tutor.benchmark.hashing import model_content_hash
 
 
@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    plan = load_and_verify_design(args.plan)
+    plan = load_design(args.plan)
     pattern_counts = Counter(case.evidence_pattern.value for case in plan.held_out_cases)
     difficulty_counts = Counter(case.difficulty.value for case in plan.held_out_cases)
     summary = {
