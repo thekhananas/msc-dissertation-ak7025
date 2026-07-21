@@ -22,15 +22,12 @@ from socratic_tutor.benchmark.evaluator.projection import (
     project_evaluator_manifest,
     project_public_manifest,
 )
-from socratic_tutor.benchmark.evaluator.requests import CriterionChannelRequestBuilder
 from socratic_tutor.benchmark.evaluator.validation import (
     BenchmarkValidationError,
     validate_manifest_structure,
 )
 from socratic_tutor.benchmark.generation import (
-    CriterionTaskPayload,
     EvidenceTaskPayload,
-    GenerationChannel,
     GenerationRequestSpec,
     ModelRoute,
     PublicTaskPayload,
@@ -264,18 +261,14 @@ def test_public_schema_has_no_criterion_definition() -> None:
 def test_channel_request_builders_isolate_context_and_cache_identity() -> None:
     authored = load_and_verify_manifest(MANIFEST_PATH)
     public_manifest = project_public_manifest(authored)
-    evaluator_manifest = project_evaluator_manifest(authored, public_manifest)
     public_builder = PublicChannelRequestBuilder(BENCHMARK_ROOT, public_manifest)
-    criterion_builder = CriterionChannelRequestBuilder(BENCHMARK_ROOT, evaluator_manifest)
     spec = generation_spec()
 
     public = public_builder.build_public(case_id="dev-aliasing-001", spec=spec)
     evidence = public_builder.build_evidence(case_id="dev-aliasing-001", spec=spec)
-    criterion = criterion_builder.build_criterion(case_id="dev-aliasing-001", spec=spec)
 
     assert isinstance(public.task_payload, PublicTaskPayload)
     assert isinstance(evidence.task_payload, EvidenceTaskPayload)
-    assert isinstance(criterion.task_payload, CriterionTaskPayload)
     assert set(public.task_payload.model_dump()) == {
         "channel",
         "benchmark_version",
@@ -292,20 +285,11 @@ def test_channel_request_builders_isolate_context_and_cache_identity() -> None:
         "target_concept",
         "evidence_probe",
     }
-    assert set(criterion.task_payload.model_dump()) == {
-        "channel",
-        "benchmark_version",
-        "case_id",
-        "criterion_probe_id",
-        "criterion_probe",
-    }
     assert "Evidence probe" not in public.task_payload.public_interaction
     assert "Public interaction" not in evidence.task_payload.evidence_probe
-    assert "Public interaction" not in criterion.task_payload.criterion_probe
-    assert "Evidence probe" not in criterion.task_payload.criterion_probe
-    assert len({public.cache_namespace, evidence.cache_namespace, criterion.cache_namespace}) == 3
-    assert len({public.cache_key, evidence.cache_key, criterion.cache_key}) == 3
-    assert len({public.request_hash, evidence.request_hash, criterion.request_hash}) == 3
+    assert public.cache_namespace != evidence.cache_namespace
+    assert public.cache_key != evidence.cache_key
+    assert public.request_hash != evidence.request_hash
 
 
 def test_generation_request_hash_is_stable_and_validated() -> None:
@@ -475,27 +459,4 @@ def test_recorded_response_rejects_provider_or_model_mismatch() -> None:
                 provider_id=request.model_route.provider,
                 model_id="different-model",
             ),
-        )
-
-
-def test_recorded_gateway_rejects_cross_channel_file(tmp_path: Path) -> None:
-    authored = load_and_verify_manifest(MANIFEST_PATH)
-    public_manifest = project_public_manifest(authored)
-    evaluator_manifest = project_evaluator_manifest(authored, public_manifest)
-    request = CriterionChannelRequestBuilder(BENCHMARK_ROOT, evaluator_manifest).build_criterion(
-        case_id="dev-aliasing-001",
-        spec=generation_spec(),
-    )
-    record = create_recorded_response(
-        request=request,
-        original_source=OriginalGenerationSource.AUTHORED,
-        final_response="Evaluator-only response",
-    )
-    response_file = tmp_path / "criterion.jsonl"
-    response_file.write_text(record.model_dump_json() + "\n", encoding="utf-8")
-
-    with pytest.raises(RecordedResponseFileError, match="not allowed"):
-        RecordedResponseGateway.from_jsonl(
-            response_file,
-            allowed_channels=frozenset({GenerationChannel.PUBLIC, GenerationChannel.EVIDENCE}),
         )

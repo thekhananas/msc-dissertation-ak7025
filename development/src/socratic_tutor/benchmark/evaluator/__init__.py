@@ -1,5 +1,14 @@
 """Evaluator-only benchmark construction and outcome-reveal package."""
 
+from socratic_tutor.benchmark.evaluator.gate import (
+    CriterionCapability,
+    CriterionCapabilityError,
+    CriterionGate,
+    CriterionGateError,
+    CriterionIneligibleError,
+    CriterionNotSealedError,
+    EvaluatorManifestAccessError,
+)
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.benchmark.evaluator.models import AuthoredBenchmarkManifest
 from socratic_tutor.benchmark.evaluator.projection import (
@@ -14,7 +23,14 @@ from socratic_tutor.benchmark.evaluator.requests import (
 __all__ = [
     "AuthoredBenchmarkManifest",
     "CriterionArtifactReadError",
+    "CriterionCapability",
+    "CriterionCapabilityError",
     "CriterionChannelRequestBuilder",
+    "CriterionGate",
+    "CriterionGateError",
+    "CriterionIneligibleError",
+    "CriterionNotSealedError",
+    "EvaluatorManifestAccessError",
     "load_and_verify_manifest",
     "project_evaluator_manifest",
     "project_public_manifest",

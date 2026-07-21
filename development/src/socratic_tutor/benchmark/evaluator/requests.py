@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from socratic_tutor.benchmark.evaluator.gate import VerifiedCriterionAccess
 from socratic_tutor.benchmark.evaluator.models import (
     ArtifactClass,
     CriterionSpec,
@@ -22,13 +23,14 @@ class CriterionArtifactReadError(ValueError):
 
 
 class CriterionChannelRequestBuilder:
-    """Build criterion requests from evaluator capabilities only."""
+    """Build criterion requests from one consumed evaluator capability."""
 
-    def __init__(self, benchmark_root: Path, manifest: EvaluatorBenchmarkManifest) -> None:
+    def __init__(self, benchmark_root: Path, access: VerifiedCriterionAccess) -> None:
         self._root = benchmark_root.resolve()
-        self._manifest = manifest
-        self._criteria = {criterion.case_id: criterion for criterion in manifest.criteria}
-        self._files = {entry.path: entry for entry in manifest.files}
+        self._access = access
+        self._manifest: EvaluatorBenchmarkManifest = access.manifest
+        self._criteria = {criterion.case_id: criterion for criterion in access.manifest.criteria}
+        self._files = {entry.path: entry for entry in access.manifest.files}
 
     def build_criterion(
         self,
@@ -38,6 +40,7 @@ class CriterionChannelRequestBuilder:
     ) -> StudentGenerationRequest:
         """Build a fresh request containing only the held-out transfer probe."""
 
+        self._validate_request_identity(case_id=case_id, spec=spec)
         criterion = self._criterion(case_id)
         probe = self._read_text(
             criterion.criterion_prompt_ref,
@@ -50,6 +53,21 @@ class CriterionChannelRequestBuilder:
             criterion_probe=probe,
         )
         return create_student_generation_request(spec=spec, payload=payload)
+
+    def _validate_request_identity(
+        self,
+        *,
+        case_id: str,
+        spec: GenerationRequestSpec,
+    ) -> None:
+        key = self._access.sample_key
+        route_id = f"{spec.model_route.provider}/{spec.model_route.model}"
+        if case_id != key.case_id:
+            raise CriterionArtifactReadError("Criterion capability belongs to another case")
+        if spec.run_id != key.run_id or spec.sample_id != key.sample_id:
+            raise CriterionArtifactReadError("Generation identity does not match the capability")
+        if route_id != key.model_route_id:
+            raise CriterionArtifactReadError("Model route does not match the capability")
 
     def _criterion(self, case_id: str) -> CriterionSpec:
         try:
