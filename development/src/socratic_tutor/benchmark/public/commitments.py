@@ -224,6 +224,18 @@ class ConditionCommitStore(Protocol):
 
     def get(self, key: BenchmarkSampleKey) -> ConditionCommitSet | None: ...
 
+    def get_records(
+        self,
+        key: BenchmarkSampleKey,
+    ) -> tuple[DecisionPredictionRecord, ...]: ...
+
+    def get_staged_records(
+        self,
+        key: BenchmarkSampleKey,
+    ) -> tuple[DecisionPredictionRecord, ...]: ...
+
+    def sealed_keys(self) -> tuple[BenchmarkSampleKey, ...]: ...
+
 
 class _ConditionRecordRef(ContractModel):
     condition: BenchmarkCondition
@@ -319,6 +331,43 @@ class FilesystemConditionCommitStore:
             if not self._set_path(key).exists():
                 return None
             return self._load_and_verify_set(key)
+
+    def get_records(
+        self,
+        key: BenchmarkSampleKey,
+    ) -> tuple[DecisionPredictionRecord, ...]:
+        """Return all records referenced by a verified sealed sample."""
+
+        with self._sample_lock(key):
+            if not self._set_path(key).exists():
+                raise IncompleteConditionSetError("Sample has no sealed prediction set")
+            commit_set = self._load_and_verify_set(key)
+            return tuple(self._load_record(item) for item in commit_set.prediction_hashes)
+
+    def get_staged_records(
+        self,
+        key: BenchmarkSampleKey,
+    ) -> tuple[DecisionPredictionRecord, ...]:
+        """Return verified records staged for a complete or incomplete sample."""
+
+        with self._sample_lock(key):
+            state = self._load_state(key)
+            return () if state is None else state.records
+
+    def sealed_keys(self) -> tuple[BenchmarkSampleKey, ...]:
+        """List verified sample keys with published condition sets."""
+
+        with self._lock:
+            keys: list[BenchmarkSampleKey] = []
+            for path in sorted(self._sets_dir.glob("*.json")):
+                commit_set = self._read_model(path, ConditionCommitSet)
+                if path.stem != sample_key_hash(commit_set.key):
+                    raise CommitStorageError(
+                        f"Commit-set filename does not match sample key: {path}"
+                    )
+                self._verify_commit_set(commit_set)
+                keys.append(commit_set.key)
+            return tuple(sorted(keys, key=_sample_key_order))
 
     @contextmanager
     def _sample_lock(self, key: BenchmarkSampleKey) -> Generator[None]:
@@ -497,6 +546,16 @@ def _validate_record_sequence(
             )
             if mismatches:
                 raise CommitParityError(f"Prediction parity mismatch: {', '.join(mismatches)}")
+
+
+def _sample_key_order(key: BenchmarkSampleKey) -> tuple[str, str, str, str, str]:
+    return (
+        key.benchmark_version,
+        key.run_id,
+        key.case_id,
+        key.sample_id,
+        key.model_route_id,
+    )
 
 
 def _require_utc(value: datetime, *, field_name: str) -> None:
