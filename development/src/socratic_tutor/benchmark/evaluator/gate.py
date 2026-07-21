@@ -4,6 +4,7 @@ import hmac
 import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from threading import RLock
 from typing import Protocol
 
@@ -11,6 +12,7 @@ from socratic_tutor.benchmark.evaluator.models import EvaluatorBenchmarkManifest
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.public import (
     BenchmarkSampleKey,
+    ConditionCommitSet,
     ConditionCommitStore,
     DecisionRunPlan,
     GlobalDecisionSeal,
@@ -65,6 +67,8 @@ class VerifiedCriterionAccess:
 
     global_seal_hash: str
     condition_set_hash: str
+    global_sealed_at_utc: datetime
+    condition_sealed_at_utc: datetime
     sample_key: BenchmarkSampleKey
     manifest: EvaluatorBenchmarkManifest
 
@@ -97,7 +101,7 @@ class CriterionGate:
         with self._lock:
             if key in self._pending or key in self._consumed:
                 raise CriterionCapabilityError("Criterion capability was already issued")
-            seal, condition_set_hash = self._verify_eligibility(key)
+            seal, commit_set = self._verify_eligibility(key)
             nonce = bytes(self._nonce_factory())
             if len(nonce) < 16:
                 raise CriterionCapabilityError("Criterion nonce must contain at least 16 bytes")
@@ -105,7 +109,7 @@ class CriterionGate:
                 raise CriterionCapabilityError("Criterion nonce was already used")
             capability = CriterionCapability(
                 global_seal_hash=seal.seal_hash,
-                condition_set_hash=condition_set_hash,
+                condition_set_hash=commit_set.seal_hash,
                 sample_key=key,
                 nonce=nonce,
             )
@@ -125,10 +129,10 @@ class CriterionGate:
             pending = self._pending.get(capability.sample_key)
             if pending is None or not _same_capability(pending, capability):
                 raise CriterionCapabilityError("Criterion capability is unknown or altered")
-            seal, condition_set_hash = self._verify_eligibility(capability.sample_key)
+            seal, commit_set = self._verify_eligibility(capability.sample_key)
             if (
                 seal.seal_hash != capability.global_seal_hash
-                or condition_set_hash != capability.condition_set_hash
+                or commit_set.seal_hash != capability.condition_set_hash
             ):
                 raise CriterionCapabilityError("Criterion capability no longer matches the seal")
 
@@ -143,6 +147,8 @@ class CriterionGate:
             return VerifiedCriterionAccess(
                 global_seal_hash=capability.global_seal_hash,
                 condition_set_hash=capability.condition_set_hash,
+                global_sealed_at_utc=seal.sealed_at_utc,
+                condition_sealed_at_utc=commit_set.sealed_at_utc,
                 sample_key=capability.sample_key,
                 manifest=manifest,
             )
@@ -150,7 +156,7 @@ class CriterionGate:
     def _verify_eligibility(
         self,
         key: BenchmarkSampleKey,
-    ) -> tuple[GlobalDecisionSeal, str]:
+    ) -> tuple[GlobalDecisionSeal, ConditionCommitSet]:
         try:
             seal = self._global_seals.load()
         except (RuntimeError, ValueError) as error:
@@ -189,7 +195,7 @@ class CriterionGate:
             raise CriterionIneligibleError("Prediction records do not precede the global seal")
         if self._criterion_record_exists(key):
             raise CriterionIneligibleError("Criterion record already exists for this sample")
-        return seal, condition_set_hash
+        return seal, commit_set
 
 
 def _validate_evaluator_manifest(

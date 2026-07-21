@@ -193,7 +193,7 @@ class PairedConditionRunner:
         ] = {
             BenchmarkCondition.DIALOGUE_ONLY: (None, None),
             BenchmarkCondition.PROBE_INFORMED: (
-                _evidence_from_counts(
+                evidence_from_test_counts(
                     passed=probe_evidence.passed,
                     failed=probe_evidence.failed,
                     source="evidence probe",
@@ -201,7 +201,7 @@ class PairedConditionRunner:
                 probe_evidence.summary_hash,
             ),
             BenchmarkCondition.UNRELATED_PROBE: (
-                _evidence_from_counts(
+                evidence_from_test_counts(
                     passed=unrelated_evidence.passed,
                     failed=unrelated_evidence.failed,
                     source="unrelated probe control",
@@ -209,7 +209,7 @@ class PairedConditionRunner:
                 unrelated_evidence.record_hash,
             ),
             BenchmarkCondition.CORRUPTED_PROBE: (
-                _evidence_from_counts(
+                evidence_from_test_counts(
                     passed=corrupted_evidence.passed,
                     failed=corrupted_evidence.failed,
                     source="corrupted probe control",
@@ -306,7 +306,9 @@ class PairedConditionRunner:
             raise ConditionRunError(f"Unknown benchmark case: {case_id}") from error
 
 
-def _evidence_from_counts(*, passed: int, failed: int, source: str) -> Evidence:
+def evidence_from_test_counts(*, passed: int, failed: int, source: str) -> Evidence:
+    """Map normalized test counts to the one frozen evidence vocabulary."""
+
     total = passed + failed
     if total <= 0:
         raise ConditionRunError("Condition evidence requires at least one test result")
