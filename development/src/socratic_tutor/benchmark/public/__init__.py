@@ -27,6 +27,10 @@ from socratic_tutor.benchmark.public.controls import (
     ProbeExecutionSummary,
     UnrelatedControlSpec,
 )
+from socratic_tutor.benchmark.public.datasets import (
+    publish_condition_predictions,
+    read_condition_predictions,
+)
 from socratic_tutor.benchmark.public.global_seal import (
     DecisionRunPlan,
     DecisionRunProvenance,
@@ -150,6 +154,8 @@ __all__ = [
     "prediction_arrow_schema",
     "prediction_arrow_snapshot",
     "prediction_record_hash",
+    "publish_condition_predictions",
+    "read_condition_predictions",
     "sample_key_hash",
     "seal_condition_records",
 ]

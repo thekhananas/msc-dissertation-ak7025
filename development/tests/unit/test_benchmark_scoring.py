@@ -181,6 +181,11 @@ def _baselines(
     )
 
 
+criterion_fixture = _criterion_fixture
+calibration_fixture = _calibration
+baselines_fixture = _baselines
+
+
 def test_completed_criterion_record_derives_outcome_and_is_exactly_once(
     tmp_path: Path,
 ) -> None:
