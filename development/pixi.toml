@@ -76,6 +76,9 @@ cmd = "python scripts/benchmark_cli.py shortcuts --input configs/benchmark/dev-v
 [tasks.benchmark-sensitivity]
 cmd = "python scripts/benchmark_cli.py sensitivity --input configs/benchmark/dev-v0-sensitivity.yaml --output artifacts/benchmark-checks/dev-v0-sensitivity.json"
 
+[tasks.benchmark-design-validate]
+cmd = "python scripts/validate_benchmark_design.py data/benchmark-design/v1/case-allocation.yaml"
+
 [tasks.benchmark-generate]
 cmd = "python scripts/benchmark_generate.py"
 
@@ -90,4 +93,4 @@ cmd = "pnpm --dir apps/web build"
 
 [tasks.check]
 cmd = "python -c \"print('All workspace checks passed')\""
-depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "benchmark-validate", "docs-check", "build-web"]
+depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "benchmark-validate", "benchmark-design-validate", "docs-check", "build-web"]

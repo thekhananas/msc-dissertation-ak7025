@@ -1,0 +1,290 @@
+schema_version: 1
+schema_id: benchmark.design_plan.v1
+benchmark_version: v1
+status: draft
+prepared_at_utc: 2026-08-11T10:50:00Z
+frozen_at_utc: null
+concept_blueprint_ref: concept-blueprint.md
+concept_blueprint_sha256: 6cf9e934d7ab550fa27155e26ec1123a84939a774a5cc6b7357527d3d86ba50e
+
+concepts:
+  - concept_id: assignment-evaluation
+    name: Assignment and expression evaluation
+    misconception_ids:
+      - live-expression-storage
+      - immutable-name-linking
+  - concept_id: object-aliasing
+    name: Object identity and aliasing
+    misconception_ids:
+      - assignment-copies-mutable-object
+      - container-copies-contained-object
+  - concept_id: function-arguments
+    name: Function arguments, mutation, and rebinding
+    misconception_ids:
+      - function-copies-mutable-argument
+      - parameter-rebinds-caller-name
+  - concept_id: conditional-control
+    name: Conditional and short-circuit control flow
+    misconception_ids:
+      - conditional-is-two-independent-checks
+      - boolean-operators-evaluate-both-operands
+
+auxiliary_families:
+  - {split: development, task_family: dev-list-identity, concept_id: object-aliasing, provenance: existing}
+  - {split: development, task_family: dev-missing-values, concept_id: null, provenance: existing}
+  - {split: development, task_family: dev-expression-state, concept_id: assignment-evaluation, provenance: planned}
+  - {split: development, task_family: dev-parameter-locality, concept_id: function-arguments, provenance: planned}
+  - {split: development, task_family: dev-conditional-effects, concept_id: conditional-control, provenance: planned}
+  - {split: calibration, task_family: cal-value-snapshots, concept_id: assignment-evaluation, provenance: planned}
+  - {split: calibration, task_family: cal-object-graphs, concept_id: object-aliasing, provenance: planned}
+  - {split: calibration, task_family: cal-call-sharing, concept_id: function-arguments, provenance: planned}
+  - {split: calibration, task_family: cal-short-circuit, concept_id: conditional-control, provenance: planned}
+
+held_out_cases:
+  - case_id: h-c1m1-01
+    concept_id: assignment-evaluation
+    misconception_id: live-expression-storage
+    task_family: heldout-billing-snapshot
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: supported_mastery
+    evidence_context: Store a delivery quote before its unit price changes.
+    criterion_context: Preserve a temperature adjustment before a sensor reading changes.
+    design_intent: Test whether a computed scalar is a snapshot rather than a live formula.
+  - case_id: h-c1m1-02
+    concept_id: assignment-evaluation
+    misconception_id: live-expression-storage
+    task_family: heldout-record-field-snapshot
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: false_public_mastery
+    evidence_context: Read a numeric field from an order before replacing that field.
+    criterion_context: Save a status string before updating the source record.
+    design_intent: Separate a stored field value from later mutation of its source container.
+  - case_id: h-c1m1-03
+    concept_id: assignment-evaluation
+    misconception_id: live-expression-storage
+    task_family: heldout-capacity-pipeline
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: ambiguous
+    evidence_context: Calculate remaining seats before processing another booking.
+    criterion_context: Calculate available storage before recording another upload.
+    design_intent: Transfer assignment-time evaluation through a short state-update pipeline.
+
+  - case_id: h-c1m2-01
+    concept_id: assignment-evaluation
+    misconception_id: immutable-name-linking
+    task_family: heldout-score-rebinding
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: honest_non_mastery
+    evidence_context: Copy a numeric score and then rebind the original score.
+    criterion_context: Copy a text label and then rebind the original label.
+    design_intent: Test whether rebinding one immutable-value name affects another name.
+  - case_id: h-c1m2-02
+    concept_id: assignment-evaluation
+    misconception_id: immutable-name-linking
+    task_family: heldout-coordinate-rebinding
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: underconfidence
+    evidence_context: Share an immutable coordinate tuple and then replace one name.
+    criterion_context: Share a frozen route tuple and then replace the source route.
+    design_intent: Distinguish shared immutable identity from linked variable slots.
+  - case_id: h-c1m2-03
+    concept_id: assignment-evaluation
+    misconception_id: immutable-name-linking
+    task_family: heldout-rebinding-chain
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: supported_mastery
+    evidence_context: Copy a retry count through three names before rebinding the first.
+    criterion_context: Copy a category code through a short chain before replacing the middle name.
+    design_intent: Test local rebinding effects across more than two names.
+
+  - case_id: h-c2m1-01
+    concept_id: object-aliasing
+    misconception_id: assignment-copies-mutable-object
+    task_family: heldout-dictionary-alias
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: false_public_mastery
+    evidence_context: Assign a settings dictionary to a second name and update one key.
+    criterion_context: Assign a stock-count dictionary to a second name and remove one key.
+    design_intent: Test shared identity without reusing the development list-append example.
+  - case_id: h-c2m1-02
+    concept_id: object-aliasing
+    misconception_id: assignment-copies-mutable-object
+    task_family: heldout-set-alias
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: honest_non_mastery
+    evidence_context: Assign a permissions set to another name and add one permission.
+    criterion_context: Assign a tag set to another name and discard one tag.
+    design_intent: Check that aliasing transfers beyond lists and dictionaries.
+  - case_id: h-c2m1-03
+    concept_id: object-aliasing
+    misconception_id: assignment-copies-mutable-object
+    task_family: heldout-alias-selection
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: underconfidence
+    evidence_context: Choose one of two dictionary aliases and update the selected object.
+    criterion_context: Route a set through a helper name and mutate it after selection.
+    design_intent: Test identity tracking through a small branch without adding algorithms.
+
+  - case_id: h-c2m2-01
+    concept_id: object-aliasing
+    misconception_id: container-copies-contained-object
+    task_family: heldout-nested-record-sharing
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: ambiguous
+    evidence_context: Put a list of labels inside a record and then change the original list.
+    criterion_context: Put a set of roles inside a profile and then change the original set.
+    design_intent: Test whether a container stores a reference to its child object.
+  - case_id: h-c2m2-02
+    concept_id: object-aliasing
+    misconception_id: container-copies-contained-object
+    task_family: heldout-tuple-child-sharing
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: supported_mastery
+    evidence_context: Place a mutable dictionary inside a tuple and update the dictionary.
+    criterion_context: Place a mutable set inside a tuple and update the set.
+    design_intent: Distinguish an immutable outer container from a mutable contained object.
+  - case_id: h-c2m2-03
+    concept_id: object-aliasing
+    misconception_id: container-copies-contained-object
+    task_family: heldout-shared-child-graph
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: honest_non_mastery
+    evidence_context: Store one child record in two parent dictionaries and update the child.
+    criterion_context: Store one member set in two team records and remove a member.
+    design_intent: Track one shared child through two different parent containers.
+
+  - case_id: h-c3m1-01
+    concept_id: function-arguments
+    misconception_id: function-copies-mutable-argument
+    task_family: heldout-function-dictionary-mutation
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: underconfidence
+    evidence_context: Pass a profile dictionary to a function that updates one field.
+    criterion_context: Pass an inventory dictionary to a function that removes one entry.
+    design_intent: Test whether in-place parameter mutation is visible to the caller.
+  - case_id: h-c3m1-02
+    concept_id: function-arguments
+    misconception_id: function-copies-mutable-argument
+    task_family: heldout-function-set-mutation
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: false_public_mastery
+    evidence_context: Pass a set to a helper that adds and then conditionally removes a value.
+    criterion_context: Pass a set to a validator that discards an invalid marker.
+    design_intent: Transfer call sharing to a different mutable type and guarded mutation.
+  - case_id: h-c3m1-03
+    concept_id: function-arguments
+    misconception_id: function-copies-mutable-argument
+    task_family: heldout-nested-function-mutation
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: supported_mastery
+    evidence_context: Pass a nested record to a helper that mutates one contained collection.
+    criterion_context: Pass a configuration tree to two helpers that update the same child mapping.
+    design_intent: Test call sharing together with a contained mutable object.
+
+  - case_id: h-c3m2-01
+    concept_id: function-arguments
+    misconception_id: parameter-rebinds-caller-name
+    task_family: heldout-parameter-dictionary-rebinding
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: honest_non_mastery
+    evidence_context: Reassign a dictionary parameter to a new dictionary inside a function.
+    criterion_context: Reassign a set parameter to a new set inside a helper.
+    design_intent: Test that local parameter rebinding leaves the caller name unchanged.
+  - case_id: h-c3m2-02
+    concept_id: function-arguments
+    misconception_id: parameter-rebinds-caller-name
+    task_family: heldout-parameter-copy-expression
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: ambiguous
+    evidence_context: Rebind a sequence parameter with concatenation rather than mutating it.
+    criterion_context: Rebind a mapping parameter with a merge expression rather than updating it.
+    design_intent: Distinguish new-object expressions from in-place mutation inside a call.
+  - case_id: h-c3m2-03
+    concept_id: function-arguments
+    misconception_id: parameter-rebinds-caller-name
+    task_family: heldout-mixed-mutation-rebinding
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: false_public_mastery
+    evidence_context: Mutate a parameter and then rebind it before returning.
+    criterion_context: Rebind a parameter and then mutate only the replacement object.
+    design_intent: Separate the caller-visible mutation from later local rebinding.
+
+  - case_id: h-c4m1-01
+    concept_id: conditional-control
+    misconception_id: conditional-is-two-independent-checks
+    task_family: heldout-exclusive-status-branch
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: supported_mastery
+    evidence_context: Assign one of two status labels with an if-else statement.
+    criterion_context: Apply one of two delivery fees with an if-else statement.
+    design_intent: Establish that exactly one branch of an if-else statement runs.
+  - case_id: h-c4m1-02
+    concept_id: conditional-control
+    misconception_id: conditional-is-two-independent-checks
+    task_family: heldout-branch-state-change
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: underconfidence
+    evidence_context: Change a balance inside the first branch and observe the chosen result.
+    criterion_context: Change a retry count inside the first branch and observe the fallback flag.
+    design_intent: Distinguish one if-else decision from reevaluating a second independent if.
+  - case_id: h-c4m1-03
+    concept_id: conditional-control
+    misconception_id: conditional-is-two-independent-checks
+    task_family: heldout-nested-exclusive-branch
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: ambiguous
+    evidence_context: Select a category with an outer branch and one nested condition.
+    criterion_context: Select an access level with an outer branch and one nested condition.
+    design_intent: Track exclusive control flow through a small nested decision.
+
+  - case_id: h-c4m2-01
+    concept_id: conditional-control
+    misconception_id: boolean-operators-evaluate-both-operands
+    task_family: heldout-guarded-division
+    transfer_role: direct
+    difficulty: low
+    evidence_pattern: false_public_mastery
+    evidence_context: Guard a division by checking for a nonzero denominator with and.
+    criterion_context: Guard an index access by checking the sequence length with and.
+    design_intent: Test whether a false left operand prevents unsafe right-side evaluation.
+  - case_id: h-c4m2-02
+    concept_id: conditional-control
+    misconception_id: boolean-operators-evaluate-both-operands
+    task_family: heldout-fallback-call
+    transfer_role: boundary
+    difficulty: medium
+    evidence_pattern: honest_non_mastery
+    evidence_context: Use or to skip a fallback function when a cached value is truthy.
+    criterion_context: Use and to skip a logging function when validation fails.
+    design_intent: Make skipped side effects observable without relying only on exceptions.
+  - case_id: h-c4m2-03
+    concept_id: conditional-control
+    misconception_id: boolean-operators-evaluate-both-operands
+    task_family: heldout-short-circuit-chain
+    transfer_role: composed
+    difficulty: high
+    evidence_pattern: underconfidence
+    evidence_context: Evaluate a three-part and chain containing a counted helper call.
+    criterion_context: Evaluate a mixed and-or guard containing two observable helper calls.
+    design_intent: Transfer short-circuit order to a composed expression with visible calls.
