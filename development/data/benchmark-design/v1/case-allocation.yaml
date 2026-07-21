@@ -4,8 +4,6 @@ benchmark_version: v1
 status: draft
 prepared_at_utc: 2026-08-11T10:50:00Z
 frozen_at_utc: null
-concept_blueprint_ref: concept-blueprint.md
-concept_blueprint_sha256: 6cf9e934d7ab550fa27155e26ec1123a84939a774a5cc6b7357527d3d86ba50e
 
 concepts:
   - concept_id: assignment-evaluation
@@ -48,6 +46,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: supported_mastery
+    public_context: Remember a meal-order estimate before the quantity is revised.
     evidence_context: Store a delivery quote before its unit price changes.
     criterion_context: Preserve a temperature adjustment before a sensor reading changes.
     design_intent: Test whether a computed scalar is a snapshot rather than a live formula.
@@ -58,6 +57,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: false_public_mastery
+    public_context: Save a game score before the scoreboard record is corrected.
     evidence_context: Read a numeric field from an order before replacing that field.
     criterion_context: Save a status string before updating the source record.
     design_intent: Separate a stored field value from later mutation of its source container.
@@ -68,6 +68,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: ambiguous
+    public_context: Calculate tickets remaining before another reservation is recorded.
     evidence_context: Calculate remaining seats before processing another booking.
     criterion_context: Calculate available storage before recording another upload.
     design_intent: Transfer assignment-time evaluation through a short state-update pipeline.
@@ -79,6 +80,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: honest_non_mastery
+    public_context: Copy an attendance count and then replace the original count.
     evidence_context: Copy a numeric score and then rebind the original score.
     criterion_context: Copy a text label and then rebind the original label.
     design_intent: Test whether rebinding one immutable-value name affects another name.
@@ -89,6 +91,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: underconfidence
+    public_context: Share an immutable colour tuple and then replace one name.
     evidence_context: Share an immutable coordinate tuple and then replace one name.
     criterion_context: Share a frozen route tuple and then replace the source route.
     design_intent: Distinguish shared immutable identity from linked variable slots.
@@ -99,6 +102,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: supported_mastery
+    public_context: Copy a revision number through three names before replacing one name.
     evidence_context: Copy a retry count through three names before rebinding the first.
     criterion_context: Copy a category code through a short chain before replacing the middle name.
     design_intent: Test local rebinding effects across more than two names.
@@ -110,6 +114,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: false_public_mastery
+    public_context: Assign a shopping-cart dictionary to another name and change a price.
     evidence_context: Assign a settings dictionary to a second name and update one key.
     criterion_context: Assign a stock-count dictionary to a second name and remove one key.
     design_intent: Test shared identity without reusing the development list-append example.
@@ -120,6 +125,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: honest_non_mastery
+    public_context: Assign an attendee set to another name and remove one attendee.
     evidence_context: Assign a permissions set to another name and add one permission.
     criterion_context: Assign a tag set to another name and discard one tag.
     design_intent: Check that aliasing transfers beyond lists and dictionaries.
@@ -130,6 +136,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: underconfidence
+    public_context: Select one of two registry aliases and update the selected dictionary.
     evidence_context: Choose one of two dictionary aliases and update the selected object.
     criterion_context: Route a set through a helper name and mutate it after selection.
     design_intent: Test identity tracking through a small branch without adding algorithms.
@@ -141,6 +148,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: ambiguous
+    public_context: Attach a notes list to a support ticket and then edit the notes.
     evidence_context: Put a list of labels inside a record and then change the original list.
     criterion_context: Put a set of roles inside a profile and then change the original set.
     design_intent: Test whether a container stores a reference to its child object.
@@ -151,6 +159,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: supported_mastery
+    public_context: Put a mutable list inside a tuple and then append to the list.
     evidence_context: Place a mutable dictionary inside a tuple and update the dictionary.
     criterion_context: Place a mutable set inside a tuple and update the set.
     design_intent: Distinguish an immutable outer container from a mutable contained object.
@@ -161,6 +170,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: honest_non_mastery
+    public_context: Store one address record in two accounts and then edit the address.
     evidence_context: Store one child record in two parent dictionaries and update the child.
     criterion_context: Store one member set in two team records and remove a member.
     design_intent: Track one shared child through two different parent containers.
@@ -172,6 +182,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: underconfidence
+    public_context: Pass a preferences dictionary to a helper that changes one option.
     evidence_context: Pass a profile dictionary to a function that updates one field.
     criterion_context: Pass an inventory dictionary to a function that removes one entry.
     design_intent: Test whether in-place parameter mutation is visible to the caller.
@@ -182,6 +193,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: false_public_mastery
+    public_context: Pass a blocked-user set to a helper that removes one user.
     evidence_context: Pass a set to a helper that adds and then conditionally removes a value.
     criterion_context: Pass a set to a validator that discards an invalid marker.
     design_intent: Transfer call sharing to a different mutable type and guarded mutation.
@@ -192,6 +204,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: supported_mastery
+    public_context: Pass a project record through two helpers that edit its task set.
     evidence_context: Pass a nested record to a helper that mutates one contained collection.
     criterion_context: Pass a configuration tree to two helpers that update the same child mapping.
     design_intent: Test call sharing together with a contained mutable object.
@@ -203,6 +216,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: honest_non_mastery
+    public_context: Reassign a list parameter to a new list inside a helper.
     evidence_context: Reassign a dictionary parameter to a new dictionary inside a function.
     criterion_context: Reassign a set parameter to a new set inside a helper.
     design_intent: Test that local parameter rebinding leaves the caller name unchanged.
@@ -213,6 +227,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: ambiguous
+    public_context: Rebind a set parameter with a union expression rather than updating it.
     evidence_context: Rebind a sequence parameter with concatenation rather than mutating it.
     criterion_context: Rebind a mapping parameter with a merge expression rather than updating it.
     design_intent: Distinguish new-object expressions from in-place mutation inside a call.
@@ -223,6 +238,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: false_public_mastery
+    public_context: Rebind a parameter and then mutate the original object through another name.
     evidence_context: Mutate a parameter and then rebind it before returning.
     criterion_context: Rebind a parameter and then mutate only the replacement object.
     design_intent: Separate the caller-visible mutation from later local rebinding.
@@ -234,6 +250,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: supported_mastery
+    public_context: Choose one of two shipping labels with an if-else statement.
     evidence_context: Assign one of two status labels with an if-else statement.
     criterion_context: Apply one of two delivery fees with an if-else statement.
     design_intent: Establish that exactly one branch of an if-else statement runs.
@@ -244,6 +261,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: underconfidence
+    public_context: Change a stock count inside one branch and observe the chosen message.
     evidence_context: Change a balance inside the first branch and observe the chosen result.
     criterion_context: Change a retry count inside the first branch and observe the fallback flag.
     design_intent: Distinguish one if-else decision from reevaluating a second independent if.
@@ -254,6 +272,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: ambiguous
+    public_context: Choose a support priority with an outer branch and one nested check.
     evidence_context: Select a category with an outer branch and one nested condition.
     criterion_context: Select an access level with an outer branch and one nested condition.
     design_intent: Track exclusive control flow through a small nested decision.
@@ -265,6 +284,7 @@ held_out_cases:
     transfer_role: direct
     difficulty: low
     evidence_pattern: false_public_mastery
+    public_context: Guard a dictionary lookup by checking that a key exists with and.
     evidence_context: Guard a division by checking for a nonzero denominator with and.
     criterion_context: Guard an index access by checking the sequence length with and.
     design_intent: Test whether a false left operand prevents unsafe right-side evaluation.
@@ -275,6 +295,7 @@ held_out_cases:
     transfer_role: boundary
     difficulty: medium
     evidence_pattern: honest_non_mastery
+    public_context: Use or to skip a loader when a saved configuration is available.
     evidence_context: Use or to skip a fallback function when a cached value is truthy.
     criterion_context: Use and to skip a logging function when validation fails.
     design_intent: Make skipped side effects observable without relying only on exceptions.
@@ -285,6 +306,7 @@ held_out_cases:
     transfer_role: composed
     difficulty: high
     evidence_pattern: underconfidence
+    public_context: Evaluate a mixed boolean guard containing two counted helper calls.
     evidence_context: Evaluate a three-part and chain containing a counted helper call.
     criterion_context: Evaluate a mixed and-or guard containing two observable helper calls.
     design_intent: Transfer short-circuit order to a composed expression with visible calls.

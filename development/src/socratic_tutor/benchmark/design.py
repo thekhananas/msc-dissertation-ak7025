@@ -9,9 +9,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from socratic_tutor.benchmark.command_io import load_command_model
-from socratic_tutor.benchmark.common import RelativePath, Sha256
 from socratic_tutor.benchmark.evaluator.models import EvidencePattern
-from socratic_tutor.benchmark.hashing import file_sha256
 from socratic_tutor.contracts import ContractModel
 
 _ID_PATTERN = r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
@@ -82,14 +80,20 @@ class HeldOutCaseAllocation(ContractModel):
     transfer_role: TransferRole
     difficulty: DifficultyBand
     evidence_pattern: EvidencePattern
+    public_context: str = Field(min_length=1)
     evidence_context: str = Field(min_length=1)
     criterion_context: str = Field(min_length=1)
     design_intent: str = Field(min_length=1)
 
     @model_validator(mode="after")
     def require_distinct_contexts(self) -> "HeldOutCaseAllocation":
-        if self.evidence_context.casefold() == self.criterion_context.casefold():
-            raise ValueError("Evidence and criterion contexts must differ")
+        contexts = {
+            self.public_context.casefold(),
+            self.evidence_context.casefold(),
+            self.criterion_context.casefold(),
+        }
+        if len(contexts) != 3:
+            raise ValueError("Public, evidence, and criterion contexts must differ")
         return self
 
 
@@ -102,8 +106,6 @@ class BenchmarkDesignPlan(ContractModel):
     status: DesignStatus
     prepared_at_utc: datetime
     frozen_at_utc: datetime | None = None
-    concept_blueprint_ref: RelativePath
-    concept_blueprint_sha256: Sha256
     concepts: tuple[ConceptDesign, ...] = Field(min_length=4, max_length=4)
     auxiliary_families: tuple[AuxiliaryFamilyReservation, ...] = Field(min_length=1)
     held_out_cases: tuple[HeldOutCaseAllocation, ...] = Field(min_length=24, max_length=24)
@@ -185,33 +187,20 @@ class BenchmarkDesignPlan(ContractModel):
                     f"Concept {concept_id} requires development and calibration families"
                 )
 
-        evidence_contexts = [case.evidence_context.casefold() for case in self.held_out_cases]
-        criterion_contexts = [case.criterion_context.casefold() for case in self.held_out_cases]
-        if len(set(evidence_contexts)) != len(evidence_contexts):
-            raise ValueError("Evidence contexts must be unique")
-        if len(set(criterion_contexts)) != len(criterion_contexts):
-            raise ValueError("Criterion contexts must be unique")
+        all_contexts = [
+            context.casefold()
+            for case in self.held_out_cases
+            for context in (case.public_context, case.evidence_context, case.criterion_context)
+        ]
+        if len(set(all_contexts)) != len(all_contexts):
+            raise ValueError("All public, evidence, and criterion contexts must be unique")
         return self
 
 
-class BenchmarkDesignReadError(RuntimeError):
-    """The allocation or its approved blueprint cannot be verified."""
+def load_design(path: Path) -> BenchmarkDesignPlan:
+    """Load and validate the self-contained benchmark allocation."""
 
-
-def load_and_verify_design(path: Path) -> BenchmarkDesignPlan:
-    """Load a design and verify the exact concept blueprint bytes it references."""
-
-    plan = load_command_model(path, BenchmarkDesignPlan)
-    blueprint_path = path.parent / plan.concept_blueprint_ref
-    try:
-        blueprint_content = blueprint_path.read_bytes()
-    except OSError as error:
-        raise BenchmarkDesignReadError(
-            f"Could not read concept blueprint: {blueprint_path}"
-        ) from error
-    if file_sha256(blueprint_content) != plan.concept_blueprint_sha256:
-        raise BenchmarkDesignReadError("Concept blueprint hash does not match the design plan")
-    return plan
+    return load_command_model(path, BenchmarkDesignPlan)
 
 
 def _is_valid_id(value: str) -> bool:
