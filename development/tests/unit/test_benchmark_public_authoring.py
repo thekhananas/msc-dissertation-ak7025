@@ -12,10 +12,10 @@ BENCHMARK_ROOT = WORKSPACE_ROOT / "data" / "benchmarks" / "v1"
 
 def test_authored_public_and_evidence_files_are_separate_and_policy_safe() -> None:
     plan = load_design(DESIGN_PATH)
-    authored_concepts = {"assignment-evaluation", "object-aliasing"}
+    authored_concepts = {"assignment-evaluation", "function-arguments", "object-aliasing"}
     cases = tuple(case for case in plan.held_out_cases if case.concept_id in authored_concepts)
 
-    assert len(cases) == 12
+    assert len(cases) == 18
     for case in cases:
         public = _read(f"public/{case.case_id}-dialogue.md")
         evidence = _read(f"evidence/{case.case_id}-prompt.md")
