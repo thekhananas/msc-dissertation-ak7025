@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: old_label
+checks:
+  - name: replacement_leaves_old_value_available
+    args: {current: pending, replacement: complete}
+    expected: pending
+  - name: empty_old_value_is_still_a_value
+    args: {current: '', replacement: ready}
+    expected: ''
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

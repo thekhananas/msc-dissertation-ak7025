@@ -1,0 +1,12 @@
+schema_id: benchmark.authored_tests.v1
+function: retained_revision
+checks:
+  - name: chained_value_survives_rebinding
+    args: {first: 2, second: 9}
+    expected: 9
+  - name: zero_is_retained_as_a_value
+    args: {first: 4, second: 0}
+    expected: 0
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute

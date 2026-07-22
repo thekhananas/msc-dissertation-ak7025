@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: availability_before_sale
+checks:
+  - name: later_sale_does_not_change_availability
+    args: {total: 40, sold: 12, additional_sale: 5}
+    expected: 28
+  - name: zero_additional_sale_keeps_availability
+    args: {total: 10, sold: 3, additional_sale: 0}
+    expected: 7
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

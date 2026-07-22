@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: previous_route
+checks:
+  - name: replacement_route_is_not_returned
+    args: {route: [north, east], replacement: [south, west]}
+    expected: [north, east]
+  - name: tuple_value_is_retained
+    args: {route: [home, library], replacement: [home, lab]}
+    expected: [home, library]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+
