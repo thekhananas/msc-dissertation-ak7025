@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: remove_stock_item
+checks:
+  - name: removal_is_visible_through_original_mapping
+    args: {stock: {notebook: 4, pen: 2}, item: pen}
+    expected: {notebook: 4}
+  - name: another_item_can_be_removed
+    args: {stock: {book: 1, card: 3}, item: book}
+    expected: {card: 3}
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

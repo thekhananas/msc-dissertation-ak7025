@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: discard_tag
+checks:
+  - name: discarded_tag_is_absent
+    args: {tags: [urgent, new, review], tag: new}
+    expected: [review, urgent]
+  - name: another_tag_can_be_discarded
+    args: {tags: [blue, green, red], tag: green}
+    expected: [blue, red]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

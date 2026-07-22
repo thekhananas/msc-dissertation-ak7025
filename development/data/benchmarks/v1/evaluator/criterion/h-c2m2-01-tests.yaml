@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: remove_role
+checks:
+  - name: profile_sees_role_removal
+    args: {profile: {roles: [reader, reviewer, writer]}, role: reviewer}
+    expected: [reader, writer]
+  - name: another_role_can_be_removed
+    args: {profile: {roles: [admin, auditor]}, role: admin}
+    expected: [auditor]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

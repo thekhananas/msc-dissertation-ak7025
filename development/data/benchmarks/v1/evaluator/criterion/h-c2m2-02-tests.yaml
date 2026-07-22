@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: add_step
+checks:
+  - name: tuple_child_list_is_updated
+    args: {progress: [[draft], active], step: review}
+    expected: [draft, review]
+  - name: second_child_update_is_visible
+    args: {progress: [[queued], waiting], step: sent}
+    expected: [queued, sent]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

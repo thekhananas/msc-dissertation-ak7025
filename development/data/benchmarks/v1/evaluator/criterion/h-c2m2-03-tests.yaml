@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: remove_team_member
+checks:
+  - name: shared_member_is_removed_from_platform
+    args: {teams: {platform: {members: [Ari, Bo, Cy]}, support: {members: [Ari, Bo, Cy]}}, member: Bo}
+    expected: [Ari, Cy]
+  - name: another_shared_member_is_removed
+    args: {teams: {platform: {members: [Lin, Mei]}, support: {members: [Lin, Mei]}}, member: Lin}
+    expected: [Mei]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

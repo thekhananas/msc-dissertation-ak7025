@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: increment_selected
+checks:
+  - name: secondary_registry_is_selected
+    args: {registries: {primary: {jobs: 2}, secondary: {jobs: 7}}, use_primary: false}
+    expected: [2, 8]
+  - name: primary_registry_is_selected
+    args: {registries: {primary: {jobs: 2}, secondary: {jobs: 7}}, use_primary: true}
+    expected: [3, 7]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+
