@@ -26,6 +26,8 @@ def test_c1_criterion_probes_are_structurally_distinct_and_tested() -> None:
     for case in cases:
         prompt = _read(CRITERION_ROOT / "criterion" / f"{case.case_id}-prompt.md")
         tests = yaml.safe_load(_read(CRITERION_ROOT / "criterion" / f"{case.case_id}-tests.yaml"))
+        rubric = yaml.safe_load(_read(CRITERION_ROOT / "criterion" / f"{case.case_id}-rubric.yaml"))
+        rationale = _read(CRITERION_ROOT / "criterion" / f"{case.case_id}-label-rationale.md")
         structural = _read(CRITERION_ROOT / "structural" / f"{case.case_id}.md")
         evidence = _read(PUBLIC_ROOT / "evidence" / f"{case.case_id}-prompt.md")
 
@@ -36,6 +38,11 @@ def test_c1_criterion_probes_are_structurally_distinct_and_tested() -> None:
         assert function_names == [tests["function"]]
         assert tests["schema_id"] == "benchmark.authored_tests.v1"
         assert len(tests["checks"]) >= 2
+        assert rubric["schema_id"] == "benchmark.criterion_rubric.v1"
+        assert rubric["true_when"] == "all_authored_tests_pass"
+        assert rubric["false_when"] == "any_authored_test_fails"
+        assert rubric["null_when"] == "execution_is_unavailable"
+        assert "not evidence of general mastery" in rationale
         assert "held-out task" in structural
         assert tests["function"] not in evidence
         public = _read(PUBLIC_ROOT / "public" / f"{case.case_id}-dialogue.md")
