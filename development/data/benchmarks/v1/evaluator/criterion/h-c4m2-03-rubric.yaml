@@ -1,0 +1,6 @@
+schema_id: benchmark.criterion_rubric.v1
+label: demonstrated_performance_on_approval_chain_task
+true_when: all_authored_tests_pass
+false_when: any_authored_test_fails
+null_when: execution_is_unavailable
+
