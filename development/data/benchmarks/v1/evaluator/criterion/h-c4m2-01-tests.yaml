@@ -1,0 +1,16 @@
+schema_id: benchmark.authored_tests.v1
+function: has_named_owner
+checks:
+  - name: matching_owner_is_true
+    args: {record: {owner: Ari}, initial: A}
+    expected: true
+  - name: missing_owner_is_false
+    args: {record: {}, initial: A}
+    expected: false
+  - name: different_owner_is_false
+    args: {record: {owner: Bo}, initial: A}
+    expected: false
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

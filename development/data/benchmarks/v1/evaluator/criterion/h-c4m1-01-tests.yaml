@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: delivery_band
+checks:
+  - name: express_delivery_uses_priority
+    args: {weight: 3, express: true}
+    expected: priority
+  - name: ordinary_delivery_uses_standard
+    args: {weight: 3, express: false}
+    expected: standard
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

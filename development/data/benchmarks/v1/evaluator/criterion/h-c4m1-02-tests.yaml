@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: balance_state
+checks:
+  - name: negative_balance_is_reset
+    args: {balance: -3}
+    expected: [reset, 0]
+  - name: nonnegative_balance_is_kept
+    args: {balance: 4}
+    expected: [kept, 4]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

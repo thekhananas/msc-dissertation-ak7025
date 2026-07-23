@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: cached_theme
+checks:
+  - name: saved_theme_skips_loader
+    args: {saved: dark, calls: []}
+    expected: [dark, []]
+  - name: empty_theme_records_loader
+    args: {saved: '', calls: []}
+    expected: [loaded, [load]]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: approval_chain
+checks:
+  - name: failed_first_check_skips_second_and_checks_third
+    args: {first: false, second: true, third: true}
+    expected: [true, [first, third]]
+  - name: failed_second_check_skips_third
+    args: {first: true, second: false, third: true}
+    expected: [false, [first, second]]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

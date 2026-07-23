@@ -1,0 +1,16 @@
+schema_id: benchmark.authored_tests.v1
+function: service_tier
+checks:
+  - name: inactive_request_is_closed
+    args: {active: false, delay_minutes: 20}
+    expected: closed
+  - name: delayed_active_request_is_priority
+    args: {active: true, delay_minutes: 5}
+    expected: priority
+  - name: short_active_request_is_normal
+    args: {active: true, delay_minutes: 2}
+    expected: normal
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+
