@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: remove_member
+checks:
+  - name: supplied_collection_loses_member
+    args: {members: [Ari, Bo, Cy], member: Bo}
+    expected: [Ari, Cy]
+  - name: another_member_can_be_removed
+    args: {members: [Lin, Mei, Noor], member: Lin}
+    expected: [Mei, Noor]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

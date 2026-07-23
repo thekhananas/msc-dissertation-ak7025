@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: replace_queue
+checks:
+  - name: original_queue_is_unchanged
+    args: {queue: [old], replacement: [new]}
+    expected: [[old], [new]]
+  - name: longer_replacement_is_returned
+    args: {queue: [a, b], replacement: [c, d, e]}
+    expected: [[a, b], [c, d, e]]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

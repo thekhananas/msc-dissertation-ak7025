@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: complete_task
+checks:
+  - name: nested_state_is_updated
+    args: {project: {tasks: [plan], status: active}, task: build}
+    expected: {tasks: [plan, build], status: complete}
+  - name: another_project_is_updated
+    args: {project: {tasks: [], status: active}, task: test}
+    expected: {tasks: [test], status: complete}
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: mark_inventory
+checks:
+  - name: supplied_mapping_receives_item
+    args: {inventory: {book: false}, item: pen}
+    expected: {book: false, pen: true}
+  - name: existing_item_is_marked
+    args: {inventory: {book: false, pen: false}, item: pen}
+    expected: {book: false, pen: true}
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+

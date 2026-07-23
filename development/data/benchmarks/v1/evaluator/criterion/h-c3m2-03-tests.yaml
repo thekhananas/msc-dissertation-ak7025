@@ -1,0 +1,13 @@
+schema_id: benchmark.authored_tests.v1
+function: split_buffer
+checks:
+  - name: original_and_replacement_are_separate
+    args: {values: [start]}
+    expected: [[start, shared], [local, replacement]]
+  - name: another_buffer_is_split
+    args: {values: [base, ready]}
+    expected: [[base, ready, shared], [local, replacement]]
+scoring:
+  demonstrated_mastery: all_checks_pass
+  missing: submission_does_not_execute
+
