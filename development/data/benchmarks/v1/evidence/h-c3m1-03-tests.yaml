@@ -1,6 +1,5 @@
 schema_id: benchmark.authored_tests.v1
 function: predicted_item_meta
 checks:
-  - expected: [[checked], 2]
+  - expected: [[checked, new], 2]
 scoring: {demonstrated: all_checks_pass}
-

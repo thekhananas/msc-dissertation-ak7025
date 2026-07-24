@@ -1728,8 +1728,8 @@ files:
 - path: evidence/h-c3m1-03-tests.yaml
   artifact_class: evidence_test
   schema_id: benchmark.authored_tests.v1
-  sha256: 640655e7f195dfbbb4c4ecfc0867135fbd91526ee5262bfe585edb49fe502d9e
-  byte_size: 148
+  sha256: 4e4da4241bae2716d81999c25d3da39f95af88286efc926f85506caccc06c349
+  byte_size: 152
 - path: evidence/h-c3m2-01-prompt.md
   artifact_class: evidence_probe
   schema_id: benchmark.evidence_probe.v1
@@ -2475,7 +2475,7 @@ reviews:
   - path: evidence/h-c3m1-03-prompt.md
     sha256: e58f475f0a9f8f29f9c86bd8cd2e1400045e49ffbaea76b4a5cd71782b805cf8
   - path: evidence/h-c3m1-03-tests.yaml
-    sha256: 640655e7f195dfbbb4c4ecfc0867135fbd91526ee5262bfe585edb49fe502d9e
+    sha256: 4e4da4241bae2716d81999c25d3da39f95af88286efc926f85506caccc06c349
   - path: evaluator/criterion/h-c3m1-03-prompt.md
     sha256: de55b313129632d2e7b398606a8b0f17d1a17a93fca34a79e29b198f0a0e540d
   - path: evaluator/criterion/h-c3m1-03-tests.yaml
