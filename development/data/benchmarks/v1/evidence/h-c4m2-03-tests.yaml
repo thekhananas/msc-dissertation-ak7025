@@ -1,0 +1,5 @@
+schema_id: benchmark.authored_tests.v1
+function: predicted_boolean_chain
+checks:
+  - expected: [false, [first, second]]
+scoring: {demonstrated: all_checks_pass}

@@ -1,0 +1,6 @@
+schema_id: benchmark.authored_tests.v1
+function: predicted_retry_values
+checks:
+  - expected: [4, 6, 1]
+scoring: {demonstrated: all_checks_pass}
+

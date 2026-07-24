@@ -1,0 +1,18 @@
+schema_id: benchmark.split_inventory.v1
+splits:
+  held_out:
+    - heldout-assignment-evaluation
+    - heldout-object-aliasing
+    - heldout-function-arguments
+    - heldout-conditional-control
+  development:
+    - dev-expression-state
+    - dev-parameter-locality
+    - dev-conditional-effects
+    - dev-list-identity
+    - dev-missing-values
+  calibration:
+    - cal-value-snapshots
+    - cal-object-graphs
+    - cal-call-sharing
+    - cal-short-circuit

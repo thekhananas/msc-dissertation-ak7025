@@ -1,0 +1,6 @@
+schema_id: benchmark.authored_tests.v1
+function: predicted_score_values
+checks:
+  - expected: [14, 20]
+scoring: {demonstrated: all_checks_pass}
+

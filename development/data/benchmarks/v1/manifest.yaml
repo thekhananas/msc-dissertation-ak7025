@@ -1,0 +1,2819 @@
+schema_version: 1
+schema_id: benchmark.manifest.v1
+benchmark_version: v1
+status: draft
+frozen_at_utc: null
+parent_version: null
+manifest_hash: null
+conditions:
+- dialogue_only
+- probe_informed
+- unrelated_probe
+- corrupted_probe
+cases:
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c1m1-01
+    task_family: heldout-billing-snapshot
+    split: held_out
+    target_concept: assignment-evaluation
+    public_fixture_ref: public/h-c1m1-01-dialogue.md
+    evidence_probe_ref: evidence/h-c1m1-01-prompt.md
+    evidence_test_ref: evidence/h-c1m1-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: f48c025a2dd0a56e2f8438b2920275226619bc64c53be27520bc893fa22d82d4
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c1m1-01
+    misconception_id: live-expression-storage
+    transfer_case_id: heldout-billing-snapshot
+    evidence_pattern: supported_mastery
+    criterion_probe_id: h-c1m1-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c1m1-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c1m1-01-tests.yaml
+    test_bundle_sha256: ab2a5438117c547224b1708ca6c7ca02ac1b5d94ec24abb489ec142decbc8d85
+    rubric_ref: evaluator/criterion/h-c1m1-01-rubric.yaml
+    rubric_sha256: 2a07b471928cc3c4a5e0fa4e3a2fef9978f9dd403e441c776a7bea7e9e13627f
+    label_rationale_ref: evaluator/criterion/h-c1m1-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c1m1-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c1m1-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c1m1-02
+    task_family: heldout-record-field-snapshot
+    split: held_out
+    target_concept: assignment-evaluation
+    public_fixture_ref: public/h-c1m1-02-dialogue.md
+    evidence_probe_ref: evidence/h-c1m1-02-prompt.md
+    evidence_test_ref: evidence/h-c1m1-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: deae2012491b8c064d23b145dd4cbe0f3af88cb769a267d2b9f8afe7e09e34cc
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c1m1-02
+    misconception_id: live-expression-storage
+    transfer_case_id: heldout-record-field-snapshot
+    evidence_pattern: false_public_mastery
+    criterion_probe_id: h-c1m1-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c1m1-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c1m1-02-tests.yaml
+    test_bundle_sha256: a1db975afef1fe37d8317b4dd8da0ba3dde532a38b379612251330b0df0058c9
+    rubric_ref: evaluator/criterion/h-c1m1-02-rubric.yaml
+    rubric_sha256: 7a5e09c5f55db498b1763c63938d6661b0a1a807b7aa5d34600415c182264f18
+    label_rationale_ref: evaluator/criterion/h-c1m1-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c1m1-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c1m1-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c1m1-03
+    task_family: heldout-capacity-pipeline
+    split: held_out
+    target_concept: assignment-evaluation
+    public_fixture_ref: public/h-c1m1-03-dialogue.md
+    evidence_probe_ref: evidence/h-c1m1-03-prompt.md
+    evidence_test_ref: evidence/h-c1m1-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: aa78ed925eedaa254db8e90dac5de2ce29981ded6f577e143d715a28d4c0b03d
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c1m1-03
+    misconception_id: live-expression-storage
+    transfer_case_id: heldout-capacity-pipeline
+    evidence_pattern: ambiguous
+    criterion_probe_id: h-c1m1-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c1m1-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c1m1-03-tests.yaml
+    test_bundle_sha256: d4109b4d891b5f068d9782723198e47cc52b3114436f4e16909a8852869aecab
+    rubric_ref: evaluator/criterion/h-c1m1-03-rubric.yaml
+    rubric_sha256: be98f786c62572414c2679bc06c142f70f7ee37dd59900b180c3c31219f475b6
+    label_rationale_ref: evaluator/criterion/h-c1m1-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c1m1-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c1m1-03.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c1m2-01
+    task_family: heldout-score-rebinding
+    split: held_out
+    target_concept: assignment-evaluation
+    public_fixture_ref: public/h-c1m2-01-dialogue.md
+    evidence_probe_ref: evidence/h-c1m2-01-prompt.md
+    evidence_test_ref: evidence/h-c1m2-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: fe962dd7f339fbe564c6a537c04c0b037bf317131d4b1fb8d7f362180e40cd96
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c1m2-01
+    misconception_id: immutable-name-linking
+    transfer_case_id: heldout-score-rebinding
+    evidence_pattern: honest_non_mastery
+    criterion_probe_id: h-c1m2-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c1m2-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c1m2-01-tests.yaml
+    test_bundle_sha256: 1e1a1f5d0521ea98f56fe1ceb1f521b70c1a24e1f0cf57adc58ee3f1ff6dfabc
+    rubric_ref: evaluator/criterion/h-c1m2-01-rubric.yaml
+    rubric_sha256: 194bdd96814190db8e05a425067e72c923ec28bda57cb435a0abc242d548f5b4
+    label_rationale_ref: evaluator/criterion/h-c1m2-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c1m2-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c1m2-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c1m2-02
+    task_family: heldout-coordinate-rebinding
+    split: held_out
+    target_concept: assignment-evaluation
+    public_fixture_ref: public/h-c1m2-02-dialogue.md
+    evidence_probe_ref: evidence/h-c1m2-02-prompt.md
+    evidence_test_ref: evidence/h-c1m2-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 5d535cd818148a3cb1e852a1446d79bfe09ff659cd864efdd69b5690ab79720d
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c1m2-02
+    misconception_id: immutable-name-linking
+    transfer_case_id: heldout-coordinate-rebinding
+    evidence_pattern: underconfidence
+    criterion_probe_id: h-c1m2-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c1m2-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c1m2-02-tests.yaml
+    test_bundle_sha256: 4ba8dd81fa5830d733020b84f3a4545fa7e5b5147d5dd65b182fe94dea57257f
+    rubric_ref: evaluator/criterion/h-c1m2-02-rubric.yaml
+    rubric_sha256: 4df76a9fa43a873202cb276588aca9537196840e77d83e9668d8397a8ac26f84
+    label_rationale_ref: evaluator/criterion/h-c1m2-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c1m2-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c1m2-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c1m2-03
+    task_family: heldout-rebinding-chain
+    split: held_out
+    target_concept: assignment-evaluation
+    public_fixture_ref: public/h-c1m2-03-dialogue.md
+    evidence_probe_ref: evidence/h-c1m2-03-prompt.md
+    evidence_test_ref: evidence/h-c1m2-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: aa6454d07c127f13d2a8949d2118f250931c74ffb0df6d82ab9dc95bb4c443db
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c1m2-03
+    misconception_id: immutable-name-linking
+    transfer_case_id: heldout-rebinding-chain
+    evidence_pattern: supported_mastery
+    criterion_probe_id: h-c1m2-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c1m2-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c1m2-03-tests.yaml
+    test_bundle_sha256: d328a38755305d2eea2f1fcf78a02e82b5427e182ab3f034f2b73bcdd5658d9f
+    rubric_ref: evaluator/criterion/h-c1m2-03-rubric.yaml
+    rubric_sha256: c23e54583de18e0dd754d9a36beabbfbbdd70537d055788b9d1c36f092f196be
+    label_rationale_ref: evaluator/criterion/h-c1m2-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c1m2-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c1m2-03.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c2m1-01
+    task_family: heldout-dictionary-alias
+    split: held_out
+    target_concept: object-aliasing
+    public_fixture_ref: public/h-c2m1-01-dialogue.md
+    evidence_probe_ref: evidence/h-c2m1-01-prompt.md
+    evidence_test_ref: evidence/h-c2m1-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 3058436d1a1e319e72ab7c5ee362e5287f3259fb198695438fdca18e75ffc836
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c2m1-01
+    misconception_id: assignment-copies-mutable-object
+    transfer_case_id: heldout-dictionary-alias
+    evidence_pattern: false_public_mastery
+    criterion_probe_id: h-c2m1-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c2m1-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c2m1-01-tests.yaml
+    test_bundle_sha256: 334fdab00133739d0439ff3e821dd9731eefe84e28dff1ff4e185bfdfd3db92f
+    rubric_ref: evaluator/criterion/h-c2m1-01-rubric.yaml
+    rubric_sha256: 5cd7250a3710312250bd619b2c8ac05607ea86d303d16bd43df1b104aa16a5ab
+    label_rationale_ref: evaluator/criterion/h-c2m1-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c2m1-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c2m1-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c2m1-02
+    task_family: heldout-set-alias
+    split: held_out
+    target_concept: object-aliasing
+    public_fixture_ref: public/h-c2m1-02-dialogue.md
+    evidence_probe_ref: evidence/h-c2m1-02-prompt.md
+    evidence_test_ref: evidence/h-c2m1-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: dac83cb7047ca36f9a4587878ba95779ccc19953c83ee63fe8e47f0bf8674ab8
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c2m1-02
+    misconception_id: assignment-copies-mutable-object
+    transfer_case_id: heldout-set-alias
+    evidence_pattern: honest_non_mastery
+    criterion_probe_id: h-c2m1-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c2m1-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c2m1-02-tests.yaml
+    test_bundle_sha256: 4681487b60073bee1668bc9d623d52319fdc0c681f7dd0ab2ff38d357dc181c5
+    rubric_ref: evaluator/criterion/h-c2m1-02-rubric.yaml
+    rubric_sha256: 077a424320b8c00fc8f4605d21ea9cfb507909dfca040bd96ffdad28dd5c8bee
+    label_rationale_ref: evaluator/criterion/h-c2m1-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c2m1-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c2m1-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c2m1-03
+    task_family: heldout-alias-selection
+    split: held_out
+    target_concept: object-aliasing
+    public_fixture_ref: public/h-c2m1-03-dialogue.md
+    evidence_probe_ref: evidence/h-c2m1-03-prompt.md
+    evidence_test_ref: evidence/h-c2m1-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 9343ece6cf7891293aa722a4d9a64502c9bafc5960c904f5cbf3b239c5fa73c6
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c2m1-03
+    misconception_id: assignment-copies-mutable-object
+    transfer_case_id: heldout-alias-selection
+    evidence_pattern: underconfidence
+    criterion_probe_id: h-c2m1-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c2m1-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c2m1-03-tests.yaml
+    test_bundle_sha256: 155b433d84e22ec9952a68db538f7f47aed318774b7dd5cb6b375080df17e56e
+    rubric_ref: evaluator/criterion/h-c2m1-03-rubric.yaml
+    rubric_sha256: 4715a69ea3a14639ff906f50ade41429d15f4819f3dad5803b1138be6d493b48
+    label_rationale_ref: evaluator/criterion/h-c2m1-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c2m1-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c2m1-03.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c2m2-01
+    task_family: heldout-nested-record-sharing
+    split: held_out
+    target_concept: object-aliasing
+    public_fixture_ref: public/h-c2m2-01-dialogue.md
+    evidence_probe_ref: evidence/h-c2m2-01-prompt.md
+    evidence_test_ref: evidence/h-c2m2-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: ae982d4fe3fb86b8a89c12157a383b4364005dd7ba5fcd889cc292f3a9828bd5
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c2m2-01
+    misconception_id: container-copies-contained-object
+    transfer_case_id: heldout-nested-record-sharing
+    evidence_pattern: ambiguous
+    criterion_probe_id: h-c2m2-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c2m2-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c2m2-01-tests.yaml
+    test_bundle_sha256: 3996ced604f42a7eec69d5f10fbc6bcabeeaa7dba137911c1df126073e9809ce
+    rubric_ref: evaluator/criterion/h-c2m2-01-rubric.yaml
+    rubric_sha256: 3bb8050d5aebbf24154fd33e0c5f6d1dec712b68ee9cd98c9ad8a8eafb94480c
+    label_rationale_ref: evaluator/criterion/h-c2m2-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c2m2-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c2m2-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c2m2-02
+    task_family: heldout-tuple-child-sharing
+    split: held_out
+    target_concept: object-aliasing
+    public_fixture_ref: public/h-c2m2-02-dialogue.md
+    evidence_probe_ref: evidence/h-c2m2-02-prompt.md
+    evidence_test_ref: evidence/h-c2m2-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 6012ad94208b62ecc81362afd92e5b711cfa48f3b157bf3aa433de3d02f28b15
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c2m2-02
+    misconception_id: container-copies-contained-object
+    transfer_case_id: heldout-tuple-child-sharing
+    evidence_pattern: supported_mastery
+    criterion_probe_id: h-c2m2-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c2m2-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c2m2-02-tests.yaml
+    test_bundle_sha256: 632c6f316dd5c40ae3111ae2dbe2b6b15946b0431b107b44957fc4e4073dd367
+    rubric_ref: evaluator/criterion/h-c2m2-02-rubric.yaml
+    rubric_sha256: 1b6a8f43823aa1c2d9877618832e4d2af05b92e87bcc5ef2f7a7253ba200c2eb
+    label_rationale_ref: evaluator/criterion/h-c2m2-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c2m2-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c2m2-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c2m2-03
+    task_family: heldout-shared-child-graph
+    split: held_out
+    target_concept: object-aliasing
+    public_fixture_ref: public/h-c2m2-03-dialogue.md
+    evidence_probe_ref: evidence/h-c2m2-03-prompt.md
+    evidence_test_ref: evidence/h-c2m2-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 4cd07956e23bdef88d543074489e1ac21792cc5c2a24061dd3c3577fe5f16387
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c2m2-03
+    misconception_id: container-copies-contained-object
+    transfer_case_id: heldout-shared-child-graph
+    evidence_pattern: honest_non_mastery
+    criterion_probe_id: h-c2m2-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c2m2-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c2m2-03-tests.yaml
+    test_bundle_sha256: 647395780b23d05a23c4c088335d099573cfa1e783c35ecb7c439b82a5e2be77
+    rubric_ref: evaluator/criterion/h-c2m2-03-rubric.yaml
+    rubric_sha256: b41633ebd6136e7b3de911a4c10259b6dee5e5c09755a28e5ea97937754c624d
+    label_rationale_ref: evaluator/criterion/h-c2m2-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c2m2-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c2m2-03.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c3m1-01
+    task_family: heldout-function-dictionary-mutation
+    split: held_out
+    target_concept: function-arguments
+    public_fixture_ref: public/h-c3m1-01-dialogue.md
+    evidence_probe_ref: evidence/h-c3m1-01-prompt.md
+    evidence_test_ref: evidence/h-c3m1-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: a198216894ff298e04a439cfdb963bab6b6607d2469bb620692a3161e392a6ac
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c3m1-01
+    misconception_id: function-copies-mutable-argument
+    transfer_case_id: heldout-function-dictionary-mutation
+    evidence_pattern: underconfidence
+    criterion_probe_id: h-c3m1-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c3m1-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c3m1-01-tests.yaml
+    test_bundle_sha256: 9736bb80022095e25e6639fa766fc64bc90d7bdcbd214d9bdd81020cadfb60e2
+    rubric_ref: evaluator/criterion/h-c3m1-01-rubric.yaml
+    rubric_sha256: 555d9f91cfd77b90cd66659b8a8af878af6ce6f43dda44dd933d21862f8b2056
+    label_rationale_ref: evaluator/criterion/h-c3m1-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c3m1-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c3m1-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c3m1-02
+    task_family: heldout-function-set-mutation
+    split: held_out
+    target_concept: function-arguments
+    public_fixture_ref: public/h-c3m1-02-dialogue.md
+    evidence_probe_ref: evidence/h-c3m1-02-prompt.md
+    evidence_test_ref: evidence/h-c3m1-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 26e8d77fef351f5c1ebd8e49968cf50b5666ffa35d7789bca7b57215cfbe458c
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c3m1-02
+    misconception_id: function-copies-mutable-argument
+    transfer_case_id: heldout-function-set-mutation
+    evidence_pattern: false_public_mastery
+    criterion_probe_id: h-c3m1-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c3m1-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c3m1-02-tests.yaml
+    test_bundle_sha256: 427257b2041497e03d2965c32cea4e271673e977282d6a9e632db577a7ca103c
+    rubric_ref: evaluator/criterion/h-c3m1-02-rubric.yaml
+    rubric_sha256: 3b3939f851042939b83608631e95cf664c72407baad8cf7c61a841d89bd86149
+    label_rationale_ref: evaluator/criterion/h-c3m1-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c3m1-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c3m1-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c3m1-03
+    task_family: heldout-nested-function-mutation
+    split: held_out
+    target_concept: function-arguments
+    public_fixture_ref: public/h-c3m1-03-dialogue.md
+    evidence_probe_ref: evidence/h-c3m1-03-prompt.md
+    evidence_test_ref: evidence/h-c3m1-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 563fba3a9d7d11f6dffbb41a28701870160d09cba5585453e4f804e5190e803c
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c3m1-03
+    misconception_id: function-copies-mutable-argument
+    transfer_case_id: heldout-nested-function-mutation
+    evidence_pattern: supported_mastery
+    criterion_probe_id: h-c3m1-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c3m1-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c3m1-03-tests.yaml
+    test_bundle_sha256: 1154e2e5ba156f3d0079259c150b59c522a8db8e6db5f067d065bd06ef215232
+    rubric_ref: evaluator/criterion/h-c3m1-03-rubric.yaml
+    rubric_sha256: 3a64b756c026eb2aef44833b4313ddb3504940c71d1773fd471aae27c85a03e0
+    label_rationale_ref: evaluator/criterion/h-c3m1-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c3m1-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c3m1-03.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c3m2-01
+    task_family: heldout-parameter-dictionary-rebinding
+    split: held_out
+    target_concept: function-arguments
+    public_fixture_ref: public/h-c3m2-01-dialogue.md
+    evidence_probe_ref: evidence/h-c3m2-01-prompt.md
+    evidence_test_ref: evidence/h-c3m2-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: e44c7681005d24765e314706a7fd47e043845d1a771263937d90ee1bb7efb155
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c3m2-01
+    misconception_id: parameter-rebinds-caller-name
+    transfer_case_id: heldout-parameter-dictionary-rebinding
+    evidence_pattern: honest_non_mastery
+    criterion_probe_id: h-c3m2-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c3m2-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c3m2-01-tests.yaml
+    test_bundle_sha256: cbaeebb9b241c73b6946a6930525fe3df1497757a39a1d0fdb25450c6abd4c39
+    rubric_ref: evaluator/criterion/h-c3m2-01-rubric.yaml
+    rubric_sha256: decb4fbabfa8a680ad490af86e9ed39d3c75abb2c3b8801832224bb15d35286d
+    label_rationale_ref: evaluator/criterion/h-c3m2-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c3m2-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c3m2-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c3m2-02
+    task_family: heldout-parameter-copy-expression
+    split: held_out
+    target_concept: function-arguments
+    public_fixture_ref: public/h-c3m2-02-dialogue.md
+    evidence_probe_ref: evidence/h-c3m2-02-prompt.md
+    evidence_test_ref: evidence/h-c3m2-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 04cf91271ffaed68768438263e51753ba62ea1f965967fd7656476ba7a9bae92
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c3m2-02
+    misconception_id: parameter-rebinds-caller-name
+    transfer_case_id: heldout-parameter-copy-expression
+    evidence_pattern: ambiguous
+    criterion_probe_id: h-c3m2-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c3m2-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c3m2-02-tests.yaml
+    test_bundle_sha256: b8930d3c456ad33da248ebefc975540c452e6db0c16fe216ab440f72069d851d
+    rubric_ref: evaluator/criterion/h-c3m2-02-rubric.yaml
+    rubric_sha256: 7e563acf2722f37c19f54cc5b7b207e8fcfb655e84138679411eb959fc1fe1a9
+    label_rationale_ref: evaluator/criterion/h-c3m2-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c3m2-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c3m2-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c3m2-03
+    task_family: heldout-mixed-mutation-rebinding
+    split: held_out
+    target_concept: function-arguments
+    public_fixture_ref: public/h-c3m2-03-dialogue.md
+    evidence_probe_ref: evidence/h-c3m2-03-prompt.md
+    evidence_test_ref: evidence/h-c3m2-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 76aad5f2cf1199095eed182532c664a2276a115057a91b08683bc318a799e4a7
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c3m2-03
+    misconception_id: parameter-rebinds-caller-name
+    transfer_case_id: heldout-mixed-mutation-rebinding
+    evidence_pattern: false_public_mastery
+    criterion_probe_id: h-c3m2-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c3m2-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c3m2-03-tests.yaml
+    test_bundle_sha256: da0e4ecc17b962839ba3f43e6072b6651acd84a579ea00fc4f7c178c4bce8e2d
+    rubric_ref: evaluator/criterion/h-c3m2-03-rubric.yaml
+    rubric_sha256: f0be0444072b2377c03d9624faad8a8112ad044cbebc6a48250e7cad4e95e25e
+    label_rationale_ref: evaluator/criterion/h-c3m2-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c3m2-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c3m2-03.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c4m1-01
+    task_family: heldout-exclusive-status-branch
+    split: held_out
+    target_concept: conditional-control
+    public_fixture_ref: public/h-c4m1-01-dialogue.md
+    evidence_probe_ref: evidence/h-c4m1-01-prompt.md
+    evidence_test_ref: evidence/h-c4m1-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: d3c683516f6e62265c7a5962f1ac2b06c7db1e40f0836ea4bd8c73ca4f358d07
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c4m1-01
+    misconception_id: conditional-is-two-independent-checks
+    transfer_case_id: heldout-exclusive-status-branch
+    evidence_pattern: supported_mastery
+    criterion_probe_id: h-c4m1-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c4m1-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c4m1-01-tests.yaml
+    test_bundle_sha256: 9a2e7a29ebbcff5ceed539efe68431eec65ba072dd0c020b313fd0764a079fb9
+    rubric_ref: evaluator/criterion/h-c4m1-01-rubric.yaml
+    rubric_sha256: b18f74af190b4318d6e53f25e04149adf5650150649f9070785dc1d274c7482a
+    label_rationale_ref: evaluator/criterion/h-c4m1-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c4m1-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c4m1-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c4m1-02
+    task_family: heldout-branch-state-change
+    split: held_out
+    target_concept: conditional-control
+    public_fixture_ref: public/h-c4m1-02-dialogue.md
+    evidence_probe_ref: evidence/h-c4m1-02-prompt.md
+    evidence_test_ref: evidence/h-c4m1-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 0330855486b9187362fabe7beb3979ef29c7850532457791f28b4ef97741d651
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c4m1-02
+    misconception_id: conditional-is-two-independent-checks
+    transfer_case_id: heldout-branch-state-change
+    evidence_pattern: underconfidence
+    criterion_probe_id: h-c4m1-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c4m1-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c4m1-02-tests.yaml
+    test_bundle_sha256: a13c7ccc3954985aad96634e626148e555949515f7854c12a4e4e2ada5ad63a0
+    rubric_ref: evaluator/criterion/h-c4m1-02-rubric.yaml
+    rubric_sha256: 92dac8265ba28f7412905ba79c36e9018233686a2a472af229051d6577a9405e
+    label_rationale_ref: evaluator/criterion/h-c4m1-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c4m1-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c4m1-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c4m1-03
+    task_family: heldout-nested-exclusive-branch
+    split: held_out
+    target_concept: conditional-control
+    public_fixture_ref: public/h-c4m1-03-dialogue.md
+    evidence_probe_ref: evidence/h-c4m1-03-prompt.md
+    evidence_test_ref: evidence/h-c4m1-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 3e8bf34010e776144031e367ef53777741d318a6f1fd9dcb1049e50c4d047e2d
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c4m1-03
+    misconception_id: conditional-is-two-independent-checks
+    transfer_case_id: heldout-nested-exclusive-branch
+    evidence_pattern: ambiguous
+    criterion_probe_id: h-c4m1-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c4m1-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c4m1-03-tests.yaml
+    test_bundle_sha256: 6f1539afa1da09c79491c71e7cf2e5cfb0501839eb242d98c3f699e0bac2dff6
+    rubric_ref: evaluator/criterion/h-c4m1-03-rubric.yaml
+    rubric_sha256: 4681ea205d347f9dc950113d6ef335b76e5cf988acee6af8073e5f92efdaa3d5
+    label_rationale_ref: evaluator/criterion/h-c4m1-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c4m1-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c4m1-03.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c4m2-01
+    task_family: heldout-guarded-division
+    split: held_out
+    target_concept: conditional-control
+    public_fixture_ref: public/h-c4m2-01-dialogue.md
+    evidence_probe_ref: evidence/h-c4m2-01-prompt.md
+    evidence_test_ref: evidence/h-c4m2-01-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 0591fa8719174385c1e8fa51bd54f2147c6ee1fbfe6ec25f43c6d87a94c23712
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c4m2-01
+    misconception_id: boolean-operators-evaluate-both-operands
+    transfer_case_id: heldout-guarded-division
+    evidence_pattern: false_public_mastery
+    criterion_probe_id: h-c4m2-01-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c4m2-01-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c4m2-01-tests.yaml
+    test_bundle_sha256: eb7efc1a5a7fdd481559908df2b07da1e471e82215025a68843c99805194aa17
+    rubric_ref: evaluator/criterion/h-c4m2-01-rubric.yaml
+    rubric_sha256: 3fe9f357aa30d68a4eb02a1bb36523737b18bc96f4cafebc137b982da9f02972
+    label_rationale_ref: evaluator/criterion/h-c4m2-01-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c4m2-01.yaml
+    structural_difference_record_ref: evaluator/structural/h-c4m2-01.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c4m2-02
+    task_family: heldout-fallback-call
+    split: held_out
+    target_concept: conditional-control
+    public_fixture_ref: public/h-c4m2-02-dialogue.md
+    evidence_probe_ref: evidence/h-c4m2-02-prompt.md
+    evidence_test_ref: evidence/h-c4m2-02-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 31196b46bdba5230559b3d88ffeba30b3964b0e6293d24b0d1f4742d73ab81f8
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c4m2-02
+    misconception_id: boolean-operators-evaluate-both-operands
+    transfer_case_id: heldout-fallback-call
+    evidence_pattern: honest_non_mastery
+    criterion_probe_id: h-c4m2-02-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c4m2-02-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c4m2-02-tests.yaml
+    test_bundle_sha256: d0b70290cbb843bf576b6844f124797f2fcc2370d9eed295ee6cca2faa75dc74
+    rubric_ref: evaluator/criterion/h-c4m2-02-rubric.yaml
+    rubric_sha256: 577a9291cdab7c188d6d27923874a5224b657ac4e368a59d34c04268cffccf4d
+    label_rationale_ref: evaluator/criterion/h-c4m2-02-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c4m2-02.yaml
+    structural_difference_record_ref: evaluator/structural/h-c4m2-02.md
+- public:
+    schema_version: 1
+    schema_id: benchmark.case_public.v1
+    benchmark_version: v1
+    case_id: h-c4m2-03
+    task_family: heldout-short-circuit-chain
+    split: held_out
+    target_concept: conditional-control
+    public_fixture_ref: public/h-c4m2-03-dialogue.md
+    evidence_probe_ref: evidence/h-c4m2-03-prompt.md
+    evidence_test_ref: evidence/h-c4m2-03-tests.yaml
+    initial_tracker_ref: public/initial-tracker.json
+    initial_tracker_hash: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+    unrelated_control_ref: controls/unrelated.yaml
+    corruption_spec_ref: controls/corruption.yaml
+    case_content_hash: 961c19d70237eaaf450cf19baa378f5a237a4e4ea5d73b38cc88d47e1485c5da
+  criterion:
+    schema_version: 1
+    schema_id: benchmark.criterion_spec.v1
+    benchmark_version: v1
+    case_id: h-c4m2-03
+    misconception_id: boolean-operators-evaluate-both-operands
+    transfer_case_id: heldout-short-circuit-chain
+    evidence_pattern: underconfidence
+    criterion_probe_id: h-c4m2-03-criterion-v1
+    criterion_prompt_ref: evaluator/criterion/h-c4m2-03-prompt.md
+    test_bundle_ref: evaluator/criterion/h-c4m2-03-tests.yaml
+    test_bundle_sha256: 21a95d89271c0f2e3d92332a6a369e636d942051c32cb3a146bb97aba70ec50d
+    rubric_ref: evaluator/criterion/h-c4m2-03-rubric.yaml
+    rubric_sha256: 19894c4e9a139ade73f4e26fa43ae495f1f7b83ee9a05472530931b90cfbadb0
+    label_rationale_ref: evaluator/criterion/h-c4m2-03-label-rationale.md
+    review_record_ref: evaluator/reviews/h-c4m2-03.yaml
+    structural_difference_record_ref: evaluator/structural/h-c4m2-03.md
+splits:
+- schema_version: 1
+  schema_id: benchmark.split.v1
+  split: held_out
+  task_families:
+  - heldout-billing-snapshot
+  - heldout-record-field-snapshot
+  - heldout-capacity-pipeline
+  - heldout-score-rebinding
+  - heldout-coordinate-rebinding
+  - heldout-rebinding-chain
+  - heldout-dictionary-alias
+  - heldout-set-alias
+  - heldout-alias-selection
+  - heldout-nested-record-sharing
+  - heldout-tuple-child-sharing
+  - heldout-shared-child-graph
+  - heldout-function-dictionary-mutation
+  - heldout-function-set-mutation
+  - heldout-nested-function-mutation
+  - heldout-parameter-dictionary-rebinding
+  - heldout-parameter-copy-expression
+  - heldout-mixed-mutation-rebinding
+  - heldout-exclusive-status-branch
+  - heldout-branch-state-change
+  - heldout-nested-exclusive-branch
+  - heldout-guarded-division
+  - heldout-fallback-call
+  - heldout-short-circuit-chain
+- schema_version: 1
+  schema_id: benchmark.split.v1
+  split: development
+  task_families:
+  - dev-list-identity
+  - dev-missing-values
+  - dev-expression-state
+  - dev-parameter-locality
+  - dev-conditional-effects
+- schema_version: 1
+  schema_id: benchmark.split.v1
+  split: calibration
+  task_families:
+  - cal-value-snapshots
+  - cal-object-graphs
+  - cal-call-sharing
+  - cal-short-circuit
+files:
+- path: controls/corruption.yaml
+  artifact_class: control
+  schema_id: benchmark.control.v1
+  sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  byte_size: 162
+- path: controls/unrelated.yaml
+  artifact_class: control
+  schema_id: benchmark.control.v1
+  sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  byte_size: 675
+- path: evaluator/criterion/h-c1m1-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 4d8de9316ef5a7840cc4a1c3a46caa2c3a431fc877eb24156b5bcf44dc28ebd7
+  byte_size: 294
+- path: evaluator/criterion/h-c1m1-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: b865982b552b8a2161de0d3cbbc823b3192bc04deec92eeb282afdde0ba3650b
+  byte_size: 343
+- path: evaluator/criterion/h-c1m1-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 2a07b471928cc3c4a5e0fa4e3a2fef9978f9dd403e441c776a7bea7e9e13627f
+  byte_size: 211
+- path: evaluator/criterion/h-c1m1-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: ab2a5438117c547224b1708ca6c7ca02ac1b5d94ec24abb489ec142decbc8d85
+  byte_size: 398
+- path: evaluator/criterion/h-c1m1-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: b96b78c466ceb0d4c744c753d1ad0777a8226cd76d2bb9803727e32919a18fe9
+  byte_size: 270
+- path: evaluator/criterion/h-c1m1-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 1ea90a2a49109a0579c2c30da63678603ebb629dfad1f9c784a14867f0dbae0b
+  byte_size: 332
+- path: evaluator/criterion/h-c1m1-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 7a5e09c5f55db498b1763c63938d6661b0a1a807b7aa5d34600415c182264f18
+  byte_size: 205
+- path: evaluator/criterion/h-c1m1-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: a1db975afef1fe37d8317b4dd8da0ba3dde532a38b379612251330b0df0058c9
+  byte_size: 403
+- path: evaluator/criterion/h-c1m1-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 5bed35194cb782e21d32c40dfb02af0015549a89a93ee80d4a226dafc9f77276
+  byte_size: 276
+- path: evaluator/criterion/h-c1m1-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 151e322f3e1d92ca230d6c5d39e4286a2dfcf6cf236c6a6c5df0cf2e160dbe8b
+  byte_size: 419
+- path: evaluator/criterion/h-c1m1-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: be98f786c62572414c2679bc06c142f70f7ee37dd59900b180c3c31219f475b6
+  byte_size: 211
+- path: evaluator/criterion/h-c1m1-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: d4109b4d891b5f068d9782723198e47cc52b3114436f4e16909a8852869aecab
+  byte_size: 407
+- path: evaluator/criterion/h-c1m2-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 2ec11962ea3a95cc97d92b40e1b1ec3320a3ee0a7d63370e817140ae335fdcbb
+  byte_size: 292
+- path: evaluator/criterion/h-c1m2-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 180c1422ccc53ea4dbaba691a424f72028653be2a704f9ae9f8302e61205be8a
+  byte_size: 261
+- path: evaluator/criterion/h-c1m2-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 194bdd96814190db8e05a425067e72c923ec28bda57cb435a0abc242d548f5b4
+  byte_size: 204
+- path: evaluator/criterion/h-c1m2-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 1e1a1f5d0521ea98f56fe1ceb1f521b70c1a24e1f0cf57adc58ee3f1ff6dfabc
+  byte_size: 383
+- path: evaluator/criterion/h-c1m2-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 8e6cbe66144331c04fe11c10ec21cc27da618d4018390b1906e2e2593e7156aa
+  byte_size: 265
+- path: evaluator/criterion/h-c1m2-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 688166ba5763d2d505be83a20e0780534449e591f4ecbd98a604cd4a5c1339ea
+  byte_size: 332
+- path: evaluator/criterion/h-c1m2-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 4df76a9fa43a873202cb276588aca9537196840e77d83e9668d8397a8ac26f84
+  byte_size: 204
+- path: evaluator/criterion/h-c1m2-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 4ba8dd81fa5830d733020b84f3a4545fa7e5b5147d5dd65b182fe94dea57257f
+  byte_size: 419
+- path: evaluator/criterion/h-c1m2-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 01125b4670e13b2498ff790bd9abfd7b49d656df6ff421b3c19746a8bd3a59d1
+  byte_size: 275
+- path: evaluator/criterion/h-c1m2-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 8b5cc9a79d24cf6a89ba96fe642852b5f41c22a246cb8b6f213e62d9aa5d2e2d
+  byte_size: 294
+- path: evaluator/criterion/h-c1m2-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: c23e54583de18e0dd754d9a36beabbfbbdd70537d055788b9d1c36f092f196be
+  byte_size: 207
+- path: evaluator/criterion/h-c1m2-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: d328a38755305d2eea2f1fcf78a02e82b5427e182ab3f034f2b73bcdd5658d9f
+  byte_size: 340
+- path: evaluator/criterion/h-c2m1-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 6d7b05effef359c7781ae2e3fb73938ab5a2d42d872f5ce73434cf1a5059f023
+  byte_size: 259
+- path: evaluator/criterion/h-c2m1-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 157f935cffd63e923af02f76db8b980712db9e00e30b60eddbdb407ca6f96bdb
+  byte_size: 365
+- path: evaluator/criterion/h-c2m1-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 5cd7250a3710312250bd619b2c8ac05607ea86d303d16bd43df1b104aa16a5ab
+  byte_size: 201
+- path: evaluator/criterion/h-c2m1-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 334fdab00133739d0439ff3e821dd9731eefe84e28dff1ff4e185bfdfd3db92f
+  byte_size: 410
+- path: evaluator/criterion/h-c2m1-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 430d2838d2360c50cc359736aa1adf7a1221faf751f7067abb8ae2fa045e3a08
+  byte_size: 281
+- path: evaluator/criterion/h-c2m1-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 31e267305b40be26004878516f54bab0bbed6515bda19c6a3697ae9588794e5c
+  byte_size: 309
+- path: evaluator/criterion/h-c2m1-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 077a424320b8c00fc8f4605d21ea9cfb507909dfca040bd96ffdad28dd5c8bee
+  byte_size: 201
+- path: evaluator/criterion/h-c2m1-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 4681487b60073bee1668bc9d623d52319fdc0c681f7dd0ab2ff38d357dc181c5
+  byte_size: 387
+- path: evaluator/criterion/h-c2m1-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: e6922bd94f2facce313ca2ccd7f487157f3df06e79bfab8f8ed2411c81346472
+  byte_size: 276
+- path: evaluator/criterion/h-c2m1-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 0d8114c322511a9b8abdff3c76a8d62239e4f193bcca5ceafe9bcbdfb1d0caf4
+  byte_size: 367
+- path: evaluator/criterion/h-c2m1-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 4715a69ea3a14639ff906f50ade41429d15f4819f3dad5803b1138be6d493b48
+  byte_size: 207
+- path: evaluator/criterion/h-c2m1-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 155b433d84e22ec9952a68db538f7f47aed318774b7dd5cb6b375080df17e56e
+  byte_size: 460
+- path: evaluator/criterion/h-c2m2-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 02a088bd72a73012f8d7dba1c1e2a1c6513ca25c52ed2517c1fbf9b87bd73e28
+  byte_size: 316
+- path: evaluator/criterion/h-c2m2-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 62f88ec6a2ad323d8918c0fe1687323a5d29af1be92df9f896cdf312df7d0a24
+  byte_size: 327
+- path: evaluator/criterion/h-c2m2-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 3bb8050d5aebbf24154fd33e0c5f6d1dec712b68ee9cd98c9ad8a8eafb94480c
+  byte_size: 204
+- path: evaluator/criterion/h-c2m2-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 3996ced604f42a7eec69d5f10fbc6bcabeeaa7dba137911c1df126073e9809ce
+  byte_size: 420
+- path: evaluator/criterion/h-c2m2-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 6b29f099b84bb9f67b03a06d2dca0ec50fb6c58f06fbc199fdadfc6c968de4e6
+  byte_size: 271
+- path: evaluator/criterion/h-c2m2-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 7225b313fdb5b7931cc211e08849cbe5dff3af0bd56f7c88849f267130fa4f44
+  byte_size: 334
+- path: evaluator/criterion/h-c2m2-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 1b6a8f43823aa1c2d9877618832e4d2af05b92e87bcc5ef2f7a7253ba200c2eb
+  byte_size: 201
+- path: evaluator/criterion/h-c2m2-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 632c6f316dd5c40ae3111ae2dbe2b6b15946b0431b107b44957fc4e4073dd367
+  byte_size: 401
+- path: evaluator/criterion/h-c2m2-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 3e3215a696344453aab3e1aa48afde5cfe98a6febefbc4f48e3e11f5c3350ba6
+  byte_size: 305
+- path: evaluator/criterion/h-c2m2-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 25ed30f221fff20b214476fa4772fd6e3ce4d2c3e41d07c98dda97ea7d77dd54
+  byte_size: 382
+- path: evaluator/criterion/h-c2m2-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: b41633ebd6136e7b3de911a4c10259b6dee5e5c09755a28e5ea97937754c624d
+  byte_size: 207
+- path: evaluator/criterion/h-c2m2-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 647395780b23d05a23c4c088335d099573cfa1e783c35ecb7c439b82a5e2be77
+  byte_size: 502
+- path: evaluator/criterion/h-c3m1-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 50222d6139fbe6454e1fbecccafce8d87cd2c014065ae0cd041cbcf3e79f1b38
+  byte_size: 281
+- path: evaluator/criterion/h-c3m1-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: c7a27d7ab0c3c29941c5b7056bb66173c7b1df7300bc0e3aab8c99e87cd3ad78
+  byte_size: 300
+- path: evaluator/criterion/h-c3m1-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 555d9f91cfd77b90cd66659b8a8af878af6ce6f43dda44dd933d21862f8b2056
+  byte_size: 208
+- path: evaluator/criterion/h-c3m1-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 9736bb80022095e25e6639fa766fc64bc90d7bdcbd214d9bdd81020cadfb60e2
+  byte_size: 422
+- path: evaluator/criterion/h-c3m1-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 73254c3911dd80fb00a3fb2fedf7654ac27f9568df9dc891fb5b78270004b549
+  byte_size: 295
+- path: evaluator/criterion/h-c3m1-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 0c7747c0b7727635149d0963f5318284fc615a69eca14e884fa2957078b9a9dc
+  byte_size: 292
+- path: evaluator/criterion/h-c3m1-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 3b3939f851042939b83608631e95cf664c72407baad8cf7c61a841d89bd86149
+  byte_size: 205
+- path: evaluator/criterion/h-c3m1-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 427257b2041497e03d2965c32cea4e271673e977282d6a9e632db577a7ca103c
+  byte_size: 391
+- path: evaluator/criterion/h-c3m1-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 03c7ed12f9efe4d4f959b4d8d76629015df91095b3dcbc831d50e7acda70af80
+  byte_size: 291
+- path: evaluator/criterion/h-c3m1-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: de55b313129632d2e7b398606a8b0f17d1a17a93fca34a79e29b198f0a0e540d
+  byte_size: 328
+- path: evaluator/criterion/h-c3m1-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 3a64b756c026eb2aef44833b4313ddb3504940c71d1773fd471aae27c85a03e0
+  byte_size: 213
+- path: evaluator/criterion/h-c3m1-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 1154e2e5ba156f3d0079259c150b59c522a8db8e6db5f067d065bd06ef215232
+  byte_size: 461
+- path: evaluator/criterion/h-c3m2-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: c4a02f2f6b0886e04a2913d0b9d43e2425a2526efc0097b2cebaf0b243a2d8f6
+  byte_size: 279
+- path: evaluator/criterion/h-c3m2-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: b3f6ed52001afeffdb14368b7ee6fa882b13eda82cc07dd40e30619099f0fd1a
+  byte_size: 393
+- path: evaluator/criterion/h-c3m2-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: decb4fbabfa8a680ad490af86e9ed39d3c75abb2c3b8801832224bb15d35286d
+  byte_size: 207
+- path: evaluator/criterion/h-c3m2-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: cbaeebb9b241c73b6946a6930525fe3df1497757a39a1d0fdb25450c6abd4c39
+  byte_size: 397
+- path: evaluator/criterion/h-c3m2-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 7ffb0c0e7b656e467df4088c7b96e6795f59c6675259117978ac5fa68c05c7de
+  byte_size: 285
+- path: evaluator/criterion/h-c3m2-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 6e9d257fe4f0ddc6de8687b6e09019a58c941a6e671138be29b3eef722136947
+  byte_size: 369
+- path: evaluator/criterion/h-c3m2-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 7e563acf2722f37c19f54cc5b7b207e8fcfb655e84138679411eb959fc1fe1a9
+  byte_size: 200
+- path: evaluator/criterion/h-c3m2-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: b8930d3c456ad33da248ebefc975540c452e6db0c16fe216ab440f72069d851d
+  byte_size: 435
+- path: evaluator/criterion/h-c3m2-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 565e6f38ef2d2cef88ab768210f85b9913469b2ae6e572eeeb7477a3f1316004
+  byte_size: 298
+- path: evaluator/criterion/h-c3m2-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 03962735442f51b910492b14bb925508b3cd54a71bcd495537c6856bdb5aeeeb
+  byte_size: 352
+- path: evaluator/criterion/h-c3m2-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: f0be0444072b2377c03d9624faad8a8112ad044cbebc6a48250e7cad4e95e25e
+  byte_size: 205
+- path: evaluator/criterion/h-c3m2-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: da0e4ecc17b962839ba3f43e6072b6651acd84a579ea00fc4f7c178c4bce8e2d
+  byte_size: 417
+- path: evaluator/criterion/h-c4m1-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: ce4e40ede015c1dc9dbd243bfd198c2102e1a44b1cf2d3595f9bee604859bc5f
+  byte_size: 260
+- path: evaluator/criterion/h-c4m1-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 61cd0e7967d242c9f7c9c701fcf89478f3acc96b9d2bf773f0fe5eebc8607265
+  byte_size: 292
+- path: evaluator/criterion/h-c4m1-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: b18f74af190b4318d6e53f25e04149adf5650150649f9070785dc1d274c7482a
+  byte_size: 205
+- path: evaluator/criterion/h-c4m1-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 9a2e7a29ebbcff5ceed539efe68431eec65ba072dd0c020b313fd0764a079fb9
+  byte_size: 364
+- path: evaluator/criterion/h-c4m1-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: fa986a63f5ce15a4bbecce6d9a585fb23bd1647f694d369a759a3f06f7073901
+  byte_size: 294
+- path: evaluator/criterion/h-c4m1-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 4250fc6223a2de26c579b1074cd531f7ad870682daec9dec9e18b2eb3f992c76
+  byte_size: 367
+- path: evaluator/criterion/h-c4m1-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 92dac8265ba28f7412905ba79c36e9018233686a2a472af229051d6577a9405e
+  byte_size: 204
+- path: evaluator/criterion/h-c4m1-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: a13c7ccc3954985aad96634e626148e555949515f7854c12a4e4e2ada5ad63a0
+  byte_size: 330
+- path: evaluator/criterion/h-c4m1-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 2bc669acab7169b1965ba2a64e85380aba4ab8472b355a103653d850aa31220d
+  byte_size: 266
+- path: evaluator/criterion/h-c4m1-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: c285686e2129502e86d9fdb19a309829785fec5c4bf0068d41022efcd3cab457
+  byte_size: 333
+- path: evaluator/criterion/h-c4m1-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 4681ea205d347f9dc950113d6ef335b76e5cf988acee6af8073e5f92efdaa3d5
+  byte_size: 202
+- path: evaluator/criterion/h-c4m1-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 6f1539afa1da09c79491c71e7cf2e5cfb0501839eb242d98c3f699e0bac2dff6
+  byte_size: 478
+- path: evaluator/criterion/h-c4m2-01-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 6166e656d8ab679b4e9d5b20a24c7cfcff98f595e3a8f9a4ffacf9f57dfd4d6b
+  byte_size: 272
+- path: evaluator/criterion/h-c4m2-01-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: d5f0a82c27c0cacb5bb760a43cd94f16f9a80fef7a2ec4821323791156a3779b
+  byte_size: 358
+- path: evaluator/criterion/h-c4m2-01-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 3fe9f357aa30d68a4eb02a1bb36523737b18bc96f4cafebc137b982da9f02972
+  byte_size: 201
+- path: evaluator/criterion/h-c4m2-01-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: eb7efc1a5a7fdd481559908df2b07da1e471e82215025a68843c99805194aa17
+  byte_size: 446
+- path: evaluator/criterion/h-c4m2-02-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 82feba9e2f532b1d7f34b502f048c85af7c82f87f95d7fc28531d184581cdb05
+  byte_size: 269
+- path: evaluator/criterion/h-c4m2-02-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 53ca0b35e10afc1b4cdbf41fec4c69ce788fd104b51f380c9b432881b1d5d802
+  byte_size: 378
+- path: evaluator/criterion/h-c4m2-02-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 577a9291cdab7c188d6d27923874a5224b657ac4e368a59d34c04268cffccf4d
+  byte_size: 202
+- path: evaluator/criterion/h-c4m2-02-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: d0b70290cbb843bf576b6844f124797f2fcc2370d9eed295ee6cca2faa75dc74
+  byte_size: 355
+- path: evaluator/criterion/h-c4m2-03-label-rationale.md
+  artifact_class: label_rationale
+  schema_id: benchmark.label_rationale.v1
+  sha256: 076a0063e1e53d3c345740b1dc94c063d67a1b019376191351c3cd64c8af03be
+  byte_size: 281
+- path: evaluator/criterion/h-c4m2-03-prompt.md
+  artifact_class: criterion_probe
+  schema_id: benchmark.criterion_probe.v1
+  sha256: 02514123ebc86e6e2c850a70fbc3c6ddf207eaf340dec4edddd284fd051952c9
+  byte_size: 393
+- path: evaluator/criterion/h-c4m2-03-rubric.yaml
+  artifact_class: criterion_rubric
+  schema_id: benchmark.criterion_rubric.v1
+  sha256: 19894c4e9a139ade73f4e26fa43ae495f1f7b83ee9a05472530931b90cfbadb0
+  byte_size: 204
+- path: evaluator/criterion/h-c4m2-03-tests.yaml
+  artifact_class: criterion_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 21a95d89271c0f2e3d92332a6a369e636d942051c32cb3a146bb97aba70ec50d
+  byte_size: 442
+- path: evaluator/reviews/h-c1m1-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 28c69fad1be605c49ff53b5dfebd86068a0b920a940c6af3295ba845452a30c8
+  byte_size: 355
+- path: evaluator/reviews/h-c1m1-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 974fd4f623925c787d9c4a324d7afff506cd7f6bf9c55a1d1300387cc5489ac5
+  byte_size: 355
+- path: evaluator/reviews/h-c1m1-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: a84fa104639a498a6332205de6a0c17008a117da3e0c0a7cddbb62dc4ddad4b4
+  byte_size: 355
+- path: evaluator/reviews/h-c1m2-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 5843743fe3868e1b5af1d2e1860dab3b003a0b8733750f139ba0e891da5f67bc
+  byte_size: 355
+- path: evaluator/reviews/h-c1m2-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 92b6c8a8b27a56f1dc62d84186d6c9b8cff68d834ec058bef0dc8083cba48b15
+  byte_size: 355
+- path: evaluator/reviews/h-c1m2-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 4be12ce1b8c5bbabf60e8979178d60a32c9b76e3b4d4028c951bd5db6e0be523
+  byte_size: 355
+- path: evaluator/reviews/h-c2m1-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 1f763623a56854941ef9656018d0f79f257848e9f5e64253f6da84ffbcd812a6
+  byte_size: 355
+- path: evaluator/reviews/h-c2m1-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 53c46f0b85863045866df9939ab5ce7bbebf3a5150deb2d0f4a660049980b40b
+  byte_size: 355
+- path: evaluator/reviews/h-c2m1-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 56023633a4d806db405d82811668dee8501310f880e74dff3037133c3f3ee125
+  byte_size: 355
+- path: evaluator/reviews/h-c2m2-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 10750f6ce1ed2a19bec9aa527bbae2d9f95a2c5f0e3bc631fcfe4b3a3c84c290
+  byte_size: 355
+- path: evaluator/reviews/h-c2m2-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: a129358e07668791a0336af59682ff6441518a610b3e4cb88f8e44ac3bd70389
+  byte_size: 355
+- path: evaluator/reviews/h-c2m2-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 7bb69d44ea82eaa4b430ec514616c3d64d1cd7226d0761d57158edfb9019229a
+  byte_size: 355
+- path: evaluator/reviews/h-c3m1-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 6582c544d057f749a1e1dd4508894113d69b3cc43f497e4fee97696c594eeb2b
+  byte_size: 355
+- path: evaluator/reviews/h-c3m1-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: a16fc78730e8045a1c5b482a0a1ea3ef72919b898130692045731dd9a1a4b768
+  byte_size: 355
+- path: evaluator/reviews/h-c3m1-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: d4f2440603b0bf23cb5f03835bf0a07d00749918d238b5a57f5cc6d9ab8922f8
+  byte_size: 355
+- path: evaluator/reviews/h-c3m2-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: a8319561b6348ec783e051646e7a2d6d7b15b80a26f974f727ab3a9a1bc3d9c5
+  byte_size: 355
+- path: evaluator/reviews/h-c3m2-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 1aabe075b339f1f4a05a30e0877ef94967e7cdff7c8010ee484a59c733d84963
+  byte_size: 355
+- path: evaluator/reviews/h-c3m2-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 6574d26dbe0c372b1c931851d1e603d53e272f12fada85e42d8b64b587480e7c
+  byte_size: 355
+- path: evaluator/reviews/h-c4m1-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: a17c9d7b0497fc69c794275c209737a1faac9772183ad056e0791ed5f5034214
+  byte_size: 355
+- path: evaluator/reviews/h-c4m1-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 6e11a3ce3c636456a3d3c2e5d2b9a4fc3e8d7ead5492e4a6d7695d9f695c55cb
+  byte_size: 355
+- path: evaluator/reviews/h-c4m1-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 8e2b6e7e3508170991f8638eb7f292246ed8928b268fb97decdce91a83a7f691
+  byte_size: 355
+- path: evaluator/reviews/h-c4m2-01.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 97271278efa69e76a13b6acc8c202c55144b9e0112cee1b3235e728c7f620611
+  byte_size: 355
+- path: evaluator/reviews/h-c4m2-02.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: 74932eace08c3b210868efd2b070f4a2b9423adac008c7346c56c195f49f5234
+  byte_size: 355
+- path: evaluator/reviews/h-c4m2-03.yaml
+  artifact_class: review
+  schema_id: benchmark.review_file.v1
+  sha256: e953cf98e6fa1a9fc76511b9701a306568e6032ba9db08e0abafb4cce0fe11fe
+  byte_size: 355
+- path: evaluator/structural/h-c1m1-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 911943128938f1200bd47a10f8f280e25471c5e2a6be79351901367b189ba2e1
+  byte_size: 306
+- path: evaluator/structural/h-c1m1-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 42c076f057bf35f78556c4ae4d627ae778fcbee9c86808d0872ab31b7a09cb65
+  byte_size: 286
+- path: evaluator/structural/h-c1m1-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 9a498bbd0482e2c30fe12f966b8709908224ca5360d7252af8094579362a5462
+  byte_size: 309
+- path: evaluator/structural/h-c1m2-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 55099e10686e42939ee792a963f3a9527e0b7081b58451858e394ccd60d9ceb3
+  byte_size: 275
+- path: evaluator/structural/h-c1m2-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 3ae9b58af28bebf81abc18fc7c707f78ffbcb64d468bd158bab9cb555a65fa4d
+  byte_size: 294
+- path: evaluator/structural/h-c1m2-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: a5f0cd6c14afca904dfb5352c4d4fc02dda8f5f224b60fec9e32e78af933a374
+  byte_size: 309
+- path: evaluator/structural/h-c2m1-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 3364c3501e68800cf942111a1119999ae097089205b3738a594883937a6cf76e
+  byte_size: 351
+- path: evaluator/structural/h-c2m1-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 818ed5ceb826698cf37041b8b3885684f6bdc5d6f8ae94266834b3dec11f4379
+  byte_size: 327
+- path: evaluator/structural/h-c2m1-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 04502b46819a6e8575a521add4135ac68c44171f79eb6333a053d1eb36a18353
+  byte_size: 335
+- path: evaluator/structural/h-c2m2-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 9451db6310e6a78cde0741473ec10b6bcd7f2f6e36102f6389cd1f5294909641
+  byte_size: 314
+- path: evaluator/structural/h-c2m2-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 960f90add8ce034449f1be77a13def62f7ed8cc7bb494eed4436f77ce725aadd
+  byte_size: 303
+- path: evaluator/structural/h-c2m2-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 1e0b9e7313abd7ef81ef8dcf1dad2e37867b14ecac32ef464810eb2e5a95ed26
+  byte_size: 315
+- path: evaluator/structural/h-c3m1-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 4d1269de1acb2749be39403bb06a087d5bd1efe18104efc053a878438c1f0090
+  byte_size: 300
+- path: evaluator/structural/h-c3m1-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: c80cdf9b5b083e73f8d619e9d4d79273fc59faf9716fe239667da3eeae3e5d40
+  byte_size: 284
+- path: evaluator/structural/h-c3m1-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 6f5ee23b64e48ff6aa78f7be016a9c93a75631acd496d7c63ff2c4969c8d27e7
+  byte_size: 276
+- path: evaluator/structural/h-c3m2-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 6d44b825c0038e0fd02329ac1cd0992c3a91abf8a1efa2dd388bbfe662cca220
+  byte_size: 290
+- path: evaluator/structural/h-c3m2-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: a379494d9041d8309f5c1803f2c16dd41c1125e9c9e818fcff26dd92a00ad58b
+  byte_size: 268
+- path: evaluator/structural/h-c3m2-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: c830f3de1f6fb934bffc1fdfafedeb7a1e18020945f158f9c5bd419aa76b2fb6
+  byte_size: 285
+- path: evaluator/structural/h-c4m1-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 184e5aa14879c4f84f0ae5bb49343b2cc58c35d3710ec608af0bf968c115b345
+  byte_size: 276
+- path: evaluator/structural/h-c4m1-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 6af1fdd6db4c5b52fe2c74b8bad29260462ab2fac158fe81f331234ae29b452e
+  byte_size: 260
+- path: evaluator/structural/h-c4m1-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: c33747d6740d44dd44ed19fab37ee6ba37cd10bb3a1b021f7aa00a8683ff50d0
+  byte_size: 262
+- path: evaluator/structural/h-c4m2-01.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 55c1c5cdc7e239e0f4ba27adfd14aa43452ce4b343adcc201f456b1eedd3eb67
+  byte_size: 266
+- path: evaluator/structural/h-c4m2-02.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: f30e81d9d6885479956bb60c7e05df8766781484d49eb8fe2eaf32452a8a7bcb
+  byte_size: 277
+- path: evaluator/structural/h-c4m2-03.md
+  artifact_class: structural_difference
+  schema_id: benchmark.structural_difference.v1
+  sha256: 178ccf34ccfef11a16c9c7471d0d24b97f5f1dd3435efb9f07daafb5fdce6543
+  byte_size: 302
+- path: evidence/h-c1m1-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 16cb2ea7cd9dfb4d2c23924462170382bec0499567708fc5c8a8816a3ea94c79
+  byte_size: 389
+- path: evidence/h-c1m1-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 2d116076cc4489d4c0ef1effa649de8c37c6af098a2da468324c12bb82dc89f7
+  byte_size: 141
+- path: evidence/h-c1m1-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: a4b32b244252ea54d3e687ad7194bd5d72ec3520decba529a2b2e4d9c3ba23b5
+  byte_size: 411
+- path: evidence/h-c1m1-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 436d15fc187a2591ff20447efd9c4022a074240f3bb6cc1dc72a5e14c220b758
+  byte_size: 137
+- path: evidence/h-c1m1-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 3ba9a1357e9c3bbb5e617730d4cbe79463174fc226465dc6bc1b575ff4891be5
+  byte_size: 437
+- path: evidence/h-c1m1-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: e00966b7ff79c283d118b9783e55fa66d8378d0ef599a76bec6cdc82cbd589ab
+  byte_size: 145
+- path: evidence/h-c1m2-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 179294237a041aa4027bf69657e0702e40d065a42aa3e5684786ba32f3b271e3
+  byte_size: 393
+- path: evidence/h-c1m2-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: cabcdcf6e51b639a28fa89d10d713b414c54908caebdbf2161144ef681be8525
+  byte_size: 145
+- path: evidence/h-c1m2-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 3c49060d558ef3745e02e0d47087e21d309416658288ca0049ee6dbed78b396e
+  byte_size: 441
+- path: evidence/h-c1m2-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: c897d6a4cb8786e937feadaf7b33de7f40eefc77a6c21605f5a72e5f0c50e0da
+  byte_size: 150
+- path: evidence/h-c1m2-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: c6917ca33c6b30863518eba0a7c3d1d92e9c9d2b75a73b3c03f8653754dd3a0b
+  byte_size: 423
+- path: evidence/h-c1m2-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 38bb6ca8264d5fa4413b8cb423afde0b084a7b21284e2bb1c3f560d36f4465f0
+  byte_size: 146
+- path: evidence/h-c2m1-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: f6712f69a57e2d17cf3b459964bf10c33422ce159262e64792f41e8a1f1cdf46
+  byte_size: 414
+- path: evidence/h-c2m1-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 180226ac2a644e0f6e6f1a7ae2f96868b33e7b20203d102ea9a1c6ecbddbbfc0
+  byte_size: 134
+- path: evidence/h-c2m1-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 38fc308995056abd174e3b01a10524db1e5e78ef348dbed49f6b8c5cae6d9cf1
+  byte_size: 408
+- path: evidence/h-c2m1-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 53c7ab8b5fc67f8bd4778d293ed494d104ba6157c8915b4eba8847317a16f303
+  byte_size: 149
+- path: evidence/h-c2m1-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: b93c2ff90521c1d8a3acc1762f9c776e91c3444de6e1fae4a28385c1edf0219d
+  byte_size: 527
+- path: evidence/h-c2m1-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 36d6d97c25a30f80612e87b5adb97bea9992a7abfd006b852251165fbcaa6075
+  byte_size: 145
+- path: evidence/h-c2m2-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: ef8e68e37131a5004c38555b0597656ebbcf1021ebc51cb769affaa9dae16d49
+  byte_size: 415
+- path: evidence/h-c2m2-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 4f09655cc82aedc0b8e224a65695f029a3b01cf6d0c18ebed26b32316804792b
+  byte_size: 151
+- path: evidence/h-c2m2-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: d0fbf35b2e1cc96b8d77a695c2086b6a6e6f53c901320e1ac57d93b343b8de35
+  byte_size: 430
+- path: evidence/h-c2m2-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 615e8060673d0b2ee1e1225b12de2c31ef4179b977278f0cce2b8b425b70e372
+  byte_size: 144
+- path: evidence/h-c2m2-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: d095985542e6cfadbb2b4ff6f291182f4a67485d75d9d04964d7abd69de81ed3
+  byte_size: 470
+- path: evidence/h-c2m2-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: a3f790f31afbb8ca13f02a91be6c5811cf4e1492c9102a53a992a4863f4aee17
+  byte_size: 137
+- path: evidence/h-c3m1-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: d55a8b2ddafa4ff35498fd2590a64e314f81c5c41755cc93ba6e9d3fcc373e7c
+  byte_size: 459
+- path: evidence/h-c3m1-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: a048fbd3cbab2cd6c2c83c74a18f78c50840a051447fa097fed85d68c2d4833c
+  byte_size: 141
+- path: evidence/h-c3m1-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 496ce0e95cada141be5aa84c48f757068e65a6f1049f568411d4e19b427f959c
+  byte_size: 479
+- path: evidence/h-c3m1-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 137be9fdc97164beffc7078c331ddbd9559c99f0694407ae9a99bc488e8362e7
+  byte_size: 145
+- path: evidence/h-c3m1-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: e58f475f0a9f8f29f9c86bd8cd2e1400045e49ffbaea76b4a5cd71782b805cf8
+  byte_size: 633
+- path: evidence/h-c3m1-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 640655e7f195dfbbb4c4ecfc0867135fbd91526ee5262bfe585edb49fe502d9e
+  byte_size: 148
+- path: evidence/h-c3m2-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 0d3370964d401fa2706cc3242439f5d7580150ff07aa70f4386b200341230db0
+  byte_size: 509
+- path: evidence/h-c3m2-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 79695ce4fde462c5b518d6aa32f658432fdd3a80a3355388936898894a3e20fd
+  byte_size: 148
+- path: evidence/h-c3m2-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 3a7d4682379ca0422514e195e1556238872a53a0ac66cb549adfc9762f04bd1e
+  byte_size: 500
+- path: evidence/h-c3m2-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 1a911a16196dfa8474725b5af83479a04817fb04b25f96dbde86da2a9048d198
+  byte_size: 163
+- path: evidence/h-c3m2-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 22bff57eff4c3f648c272df47a658a0b2178b12869d3126e419619969e04e8be
+  byte_size: 537
+- path: evidence/h-c3m2-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 4e8b05887ab956745d3c6d4b05ad8007a69c2ec0ace935b2435c5e22ca5bde6d
+  byte_size: 180
+- path: evidence/h-c4m1-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: d0338ae038457b2d575dba7f9365ba92fb3e37d498d0795e0fcb6aef0d053a26
+  byte_size: 409
+- path: evidence/h-c4m1-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 82447901f905cc2addd4280ecdd5e1ccec40a508d40944fc1567c436dc3d87bc
+  byte_size: 147
+- path: evidence/h-c4m1-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 9fd85b89b4628f6a45109ad2562416e4571c17b457694c83e8014ddedb35159c
+  byte_size: 451
+- path: evidence/h-c4m1-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 360e7e032684cce22d3bd3717c16f9558017c7e188122fdb1d6243e751d48a35
+  byte_size: 149
+- path: evidence/h-c4m1-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: a39a08a086524c680bad311e60083c918dfafe8100f25eb1f43aa55dc9535f29
+  byte_size: 486
+- path: evidence/h-c4m1-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 917af40db07cd78fc4f7ed28661757a0a30b64e4bb2530b34b96287c8ed6f4c2
+  byte_size: 148
+- path: evidence/h-c4m2-01-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 1087f13414851852fa746d6873fab5a4efb1099f2686c3dc57f3ddf9e493f591
+  byte_size: 399
+- path: evidence/h-c4m2-01-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 8da84e38849a684e5bb23236cbfea338de2bb0e1ce073c791f09bd4825884cf0
+  byte_size: 141
+- path: evidence/h-c4m2-02-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 6f38240107a995cb494d500c2eabdad8450e55189eddc1b9ac32a16786306443
+  byte_size: 481
+- path: evidence/h-c4m2-02-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 0255b513ac20ce229c0caebe102b5b513fb57b7381e2b97a5de35d2c31521651
+  byte_size: 149
+- path: evidence/h-c4m2-03-prompt.md
+  artifact_class: evidence_probe
+  schema_id: benchmark.evidence_probe.v1
+  sha256: 52da9454a0b384ad2d3062b4b774d513273b972782ab68e1431f50b493ce79cb
+  byte_size: 537
+- path: evidence/h-c4m2-03-tests.yaml
+  artifact_class: evidence_test
+  schema_id: benchmark.authored_tests.v1
+  sha256: 1ccfc2d55a3f694b7625af3340dff28d0d296a67f05992e284ba5b00bd931839
+  byte_size: 161
+- path: limitations.md
+  artifact_class: limitations
+  schema_id: benchmark.limitations.v1
+  sha256: 0013b0e70459c94676dfe1ec466dbaacd2c38c9b8dff7f5b33e7102c12fb5379
+  byte_size: 402
+- path: prompts/student-system-v1.md
+  artifact_class: prompt
+  schema_id: benchmark.student_system_prompt.v1
+  sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  byte_size: 241
+- path: public/h-c1m1-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 14e42aae551641d32067cb5abd4af891ea46ccd772d907540bad4022463ecc88
+  byte_size: 342
+- path: public/h-c1m1-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: e2c12e9cf13e5c39ecf01671ceba6e936db034e89ddea1ff4f6e04e9aaa1b36f
+  byte_size: 365
+- path: public/h-c1m1-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: f558a9dd2f3c046849138e3ee2259083b69bc3001516e4e93605e75d33f236c5
+  byte_size: 389
+- path: public/h-c1m2-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: f1839a39fd7846dc74bd3f683020cc32f5bca65c96c4524d8d341da272eeef46
+  byte_size: 368
+- path: public/h-c1m2-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 375f980b842d46e57baade959252b0c7e048eec0825fb250fffc202e34f8bb2f
+  byte_size: 371
+- path: public/h-c1m2-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 7fe0e2da655049126448106d7a6381c6d149f7817abb8894979b4ddbf4d63656
+  byte_size: 358
+- path: public/h-c2m1-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: f341a8af881c580924a1520cf81816e17336cd221b3650a63b66fc0e70ed42ad
+  byte_size: 372
+- path: public/h-c2m1-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: dffa14eb21af3cffbd6fc4de4670a421ed21e4030f7b4dff0f8163b880f37186
+  byte_size: 382
+- path: public/h-c2m1-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 6712a42eb288fdd390b0838b338331f9ceae7b3b4532d56193de4ffa2186790d
+  byte_size: 464
+- path: public/h-c2m2-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 1ee132c648eb0acde9b5c684194202b4f377155e8152bc7ff7f5032d993c61ea
+  byte_size: 365
+- path: public/h-c2m2-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: ef6eb83f4c67a3131fa9c856939bdd8a791da2a54e2e3c40039c0a50ba6c37e7
+  byte_size: 368
+- path: public/h-c2m2-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 193877f2a94335067b8092074e303c35527ad80d89acbf643c9385c99d0d48d1
+  byte_size: 449
+- path: public/h-c3m1-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 13dc4f84511fd49af161e5d4ac3953e10078002a66542896c99ee473238c214f
+  byte_size: 417
+- path: public/h-c3m1-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 38732f1baef72f148cb5c8b9f71e459a817004e7320c4a8c377a8d2f290e4f5b
+  byte_size: 438
+- path: public/h-c3m1-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 211abd4c7955bdc47587aa864be7287c9a75d5c55ffb6e95c46f0eab99bd1ac5
+  byte_size: 562
+- path: public/h-c3m2-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 176f95158c90e61a8703bcfe92c4b7ed1d614a26ee5bc5548bad9ba8754e6f60
+  byte_size: 433
+- path: public/h-c3m2-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 7636256b7ba756bce54f5aa3c063e9b4c51549ec6ad2359bf1566250b96da81b
+  byte_size: 511
+- path: public/h-c3m2-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 6657b8ce52bc0d042bcbff9afc2cac519deefb595d0583b9fae8ffafddfa40b4
+  byte_size: 581
+- path: public/h-c4m1-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: b73496f8c963f6cc2b0f669ecd5b200c43584a393f542da302f6dd4a1158f170
+  byte_size: 340
+- path: public/h-c4m1-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: f8e58ddf3e3d2b1a42f38e3dd7056bc75ea7a313c1dad5e08a5bf3a71825a00a
+  byte_size: 383
+- path: public/h-c4m1-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 5b104909b0138242e0c836f2f0cf7e8bff8e027eefc1d03abc16bae4e5cc0c83
+  byte_size: 437
+- path: public/h-c4m2-01-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: a9ec66a2237996f5e3bfcca5fa3e4e8cd0eff05852ba69c8b592efbbd08361f2
+  byte_size: 359
+- path: public/h-c4m2-02-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: d64f7d35deb5ebeec2d35a85a99e0e6b4bd3e2e3e365c24c31fd3fa563ac7eac
+  byte_size: 428
+- path: public/h-c4m2-03-dialogue.md
+  artifact_class: public_fixture
+  schema_id: benchmark.public_fixture.v1
+  sha256: 80c8a20642e3cf3a8f909cb8fb181d2af23b9249461779ece16672c4b3dc1f46
+  byte_size: 437
+- path: public/initial-tracker.json
+  artifact_class: initial_tracker
+  schema_id: benchmark.initial_tracker.v1
+  sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  byte_size: 109
+- path: splits.yaml
+  artifact_class: split
+  schema_id: benchmark.split_inventory.v1
+  sha256: f798e62677e56c5c617802a880e128ea71cfb22999ba33585931f55b099823ec
+  byte_size: 455
+reviews:
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c1m1-01
+  case_id: h-c1m1-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c1m1-01-dialogue.md
+    sha256: 14e42aae551641d32067cb5abd4af891ea46ccd772d907540bad4022463ecc88
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c1m1-01-prompt.md
+    sha256: 16cb2ea7cd9dfb4d2c23924462170382bec0499567708fc5c8a8816a3ea94c79
+  - path: evidence/h-c1m1-01-tests.yaml
+    sha256: 2d116076cc4489d4c0ef1effa649de8c37c6af098a2da468324c12bb82dc89f7
+  - path: evaluator/criterion/h-c1m1-01-prompt.md
+    sha256: b865982b552b8a2161de0d3cbbc823b3192bc04deec92eeb282afdde0ba3650b
+  - path: evaluator/criterion/h-c1m1-01-tests.yaml
+    sha256: ab2a5438117c547224b1708ca6c7ca02ac1b5d94ec24abb489ec142decbc8d85
+  - path: evaluator/criterion/h-c1m1-01-rubric.yaml
+    sha256: 2a07b471928cc3c4a5e0fa4e3a2fef9978f9dd403e441c776a7bea7e9e13627f
+  - path: evaluator/criterion/h-c1m1-01-label-rationale.md
+    sha256: 4d8de9316ef5a7840cc4a1c3a46caa2c3a431fc877eb24156b5bcf44dc28ebd7
+  - path: evaluator/structural/h-c1m1-01.md
+    sha256: 911943128938f1200bd47a10f8f280e25471c5e2a6be79351901367b189ba2e1
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c1m1-02
+  case_id: h-c1m1-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c1m1-02-dialogue.md
+    sha256: e2c12e9cf13e5c39ecf01671ceba6e936db034e89ddea1ff4f6e04e9aaa1b36f
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c1m1-02-prompt.md
+    sha256: a4b32b244252ea54d3e687ad7194bd5d72ec3520decba529a2b2e4d9c3ba23b5
+  - path: evidence/h-c1m1-02-tests.yaml
+    sha256: 436d15fc187a2591ff20447efd9c4022a074240f3bb6cc1dc72a5e14c220b758
+  - path: evaluator/criterion/h-c1m1-02-prompt.md
+    sha256: 1ea90a2a49109a0579c2c30da63678603ebb629dfad1f9c784a14867f0dbae0b
+  - path: evaluator/criterion/h-c1m1-02-tests.yaml
+    sha256: a1db975afef1fe37d8317b4dd8da0ba3dde532a38b379612251330b0df0058c9
+  - path: evaluator/criterion/h-c1m1-02-rubric.yaml
+    sha256: 7a5e09c5f55db498b1763c63938d6661b0a1a807b7aa5d34600415c182264f18
+  - path: evaluator/criterion/h-c1m1-02-label-rationale.md
+    sha256: b96b78c466ceb0d4c744c753d1ad0777a8226cd76d2bb9803727e32919a18fe9
+  - path: evaluator/structural/h-c1m1-02.md
+    sha256: 42c076f057bf35f78556c4ae4d627ae778fcbee9c86808d0872ab31b7a09cb65
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c1m1-03
+  case_id: h-c1m1-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c1m1-03-dialogue.md
+    sha256: f558a9dd2f3c046849138e3ee2259083b69bc3001516e4e93605e75d33f236c5
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c1m1-03-prompt.md
+    sha256: 3ba9a1357e9c3bbb5e617730d4cbe79463174fc226465dc6bc1b575ff4891be5
+  - path: evidence/h-c1m1-03-tests.yaml
+    sha256: e00966b7ff79c283d118b9783e55fa66d8378d0ef599a76bec6cdc82cbd589ab
+  - path: evaluator/criterion/h-c1m1-03-prompt.md
+    sha256: 151e322f3e1d92ca230d6c5d39e4286a2dfcf6cf236c6a6c5df0cf2e160dbe8b
+  - path: evaluator/criterion/h-c1m1-03-tests.yaml
+    sha256: d4109b4d891b5f068d9782723198e47cc52b3114436f4e16909a8852869aecab
+  - path: evaluator/criterion/h-c1m1-03-rubric.yaml
+    sha256: be98f786c62572414c2679bc06c142f70f7ee37dd59900b180c3c31219f475b6
+  - path: evaluator/criterion/h-c1m1-03-label-rationale.md
+    sha256: 5bed35194cb782e21d32c40dfb02af0015549a89a93ee80d4a226dafc9f77276
+  - path: evaluator/structural/h-c1m1-03.md
+    sha256: 9a498bbd0482e2c30fe12f966b8709908224ca5360d7252af8094579362a5462
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c1m2-01
+  case_id: h-c1m2-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c1m2-01-dialogue.md
+    sha256: f1839a39fd7846dc74bd3f683020cc32f5bca65c96c4524d8d341da272eeef46
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c1m2-01-prompt.md
+    sha256: 179294237a041aa4027bf69657e0702e40d065a42aa3e5684786ba32f3b271e3
+  - path: evidence/h-c1m2-01-tests.yaml
+    sha256: cabcdcf6e51b639a28fa89d10d713b414c54908caebdbf2161144ef681be8525
+  - path: evaluator/criterion/h-c1m2-01-prompt.md
+    sha256: 180c1422ccc53ea4dbaba691a424f72028653be2a704f9ae9f8302e61205be8a
+  - path: evaluator/criterion/h-c1m2-01-tests.yaml
+    sha256: 1e1a1f5d0521ea98f56fe1ceb1f521b70c1a24e1f0cf57adc58ee3f1ff6dfabc
+  - path: evaluator/criterion/h-c1m2-01-rubric.yaml
+    sha256: 194bdd96814190db8e05a425067e72c923ec28bda57cb435a0abc242d548f5b4
+  - path: evaluator/criterion/h-c1m2-01-label-rationale.md
+    sha256: 2ec11962ea3a95cc97d92b40e1b1ec3320a3ee0a7d63370e817140ae335fdcbb
+  - path: evaluator/structural/h-c1m2-01.md
+    sha256: 55099e10686e42939ee792a963f3a9527e0b7081b58451858e394ccd60d9ceb3
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c1m2-02
+  case_id: h-c1m2-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c1m2-02-dialogue.md
+    sha256: 375f980b842d46e57baade959252b0c7e048eec0825fb250fffc202e34f8bb2f
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c1m2-02-prompt.md
+    sha256: 3c49060d558ef3745e02e0d47087e21d309416658288ca0049ee6dbed78b396e
+  - path: evidence/h-c1m2-02-tests.yaml
+    sha256: c897d6a4cb8786e937feadaf7b33de7f40eefc77a6c21605f5a72e5f0c50e0da
+  - path: evaluator/criterion/h-c1m2-02-prompt.md
+    sha256: 688166ba5763d2d505be83a20e0780534449e591f4ecbd98a604cd4a5c1339ea
+  - path: evaluator/criterion/h-c1m2-02-tests.yaml
+    sha256: 4ba8dd81fa5830d733020b84f3a4545fa7e5b5147d5dd65b182fe94dea57257f
+  - path: evaluator/criterion/h-c1m2-02-rubric.yaml
+    sha256: 4df76a9fa43a873202cb276588aca9537196840e77d83e9668d8397a8ac26f84
+  - path: evaluator/criterion/h-c1m2-02-label-rationale.md
+    sha256: 8e6cbe66144331c04fe11c10ec21cc27da618d4018390b1906e2e2593e7156aa
+  - path: evaluator/structural/h-c1m2-02.md
+    sha256: 3ae9b58af28bebf81abc18fc7c707f78ffbcb64d468bd158bab9cb555a65fa4d
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c1m2-03
+  case_id: h-c1m2-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c1m2-03-dialogue.md
+    sha256: 7fe0e2da655049126448106d7a6381c6d149f7817abb8894979b4ddbf4d63656
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c1m2-03-prompt.md
+    sha256: c6917ca33c6b30863518eba0a7c3d1d92e9c9d2b75a73b3c03f8653754dd3a0b
+  - path: evidence/h-c1m2-03-tests.yaml
+    sha256: 38bb6ca8264d5fa4413b8cb423afde0b084a7b21284e2bb1c3f560d36f4465f0
+  - path: evaluator/criterion/h-c1m2-03-prompt.md
+    sha256: 8b5cc9a79d24cf6a89ba96fe642852b5f41c22a246cb8b6f213e62d9aa5d2e2d
+  - path: evaluator/criterion/h-c1m2-03-tests.yaml
+    sha256: d328a38755305d2eea2f1fcf78a02e82b5427e182ab3f034f2b73bcdd5658d9f
+  - path: evaluator/criterion/h-c1m2-03-rubric.yaml
+    sha256: c23e54583de18e0dd754d9a36beabbfbbdd70537d055788b9d1c36f092f196be
+  - path: evaluator/criterion/h-c1m2-03-label-rationale.md
+    sha256: 01125b4670e13b2498ff790bd9abfd7b49d656df6ff421b3c19746a8bd3a59d1
+  - path: evaluator/structural/h-c1m2-03.md
+    sha256: a5f0cd6c14afca904dfb5352c4d4fc02dda8f5f224b60fec9e32e78af933a374
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c2m1-01
+  case_id: h-c2m1-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c2m1-01-dialogue.md
+    sha256: f341a8af881c580924a1520cf81816e17336cd221b3650a63b66fc0e70ed42ad
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c2m1-01-prompt.md
+    sha256: f6712f69a57e2d17cf3b459964bf10c33422ce159262e64792f41e8a1f1cdf46
+  - path: evidence/h-c2m1-01-tests.yaml
+    sha256: 180226ac2a644e0f6e6f1a7ae2f96868b33e7b20203d102ea9a1c6ecbddbbfc0
+  - path: evaluator/criterion/h-c2m1-01-prompt.md
+    sha256: 157f935cffd63e923af02f76db8b980712db9e00e30b60eddbdb407ca6f96bdb
+  - path: evaluator/criterion/h-c2m1-01-tests.yaml
+    sha256: 334fdab00133739d0439ff3e821dd9731eefe84e28dff1ff4e185bfdfd3db92f
+  - path: evaluator/criterion/h-c2m1-01-rubric.yaml
+    sha256: 5cd7250a3710312250bd619b2c8ac05607ea86d303d16bd43df1b104aa16a5ab
+  - path: evaluator/criterion/h-c2m1-01-label-rationale.md
+    sha256: 6d7b05effef359c7781ae2e3fb73938ab5a2d42d872f5ce73434cf1a5059f023
+  - path: evaluator/structural/h-c2m1-01.md
+    sha256: 3364c3501e68800cf942111a1119999ae097089205b3738a594883937a6cf76e
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c2m1-02
+  case_id: h-c2m1-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c2m1-02-dialogue.md
+    sha256: dffa14eb21af3cffbd6fc4de4670a421ed21e4030f7b4dff0f8163b880f37186
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c2m1-02-prompt.md
+    sha256: 38fc308995056abd174e3b01a10524db1e5e78ef348dbed49f6b8c5cae6d9cf1
+  - path: evidence/h-c2m1-02-tests.yaml
+    sha256: 53c7ab8b5fc67f8bd4778d293ed494d104ba6157c8915b4eba8847317a16f303
+  - path: evaluator/criterion/h-c2m1-02-prompt.md
+    sha256: 31e267305b40be26004878516f54bab0bbed6515bda19c6a3697ae9588794e5c
+  - path: evaluator/criterion/h-c2m1-02-tests.yaml
+    sha256: 4681487b60073bee1668bc9d623d52319fdc0c681f7dd0ab2ff38d357dc181c5
+  - path: evaluator/criterion/h-c2m1-02-rubric.yaml
+    sha256: 077a424320b8c00fc8f4605d21ea9cfb507909dfca040bd96ffdad28dd5c8bee
+  - path: evaluator/criterion/h-c2m1-02-label-rationale.md
+    sha256: 430d2838d2360c50cc359736aa1adf7a1221faf751f7067abb8ae2fa045e3a08
+  - path: evaluator/structural/h-c2m1-02.md
+    sha256: 818ed5ceb826698cf37041b8b3885684f6bdc5d6f8ae94266834b3dec11f4379
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c2m1-03
+  case_id: h-c2m1-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c2m1-03-dialogue.md
+    sha256: 6712a42eb288fdd390b0838b338331f9ceae7b3b4532d56193de4ffa2186790d
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c2m1-03-prompt.md
+    sha256: b93c2ff90521c1d8a3acc1762f9c776e91c3444de6e1fae4a28385c1edf0219d
+  - path: evidence/h-c2m1-03-tests.yaml
+    sha256: 36d6d97c25a30f80612e87b5adb97bea9992a7abfd006b852251165fbcaa6075
+  - path: evaluator/criterion/h-c2m1-03-prompt.md
+    sha256: 0d8114c322511a9b8abdff3c76a8d62239e4f193bcca5ceafe9bcbdfb1d0caf4
+  - path: evaluator/criterion/h-c2m1-03-tests.yaml
+    sha256: 155b433d84e22ec9952a68db538f7f47aed318774b7dd5cb6b375080df17e56e
+  - path: evaluator/criterion/h-c2m1-03-rubric.yaml
+    sha256: 4715a69ea3a14639ff906f50ade41429d15f4819f3dad5803b1138be6d493b48
+  - path: evaluator/criterion/h-c2m1-03-label-rationale.md
+    sha256: e6922bd94f2facce313ca2ccd7f487157f3df06e79bfab8f8ed2411c81346472
+  - path: evaluator/structural/h-c2m1-03.md
+    sha256: 04502b46819a6e8575a521add4135ac68c44171f79eb6333a053d1eb36a18353
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c2m2-01
+  case_id: h-c2m2-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c2m2-01-dialogue.md
+    sha256: 1ee132c648eb0acde9b5c684194202b4f377155e8152bc7ff7f5032d993c61ea
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c2m2-01-prompt.md
+    sha256: ef8e68e37131a5004c38555b0597656ebbcf1021ebc51cb769affaa9dae16d49
+  - path: evidence/h-c2m2-01-tests.yaml
+    sha256: 4f09655cc82aedc0b8e224a65695f029a3b01cf6d0c18ebed26b32316804792b
+  - path: evaluator/criterion/h-c2m2-01-prompt.md
+    sha256: 62f88ec6a2ad323d8918c0fe1687323a5d29af1be92df9f896cdf312df7d0a24
+  - path: evaluator/criterion/h-c2m2-01-tests.yaml
+    sha256: 3996ced604f42a7eec69d5f10fbc6bcabeeaa7dba137911c1df126073e9809ce
+  - path: evaluator/criterion/h-c2m2-01-rubric.yaml
+    sha256: 3bb8050d5aebbf24154fd33e0c5f6d1dec712b68ee9cd98c9ad8a8eafb94480c
+  - path: evaluator/criterion/h-c2m2-01-label-rationale.md
+    sha256: 02a088bd72a73012f8d7dba1c1e2a1c6513ca25c52ed2517c1fbf9b87bd73e28
+  - path: evaluator/structural/h-c2m2-01.md
+    sha256: 9451db6310e6a78cde0741473ec10b6bcd7f2f6e36102f6389cd1f5294909641
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c2m2-02
+  case_id: h-c2m2-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c2m2-02-dialogue.md
+    sha256: ef6eb83f4c67a3131fa9c856939bdd8a791da2a54e2e3c40039c0a50ba6c37e7
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c2m2-02-prompt.md
+    sha256: d0fbf35b2e1cc96b8d77a695c2086b6a6e6f53c901320e1ac57d93b343b8de35
+  - path: evidence/h-c2m2-02-tests.yaml
+    sha256: 615e8060673d0b2ee1e1225b12de2c31ef4179b977278f0cce2b8b425b70e372
+  - path: evaluator/criterion/h-c2m2-02-prompt.md
+    sha256: 7225b313fdb5b7931cc211e08849cbe5dff3af0bd56f7c88849f267130fa4f44
+  - path: evaluator/criterion/h-c2m2-02-tests.yaml
+    sha256: 632c6f316dd5c40ae3111ae2dbe2b6b15946b0431b107b44957fc4e4073dd367
+  - path: evaluator/criterion/h-c2m2-02-rubric.yaml
+    sha256: 1b6a8f43823aa1c2d9877618832e4d2af05b92e87bcc5ef2f7a7253ba200c2eb
+  - path: evaluator/criterion/h-c2m2-02-label-rationale.md
+    sha256: 6b29f099b84bb9f67b03a06d2dca0ec50fb6c58f06fbc199fdadfc6c968de4e6
+  - path: evaluator/structural/h-c2m2-02.md
+    sha256: 960f90add8ce034449f1be77a13def62f7ed8cc7bb494eed4436f77ce725aadd
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c2m2-03
+  case_id: h-c2m2-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c2m2-03-dialogue.md
+    sha256: 193877f2a94335067b8092074e303c35527ad80d89acbf643c9385c99d0d48d1
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c2m2-03-prompt.md
+    sha256: d095985542e6cfadbb2b4ff6f291182f4a67485d75d9d04964d7abd69de81ed3
+  - path: evidence/h-c2m2-03-tests.yaml
+    sha256: a3f790f31afbb8ca13f02a91be6c5811cf4e1492c9102a53a992a4863f4aee17
+  - path: evaluator/criterion/h-c2m2-03-prompt.md
+    sha256: 25ed30f221fff20b214476fa4772fd6e3ce4d2c3e41d07c98dda97ea7d77dd54
+  - path: evaluator/criterion/h-c2m2-03-tests.yaml
+    sha256: 647395780b23d05a23c4c088335d099573cfa1e783c35ecb7c439b82a5e2be77
+  - path: evaluator/criterion/h-c2m2-03-rubric.yaml
+    sha256: b41633ebd6136e7b3de911a4c10259b6dee5e5c09755a28e5ea97937754c624d
+  - path: evaluator/criterion/h-c2m2-03-label-rationale.md
+    sha256: 3e3215a696344453aab3e1aa48afde5cfe98a6febefbc4f48e3e11f5c3350ba6
+  - path: evaluator/structural/h-c2m2-03.md
+    sha256: 1e0b9e7313abd7ef81ef8dcf1dad2e37867b14ecac32ef464810eb2e5a95ed26
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c3m1-01
+  case_id: h-c3m1-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c3m1-01-dialogue.md
+    sha256: 13dc4f84511fd49af161e5d4ac3953e10078002a66542896c99ee473238c214f
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c3m1-01-prompt.md
+    sha256: d55a8b2ddafa4ff35498fd2590a64e314f81c5c41755cc93ba6e9d3fcc373e7c
+  - path: evidence/h-c3m1-01-tests.yaml
+    sha256: a048fbd3cbab2cd6c2c83c74a18f78c50840a051447fa097fed85d68c2d4833c
+  - path: evaluator/criterion/h-c3m1-01-prompt.md
+    sha256: c7a27d7ab0c3c29941c5b7056bb66173c7b1df7300bc0e3aab8c99e87cd3ad78
+  - path: evaluator/criterion/h-c3m1-01-tests.yaml
+    sha256: 9736bb80022095e25e6639fa766fc64bc90d7bdcbd214d9bdd81020cadfb60e2
+  - path: evaluator/criterion/h-c3m1-01-rubric.yaml
+    sha256: 555d9f91cfd77b90cd66659b8a8af878af6ce6f43dda44dd933d21862f8b2056
+  - path: evaluator/criterion/h-c3m1-01-label-rationale.md
+    sha256: 50222d6139fbe6454e1fbecccafce8d87cd2c014065ae0cd041cbcf3e79f1b38
+  - path: evaluator/structural/h-c3m1-01.md
+    sha256: 4d1269de1acb2749be39403bb06a087d5bd1efe18104efc053a878438c1f0090
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c3m1-02
+  case_id: h-c3m1-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c3m1-02-dialogue.md
+    sha256: 38732f1baef72f148cb5c8b9f71e459a817004e7320c4a8c377a8d2f290e4f5b
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c3m1-02-prompt.md
+    sha256: 496ce0e95cada141be5aa84c48f757068e65a6f1049f568411d4e19b427f959c
+  - path: evidence/h-c3m1-02-tests.yaml
+    sha256: 137be9fdc97164beffc7078c331ddbd9559c99f0694407ae9a99bc488e8362e7
+  - path: evaluator/criterion/h-c3m1-02-prompt.md
+    sha256: 0c7747c0b7727635149d0963f5318284fc615a69eca14e884fa2957078b9a9dc
+  - path: evaluator/criterion/h-c3m1-02-tests.yaml
+    sha256: 427257b2041497e03d2965c32cea4e271673e977282d6a9e632db577a7ca103c
+  - path: evaluator/criterion/h-c3m1-02-rubric.yaml
+    sha256: 3b3939f851042939b83608631e95cf664c72407baad8cf7c61a841d89bd86149
+  - path: evaluator/criterion/h-c3m1-02-label-rationale.md
+    sha256: 73254c3911dd80fb00a3fb2fedf7654ac27f9568df9dc891fb5b78270004b549
+  - path: evaluator/structural/h-c3m1-02.md
+    sha256: c80cdf9b5b083e73f8d619e9d4d79273fc59faf9716fe239667da3eeae3e5d40
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c3m1-03
+  case_id: h-c3m1-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c3m1-03-dialogue.md
+    sha256: 211abd4c7955bdc47587aa864be7287c9a75d5c55ffb6e95c46f0eab99bd1ac5
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c3m1-03-prompt.md
+    sha256: e58f475f0a9f8f29f9c86bd8cd2e1400045e49ffbaea76b4a5cd71782b805cf8
+  - path: evidence/h-c3m1-03-tests.yaml
+    sha256: 640655e7f195dfbbb4c4ecfc0867135fbd91526ee5262bfe585edb49fe502d9e
+  - path: evaluator/criterion/h-c3m1-03-prompt.md
+    sha256: de55b313129632d2e7b398606a8b0f17d1a17a93fca34a79e29b198f0a0e540d
+  - path: evaluator/criterion/h-c3m1-03-tests.yaml
+    sha256: 1154e2e5ba156f3d0079259c150b59c522a8db8e6db5f067d065bd06ef215232
+  - path: evaluator/criterion/h-c3m1-03-rubric.yaml
+    sha256: 3a64b756c026eb2aef44833b4313ddb3504940c71d1773fd471aae27c85a03e0
+  - path: evaluator/criterion/h-c3m1-03-label-rationale.md
+    sha256: 03c7ed12f9efe4d4f959b4d8d76629015df91095b3dcbc831d50e7acda70af80
+  - path: evaluator/structural/h-c3m1-03.md
+    sha256: 6f5ee23b64e48ff6aa78f7be016a9c93a75631acd496d7c63ff2c4969c8d27e7
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c3m2-01
+  case_id: h-c3m2-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c3m2-01-dialogue.md
+    sha256: 176f95158c90e61a8703bcfe92c4b7ed1d614a26ee5bc5548bad9ba8754e6f60
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c3m2-01-prompt.md
+    sha256: 0d3370964d401fa2706cc3242439f5d7580150ff07aa70f4386b200341230db0
+  - path: evidence/h-c3m2-01-tests.yaml
+    sha256: 79695ce4fde462c5b518d6aa32f658432fdd3a80a3355388936898894a3e20fd
+  - path: evaluator/criterion/h-c3m2-01-prompt.md
+    sha256: b3f6ed52001afeffdb14368b7ee6fa882b13eda82cc07dd40e30619099f0fd1a
+  - path: evaluator/criterion/h-c3m2-01-tests.yaml
+    sha256: cbaeebb9b241c73b6946a6930525fe3df1497757a39a1d0fdb25450c6abd4c39
+  - path: evaluator/criterion/h-c3m2-01-rubric.yaml
+    sha256: decb4fbabfa8a680ad490af86e9ed39d3c75abb2c3b8801832224bb15d35286d
+  - path: evaluator/criterion/h-c3m2-01-label-rationale.md
+    sha256: c4a02f2f6b0886e04a2913d0b9d43e2425a2526efc0097b2cebaf0b243a2d8f6
+  - path: evaluator/structural/h-c3m2-01.md
+    sha256: 6d44b825c0038e0fd02329ac1cd0992c3a91abf8a1efa2dd388bbfe662cca220
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c3m2-02
+  case_id: h-c3m2-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c3m2-02-dialogue.md
+    sha256: 7636256b7ba756bce54f5aa3c063e9b4c51549ec6ad2359bf1566250b96da81b
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c3m2-02-prompt.md
+    sha256: 3a7d4682379ca0422514e195e1556238872a53a0ac66cb549adfc9762f04bd1e
+  - path: evidence/h-c3m2-02-tests.yaml
+    sha256: 1a911a16196dfa8474725b5af83479a04817fb04b25f96dbde86da2a9048d198
+  - path: evaluator/criterion/h-c3m2-02-prompt.md
+    sha256: 6e9d257fe4f0ddc6de8687b6e09019a58c941a6e671138be29b3eef722136947
+  - path: evaluator/criterion/h-c3m2-02-tests.yaml
+    sha256: b8930d3c456ad33da248ebefc975540c452e6db0c16fe216ab440f72069d851d
+  - path: evaluator/criterion/h-c3m2-02-rubric.yaml
+    sha256: 7e563acf2722f37c19f54cc5b7b207e8fcfb655e84138679411eb959fc1fe1a9
+  - path: evaluator/criterion/h-c3m2-02-label-rationale.md
+    sha256: 7ffb0c0e7b656e467df4088c7b96e6795f59c6675259117978ac5fa68c05c7de
+  - path: evaluator/structural/h-c3m2-02.md
+    sha256: a379494d9041d8309f5c1803f2c16dd41c1125e9c9e818fcff26dd92a00ad58b
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c3m2-03
+  case_id: h-c3m2-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c3m2-03-dialogue.md
+    sha256: 6657b8ce52bc0d042bcbff9afc2cac519deefb595d0583b9fae8ffafddfa40b4
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c3m2-03-prompt.md
+    sha256: 22bff57eff4c3f648c272df47a658a0b2178b12869d3126e419619969e04e8be
+  - path: evidence/h-c3m2-03-tests.yaml
+    sha256: 4e8b05887ab956745d3c6d4b05ad8007a69c2ec0ace935b2435c5e22ca5bde6d
+  - path: evaluator/criterion/h-c3m2-03-prompt.md
+    sha256: 03962735442f51b910492b14bb925508b3cd54a71bcd495537c6856bdb5aeeeb
+  - path: evaluator/criterion/h-c3m2-03-tests.yaml
+    sha256: da0e4ecc17b962839ba3f43e6072b6651acd84a579ea00fc4f7c178c4bce8e2d
+  - path: evaluator/criterion/h-c3m2-03-rubric.yaml
+    sha256: f0be0444072b2377c03d9624faad8a8112ad044cbebc6a48250e7cad4e95e25e
+  - path: evaluator/criterion/h-c3m2-03-label-rationale.md
+    sha256: 565e6f38ef2d2cef88ab768210f85b9913469b2ae6e572eeeb7477a3f1316004
+  - path: evaluator/structural/h-c3m2-03.md
+    sha256: c830f3de1f6fb934bffc1fdfafedeb7a1e18020945f158f9c5bd419aa76b2fb6
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c4m1-01
+  case_id: h-c4m1-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c4m1-01-dialogue.md
+    sha256: b73496f8c963f6cc2b0f669ecd5b200c43584a393f542da302f6dd4a1158f170
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c4m1-01-prompt.md
+    sha256: d0338ae038457b2d575dba7f9365ba92fb3e37d498d0795e0fcb6aef0d053a26
+  - path: evidence/h-c4m1-01-tests.yaml
+    sha256: 82447901f905cc2addd4280ecdd5e1ccec40a508d40944fc1567c436dc3d87bc
+  - path: evaluator/criterion/h-c4m1-01-prompt.md
+    sha256: 61cd0e7967d242c9f7c9c701fcf89478f3acc96b9d2bf773f0fe5eebc8607265
+  - path: evaluator/criterion/h-c4m1-01-tests.yaml
+    sha256: 9a2e7a29ebbcff5ceed539efe68431eec65ba072dd0c020b313fd0764a079fb9
+  - path: evaluator/criterion/h-c4m1-01-rubric.yaml
+    sha256: b18f74af190b4318d6e53f25e04149adf5650150649f9070785dc1d274c7482a
+  - path: evaluator/criterion/h-c4m1-01-label-rationale.md
+    sha256: ce4e40ede015c1dc9dbd243bfd198c2102e1a44b1cf2d3595f9bee604859bc5f
+  - path: evaluator/structural/h-c4m1-01.md
+    sha256: 184e5aa14879c4f84f0ae5bb49343b2cc58c35d3710ec608af0bf968c115b345
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c4m1-02
+  case_id: h-c4m1-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c4m1-02-dialogue.md
+    sha256: f8e58ddf3e3d2b1a42f38e3dd7056bc75ea7a313c1dad5e08a5bf3a71825a00a
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c4m1-02-prompt.md
+    sha256: 9fd85b89b4628f6a45109ad2562416e4571c17b457694c83e8014ddedb35159c
+  - path: evidence/h-c4m1-02-tests.yaml
+    sha256: 360e7e032684cce22d3bd3717c16f9558017c7e188122fdb1d6243e751d48a35
+  - path: evaluator/criterion/h-c4m1-02-prompt.md
+    sha256: 4250fc6223a2de26c579b1074cd531f7ad870682daec9dec9e18b2eb3f992c76
+  - path: evaluator/criterion/h-c4m1-02-tests.yaml
+    sha256: a13c7ccc3954985aad96634e626148e555949515f7854c12a4e4e2ada5ad63a0
+  - path: evaluator/criterion/h-c4m1-02-rubric.yaml
+    sha256: 92dac8265ba28f7412905ba79c36e9018233686a2a472af229051d6577a9405e
+  - path: evaluator/criterion/h-c4m1-02-label-rationale.md
+    sha256: fa986a63f5ce15a4bbecce6d9a585fb23bd1647f694d369a759a3f06f7073901
+  - path: evaluator/structural/h-c4m1-02.md
+    sha256: 6af1fdd6db4c5b52fe2c74b8bad29260462ab2fac158fe81f331234ae29b452e
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c4m1-03
+  case_id: h-c4m1-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c4m1-03-dialogue.md
+    sha256: 5b104909b0138242e0c836f2f0cf7e8bff8e027eefc1d03abc16bae4e5cc0c83
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c4m1-03-prompt.md
+    sha256: a39a08a086524c680bad311e60083c918dfafe8100f25eb1f43aa55dc9535f29
+  - path: evidence/h-c4m1-03-tests.yaml
+    sha256: 917af40db07cd78fc4f7ed28661757a0a30b64e4bb2530b34b96287c8ed6f4c2
+  - path: evaluator/criterion/h-c4m1-03-prompt.md
+    sha256: c285686e2129502e86d9fdb19a309829785fec5c4bf0068d41022efcd3cab457
+  - path: evaluator/criterion/h-c4m1-03-tests.yaml
+    sha256: 6f1539afa1da09c79491c71e7cf2e5cfb0501839eb242d98c3f699e0bac2dff6
+  - path: evaluator/criterion/h-c4m1-03-rubric.yaml
+    sha256: 4681ea205d347f9dc950113d6ef335b76e5cf988acee6af8073e5f92efdaa3d5
+  - path: evaluator/criterion/h-c4m1-03-label-rationale.md
+    sha256: 2bc669acab7169b1965ba2a64e85380aba4ab8472b355a103653d850aa31220d
+  - path: evaluator/structural/h-c4m1-03.md
+    sha256: c33747d6740d44dd44ed19fab37ee6ba37cd10bb3a1b021f7aa00a8683ff50d0
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c4m2-01
+  case_id: h-c4m2-01
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c4m2-01-dialogue.md
+    sha256: a9ec66a2237996f5e3bfcca5fa3e4e8cd0eff05852ba69c8b592efbbd08361f2
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c4m2-01-prompt.md
+    sha256: 1087f13414851852fa746d6873fab5a4efb1099f2686c3dc57f3ddf9e493f591
+  - path: evidence/h-c4m2-01-tests.yaml
+    sha256: 8da84e38849a684e5bb23236cbfea338de2bb0e1ce073c791f09bd4825884cf0
+  - path: evaluator/criterion/h-c4m2-01-prompt.md
+    sha256: d5f0a82c27c0cacb5bb760a43cd94f16f9a80fef7a2ec4821323791156a3779b
+  - path: evaluator/criterion/h-c4m2-01-tests.yaml
+    sha256: eb7efc1a5a7fdd481559908df2b07da1e471e82215025a68843c99805194aa17
+  - path: evaluator/criterion/h-c4m2-01-rubric.yaml
+    sha256: 3fe9f357aa30d68a4eb02a1bb36523737b18bc96f4cafebc137b982da9f02972
+  - path: evaluator/criterion/h-c4m2-01-label-rationale.md
+    sha256: 6166e656d8ab679b4e9d5b20a24c7cfcff98f595e3a8f9a4ffacf9f57dfd4d6b
+  - path: evaluator/structural/h-c4m2-01.md
+    sha256: 55c1c5cdc7e239e0f4ba27adfd14aa43452ce4b343adcc201f456b1eedd3eb67
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c4m2-02
+  case_id: h-c4m2-02
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c4m2-02-dialogue.md
+    sha256: d64f7d35deb5ebeec2d35a85a99e0e6b4bd3e2e3e365c24c31fd3fa563ac7eac
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c4m2-02-prompt.md
+    sha256: 6f38240107a995cb494d500c2eabdad8450e55189eddc1b9ac32a16786306443
+  - path: evidence/h-c4m2-02-tests.yaml
+    sha256: 0255b513ac20ce229c0caebe102b5b513fb57b7381e2b97a5de35d2c31521651
+  - path: evaluator/criterion/h-c4m2-02-prompt.md
+    sha256: 53ca0b35e10afc1b4cdbf41fec4c69ce788fd104b51f380c9b432881b1d5d802
+  - path: evaluator/criterion/h-c4m2-02-tests.yaml
+    sha256: d0b70290cbb843bf576b6844f124797f2fcc2370d9eed295ee6cca2faa75dc74
+  - path: evaluator/criterion/h-c4m2-02-rubric.yaml
+    sha256: 577a9291cdab7c188d6d27923874a5224b657ac4e368a59d34c04268cffccf4d
+  - path: evaluator/criterion/h-c4m2-02-label-rationale.md
+    sha256: 82feba9e2f532b1d7f34b502f048c85af7c82f87f95d7fc28531d184581cdb05
+  - path: evaluator/structural/h-c4m2-02.md
+    sha256: f30e81d9d6885479956bb60c7e05df8766781484d49eb8fe2eaf32452a8a7bcb
+- schema_version: 1
+  schema_id: benchmark.review.v1
+  review_id: v1-review-h-c4m2-03
+  case_id: h-c4m2-03
+  author: Anas Khan
+  reviewer: independent-reviewer-tbd
+  reviewed_at_utc: null
+  decision: pending
+  concerns: []
+  adjudication: null
+  reviewed_files:
+  - path: public/h-c4m2-03-dialogue.md
+    sha256: 80c8a20642e3cf3a8f909cb8fb181d2af23b9249461779ece16672c4b3dc1f46
+  - path: public/initial-tracker.json
+    sha256: 4f4ca8ddd7bfeb612dbe41d1f4c7d4a6dec3232c90cbe6d3c9c482e5977fa7eb
+  - path: controls/unrelated.yaml
+    sha256: fb8da66dfdc074cd74d012ff1b0b6e41867554393f60bd1d0a88d453edff74c0
+  - path: controls/corruption.yaml
+    sha256: f30a4e8662d22d2dbc0e97ceefff89a96937a5585b011c8c1832e9d3746d1356
+  - path: prompts/student-system-v1.md
+    sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  - path: evidence/h-c4m2-03-prompt.md
+    sha256: 52da9454a0b384ad2d3062b4b774d513273b972782ab68e1431f50b493ce79cb
+  - path: evidence/h-c4m2-03-tests.yaml
+    sha256: 1ccfc2d55a3f694b7625af3340dff28d0d296a67f05992e284ba5b00bd931839
+  - path: evaluator/criterion/h-c4m2-03-prompt.md
+    sha256: 02514123ebc86e6e2c850a70fbc3c6ddf207eaf340dec4edddd284fd051952c9
+  - path: evaluator/criterion/h-c4m2-03-tests.yaml
+    sha256: 21a95d89271c0f2e3d92332a6a369e636d942051c32cb3a146bb97aba70ec50d
+  - path: evaluator/criterion/h-c4m2-03-rubric.yaml
+    sha256: 19894c4e9a139ade73f4e26fa43ae495f1f7b83ee9a05472530931b90cfbadb0
+  - path: evaluator/criterion/h-c4m2-03-label-rationale.md
+    sha256: 076a0063e1e53d3c345740b1dc94c063d67a1b019376191351c3cd64c8af03be
+  - path: evaluator/structural/h-c4m2-03.md
+    sha256: 178ccf34ccfef11a16c9c7471d0d24b97f5f1dd3435efb9f07daafb5fdce6543
+primary_metric:
+  name: paired_brier_difference
+  favourable_direction: positive
+  aggregation_unit: case
+  interval_method: paired_case_bootstrap
+  missingness_rule: exclude_missing_criterion_and_report_denominator
+generation:
+  provider: recorded_fixture
+  model: authored-deterministic
+  system_prompt_version: student-system-v1
+  system_prompt_ref: prompts/student-system-v1.md
+  system_prompt_sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+  repeats_per_case: 1
+  temperature: 0.0
+  max_output_tokens: 512
+limitations_ref: limitations.md

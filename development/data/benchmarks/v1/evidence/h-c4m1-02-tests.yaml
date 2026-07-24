@@ -1,0 +1,6 @@
+schema_id: benchmark.authored_tests.v1
+function: predicted_balance_result
+checks:
+  - expected: [0, reset]
+scoring: {demonstrated: all_checks_pass}
+

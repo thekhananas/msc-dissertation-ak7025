@@ -1,0 +1,6 @@
+schema_id: benchmark.authored_tests.v1
+function: predicted_sequence_values
+checks:
+  - expected: [[base], [base, extra]]
+scoring: {demonstrated: all_checks_pass}
+

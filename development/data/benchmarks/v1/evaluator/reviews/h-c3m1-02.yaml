@@ -1,0 +1,11 @@
+schema_id: benchmark.review_file.v1
+case_id: h-c3m1-02
+status: pending
+author: Anas Khan
+reviewer: independent-reviewer-tbd
+review_scope:
+- public_dialogue_matches_declared_pattern
+- evidence_and_criterion_measure_the_same_concept
+- criterion_does_not_repeat_the_evidence_solution
+- authored_tests_match_the_prompts
+- controls_do_not_use_criterion_labels
