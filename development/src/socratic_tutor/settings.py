@@ -1,5 +1,6 @@
 """Typed process settings with offline-safe defaults."""
 
+from pathlib import Path
 from typing import Literal
 
 from pydantic import SecretStr, model_validator
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
     template_only: bool = True
     wandb_mode: Literal["disabled", "offline", "online"] = "disabled"
     openrouter_api_key: SecretStr | None = None
+    event_log_path: Path = Path(".local/demo-events.jsonl")
 
     @model_validator(mode="after")
     def require_template_or_model_access(self) -> "Settings":

@@ -25,6 +25,8 @@ pixi run dev
 
 Then open `http://127.0.0.1:5173`. Vite proxies `/api` to FastAPI on port 8000.
 
+The offline demo presents one Python list-aliasing task. A submitted explanation passes through a bounded LangGraph turn, deterministic evidence rules, a simple mastery tracker, a heuristic policy, and a leakage guardrail. Completed turns are written to `.local/demo-events.jsonl` and recovered when the API restarts.
+
 ## Focused Commands
 
 ```bash
@@ -32,6 +34,7 @@ pixi run dev-api
 pixi run dev-web
 pixi run test
 pixi run test-web
+pixi run test-e2e
 pixi run lint
 pixi run typecheck
 pixi run config-smoke
@@ -39,7 +42,7 @@ pixi run docs-check
 pixi run build-web
 ```
 
-`config-smoke` composes the default Hydra configuration without running a simulation. Experiment behavior is added only after the browser vertical slice is complete.
+`config-smoke` composes the default Hydra configuration without running a simulation. The first browser slice is deterministic and offline; LLM simulation and learned policies remain later experiment stages.
 
 ## Data Policy
 

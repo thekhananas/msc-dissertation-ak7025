@@ -1,0 +1,32 @@
+schema_version: 1
+task_id: mutable-list-aliasing
+version: "1.0.0"
+title: Shared list references
+concept: mutable-list-aliasing
+instructions: >-
+  Predict exactly what the program prints, then explain why changing `alias`
+  affects (or does not affect) `numbers`.
+starter_code: |-
+  numbers = [1, 2]
+  alias = numbers
+  alias.append(3)
+  print(numbers)
+initial_prompt: >-
+  Before running the program, what do you think it prints? Explain what
+  relationship `alias` has to `numbers`.
+evidence_rules:
+  correct_output_markers:
+    - "[1, 2, 3]"
+    - "[1,2,3]"
+  correct_explanation_markers:
+    - "same list"
+    - "same object"
+    - "reference"
+    - "alias"
+  misconception_output_markers:
+    - "[1, 2]"
+    - "[1,2]"
+  misconception_explanation_markers:
+    - "copy"
+    - "independent"
+    - "separate list"
