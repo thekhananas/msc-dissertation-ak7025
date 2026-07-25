@@ -4,22 +4,26 @@
 
 | Field | Value |
 |---|---|
-| Status | Approved rescope for implementation |
+| Status | Proposed measurement-design amendment for review |
 | Product phase | Master's dissertation proof of concept |
-| Revision date | 2026-07-12 |
+| Revision date | 2026-07-14 |
 | Primary source | `proposal/dissertation_proposal.tex` |
 | Delivery target | Working demo and reproducible simulation study by 2026-09-15 |
 | Initial domain | Python mutable-list aliasing and mutation |
 | Initial users | Researcher, dissertation evaluator, demo participant |
 | Future users | Pilot-study students after separate ethics approval |
 
-> **Downstream-document status:** This PRD is the current source of truth. `docs/engineering-plan.md`, `docs/HLD.md`, `docs/LLD.md`, `docs/data-flow-and-schema.md`, and `docs/implementation-plan.md` still describe the previous enterprise scope and must be revised sequentially before implementation begins beyond the vertical slice.
+> **Amendment status:** This revision proposes a benchmark-first primary study. It does not silently amend `proposal/dissertation_proposal.tex`; the research-question change requires supervisor review before the proposal is updated. Downstream documents reflect the earlier POC rescope and must be revised sequentially to incorporate this measurement design.
 
 ## 1. Purpose
 
 This document defines a deliberately narrow proof of concept for evaluating adaptive Socratic tutoring. The system uses LangGraph to orchestrate a tutoring turn, maintains an estimated learner state, selects an interpretable pedagogical directive, and renders the next Socratic prompt through a deterministic template or a pinned LLM.
 
-The dissertation is not building a production tutoring platform. Its required outcome is a working, inspectable demo and a reproducible simulation experiment that can determine whether Cognitive Bandwidth and Friction modelling, probabilistic tracking, and delayed-return policy learning add value over simpler alternatives.
+The dissertation is not building a production tutoring platform. Its required outcome is a working, inspectable demo and a reproducible study centred on one primary claim:
+
+> Dialogue-only evidence can cause false mastery estimates in simulated programming students; context-isolated executable probes should reduce that error and make subsequent tutoring-policy evaluation more reliable.
+
+The benchmark and measurement protocol for this claim must be specified before CBFM, probabilistic tracking, or learned policies are allowed to expand. Those components are secondary experiments that survive only when they add value over simpler alternatives.
 
 The first mandatory product is one complete vertical slice:
 
@@ -46,8 +50,9 @@ Provide a small research instrument that makes the tutoring decision loop visibl
 - Which pedagogical action was selected.
 - Which prompt was shown next.
 - How simulated reward and external evaluation metrics were calculated.
+- Which benchmark case, evidence condition, criterion label, and held-out split support each reported result.
 
-The project succeeds even if SMC, CBFM, or Q-learning is rejected, provided the comparison is rigorous and the simpler winning approach is reported honestly.
+The project succeeds if it produces a valid, reproducible answer to the dialogue-only versus probe-informed mastery question. It also succeeds if SMC, CBFM, or Q-learning is rejected, provided the comparison is rigorous and the simpler winning approach is reported honestly.
 
 ## 3. Product Principles
 
@@ -60,6 +65,9 @@ The project succeeds even if SMC, CBFM, or Q-learning is rejected, provided the 
 7. **CBFM is a simulator construct.** `B_t` and `F_t` are not validated measurements of human fatigue or working memory.
 8. **No raw hidden reasoning is stored or displayed.** The product retains public text, code, tests, structured evidence, and final outputs only.
 9. **Human research is separate.** The dissertation demo does not authorize student recruitment or data collection.
+10. **Measurement precedes modelling.** Criterion labels, benchmark cases, controls, splits, hypotheses, and primary metrics are frozen before advanced tracker, CBFM, or policy comparisons.
+11. **Executable outcomes outrank self-report.** Public claims such as "I understand" are evidence, not ground truth; independent tests and authored rubrics determine synthetic benchmark labels.
+12. **Benchmark and simulator are distinct.** The benchmark evaluates inference and decisions; it must not be generated from the same transition equations or reward function being evaluated.
 
 ## 4. Users and Stakeholders
 
@@ -89,15 +97,19 @@ Uses one authored task, deterministic evidence rules, a simple mastery tracker, 
 
 Runs `SocraticTutor/POMDP-v0` through Gymnasium using mathematical student transitions, template prompts, frozen seeds, and no LLM calls. This is the policy-training and reproducibility reference.
 
-### 5.3 LLM-Rendered Demo Mode
+### 5.3 Benchmark Evaluation Mode
+
+Runs paired dialogue-only and probe-informed evidence conditions over a versioned set of authored Python misconceptions. Each case separates an evidence probe available to the tracker from a structurally different held-out criterion probe used only for scoring. Executable tests and reviewed rubrics provide labels independent of tracker, policy, reward, and CBFM equations.
+
+### 5.4 LLM-Rendered Demo Mode
 
 Uses the same tracker and policy decisions as deterministic mode but allows a pinned OpenRouter model/provider route to render the selected directive. A safe deterministic template remains the fallback.
 
-### 5.4 Glass Box Mode
+### 5.5 Glass Box Mode
 
 Displays synthetic true state, tracker estimates, selected actions, prompt-load features, CBFM state, evidence, and rewards in clearly separated views. Simulator truth is labeled and unavailable outside synthetic sessions.
 
-### 5.5 Future Pilot Mode
+### 5.6 Future Pilot Mode
 
 Deferred until after dissertation delivery and prior institutional approval. It will contain no simulator truth and will use frozen policies, approved instruments, consent, and a separate human-data lifecycle.
 
@@ -106,6 +118,8 @@ Deferred until after dissertation delivery and prior institutional approval. It 
 ### 6.1 Required Goals
 
 - Complete the thin vertical slice through a browser.
+- Publish a versioned benchmark of programming misconceptions, public responses, evidence probes, held-out criterion probes, executable outcomes, and reviewed labels.
+- Compare dialogue-only and probe-informed mastery estimation using paired cases and prespecified metrics.
 - Build a deterministic Gymnasium environment with reproducible trajectories.
 - Implement a simple tracker before BKT and reduced SMC.
 - Implement a heuristic policy before contextual bandit and Q-learning.
@@ -125,6 +139,8 @@ Deferred until after dissertation delivery and prior institutional approval. It 
 - Establishing educational efficacy from synthetic students.
 - Running a real-student pilot before dissertation submission.
 - Claiming that `B_t` or `F_t` directly measures a human mental state.
+- Treating simulator latent state, aggregate reward, or an LLM judge as benchmark ground truth.
+- Claiming that the authored benchmark represents all programming concepts, students, or real learning behaviour.
 
 ## 7. Approved Technical Constraints
 
@@ -141,6 +157,7 @@ Deferred until after dissertation delivery and prior institutional approval. It 
 | RL implementations | NumPy/SciPy heuristic, contextual bandit, and tabular Q-learning |
 | Experiment configuration | Hydra with saved fully resolved configurations |
 | Experiment tracking | Weights & Biases |
+| Primary benchmark | Repository-authored Python cases with executable tests and reviewed misconception labels |
 | Development logging | Append-only JSONL |
 | Canonical trajectories | Versioned Parquet |
 | Analysis | DuckDB, SciPy, statsmodels |
@@ -165,7 +182,30 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-VS-009 | The browser shall display the interaction and inspectable state transition. | A reviewer can complete and explain one full turn without using developer tools. | Must |
 | FR-VS-010 | The vertical slice shall run without LLM, W&B, or sandbox credentials. | Offline end-to-end test passes using templates and local files. | Must |
 
-### 8.2 Experiment Configuration and Reproducibility
+### 8.2 Context-Isolated Mastery Benchmark
+
+The first benchmark artifact is provisionally named **Context-Isolated Mastery Benchmark v1**. The descriptive name may change before publication; its versioned contract and case identifiers must remain stable after the benchmark freeze.
+
+| ID | Requirement | Acceptance criterion | Priority |
+|---|---|---|---|
+| FR-BMK-001 | The repository shall contain a versioned benchmark-case schema independent of tracker, policy, reward, and CBFM implementations. | Schema validation succeeds without importing simulator, tracker, policy, or cognitive modules. | Must |
+| FR-BMK-002 | Version 1 shall cover at least four Python concepts, two misconception states per concept, and three transfer cases per concept/misconception pair. | The frozen manifest contains at least 24 uniquely identified cases with balanced declared strata. | Must |
+| FR-BMK-003 | Every case shall include a public interaction fixture, a context-isolated evidence probe, a structurally different held-out criterion probe, executable or deterministic rubrics for both probes, and a criterion demonstrated-mastery label. | Case validation rejects any missing channel, oracle test, rubric, structural-difference record, or label provenance. | Must |
+| FR-BMK-004 | Evidence and criterion probes shall exclude tutor dialogue, target solutions, hidden simulator state, and answer-bearing feedback. | Automated field allowlists and manual review confirm context isolation before freeze. | Must |
+| FR-BMK-005 | Dialogue-only and probe-informed conditions shall be paired on the same case and identical pre-update history. | Pairing audit shows that only evidence-probe input differs at the tracker update; both conditions are scored against the same unseen criterion probe. | Must |
+| FR-BMK-006 | Criterion-probe content, response, execution result, and label shall be unavailable to trackers and policies until after their predictions and actions are committed. | Runtime access tests and trajectory timing prove criterion isolation at decision time. | Must |
+| FR-BMK-007 | Development, calibration, policy-selection, and held-out splits shall separate task families rather than randomly splitting dialogue rows. | Split validator reports no shared task template, probe template, or surface variant across forbidden partitions. | Must |
+| FR-BMK-008 | Criterion demonstrated-mastery labels and misconception mappings shall be grounded in held-out executable behaviour and reviewed independently of model outputs. | Each frozen case records evidence/criterion test hashes, label rationale, author, independent reviewer, and adjudication status. | Must |
+| FR-BMK-009 | The primary endpoint shall be the paired change in mastery-probability Brier score against the unseen criterion label between dialogue-only and probe-informed conditions. | The metric definition, direction, aggregation unit, exclusions, and interval method are frozen before held-out runs. | Must |
+| FR-BMK-010 | Secondary outcomes shall include false-mastery acceptance, false-mastery detection precision/recall, unsafe advancement, tracker confidence, and policy-action disagreement. | The report emits all outcomes with case counts and uncertainty; policy rank reversal remains explicitly exploratory. | Must |
+| FR-BMK-011 | Negative controls shall include an unrelated probe and a label-shuffled or corrupted-probe condition. | Probe-informed improvement must weaken or disappear under controls, or the result is reported as non-specific. | Must |
+| FR-BMK-012 | Deterministic authored fixtures shall validate the measurement pipeline before LLM-student stress tests are run. | Known false-mastery, true-mastery, underconfidence, and ambiguous fixtures recover their expected labels and metric directions. | Must |
+| FR-BMK-013 | Primary benchmark cases shall not be tuned after held-out results are viewed. | Any post-freeze correction creates a new benchmark version and reruns every affected condition. | Must |
+| FR-BMK-014 | The final benchmark artifact shall include schemas, manifests, cases, tests, split hashes, metric code, and a limitations card. | A clean command validates and reproduces the benchmark summary without W&B or network access. | Must |
+| FR-BMK-015 | Simulator latent truth may be used only as a separate synthetic diagnostic and shall not define the primary criterion label. | Reports separate criterion-probe performance from simulator-state recovery and make no human-mastery claim. | Must |
+| FR-BMK-016 | The case matrix shall cover supported mastery, false public mastery, honest non-mastery, underconfidence, and ambiguous evidence patterns. | Every concept has declared coverage, and reports stratify results without silently discarding ambiguous cases. | Must |
+
+### 8.3 Experiment Configuration and Reproducibility
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -176,20 +216,20 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-EXP-005 | Every run shall record code revision and dependency/configuration hashes. | W&B and local manifest contain Git revision, dirty state, Pixi lock hash, resolved config hash, split hash, and artifact versions. | Must |
 | FR-EXP-006 | Held-out evaluation shall execute only after configuration and policy freeze. | Evaluation command rejects mutable or unselected candidate configurations. | Must |
 
-### 8.3 Gymnasium Simulator
+### 8.4 Gymnasium Simulator
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
 | FR-SIM-001 | The system shall register `SocraticTutor/POMDP-v0`. | `gymnasium.make` and `check_env` pass in CI. | Must |
 | FR-SIM-002 | The environment shall exclusively own simulator true state. | Policies cannot import, deserialize, or receive the true-state type. | Must |
 | FR-SIM-003 | The environment shall preserve fast-prompt, evidence, and slow-learning timing. | Order-spy tests demonstrate the specified transition order. | Must |
-| FR-SIM-004 | The simulator shall support a small versioned profile/task set. | At least 4 tasks across 3 concepts can run from frozen fixtures before final experiments. | Should |
+| FR-SIM-004 | The simulator shall support a small versioned profile/task set distinct from benchmark labels. | At least 4 tasks across 3 concepts can run from frozen fixtures without importing benchmark criterion labels. | Should |
 | FR-SIM-005 | `reset(seed=...)` shall reproduce initial state and random streams. | Golden reset fixtures match exactly. | Must |
 | FR-SIM-006 | Policy observations shall contain tracker-visible features only. | Recursive feature audit finds no simulator truth. | Must |
 | FR-SIM-007 | Natural termination and administrative truncation shall be separate. | Completion, maximum-turn, budget, and failure fixtures return correct flags/reasons. | Must |
 | FR-SIM-008 | RL rollouts shall run without LangGraph or LLM calls. | Training test succeeds with network disabled. | Must |
 
-### 8.4 Cognitive Bandwidth and Friction
+### 8.5 Cognitive Bandwidth and Friction
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -203,7 +243,7 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-CBFM-008 | Sensitivity and negative controls shall be reported. | Parameter perturbation and shuffled-feature tests produce a robustness result. | Must |
 | FR-CBFM-009 | Product language shall identify CBFM as simulated or estimated. | Copy tests reject unsupported human-fatigue claims. | Must |
 
-### 8.5 Tracking
+### 8.6 Tracking
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -217,7 +257,7 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-TRK-008 | Tracker parameters may differ from simulator truth. | Misspecification experiments run from configuration without code changes. | Should |
 | FR-TRK-009 | The tracker shall be the only writer of tutor-facing estimates. | LangGraph node/state tests reject unauthorized writes. | Must |
 
-### 8.6 Tutor Policies and RL
+### 8.7 Tutor Policies and RL
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -231,7 +271,7 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-POL-008 | RL training shall use local CPU rollouts and no LLM calls. | Network-disabled training produces a policy artifact. | Must |
 | FR-POL-009 | Demo and evaluation sessions shall use frozen policy artifacts. | Policy version cannot change within an episode. | Must |
 
-### 8.7 LangGraph, Generation, and Guardrails
+### 8.8 LangGraph, Generation, and Guardrails
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -247,7 +287,7 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-GRD-002 | Guardrail output shall be structured and validated. | Malformed classifier output, if later added, fails closed. | Should |
 | FR-GRD-003 | Rewrite attempts shall be bounded and end in a safe template. | Exhaustion route is deterministic and tested. | Must |
 
-### 8.8 Logging, Trajectories, and W&B
+### 8.9 Logging, Trajectories, and W&B
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -258,7 +298,7 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-TRJ-005 | W&B shall track resolved configuration, metrics, summaries, and artifact references. | Every final run resolves to local canonical artifacts and hashes. | Must |
 | FR-TRJ-006 | W&B Tables shall contain selected examples only. | Complete raw trajectories remain reproducible when W&B is unavailable. | Must |
 
-### 8.9 Demo Interface
+### 8.10 Demo Interface
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -269,7 +309,7 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | FR-UI-005 | The demo shall handle LLM failure gracefully. | Simulated timeout produces a deterministic template without losing the turn. | Must |
 | FR-UI-006 | Synthetic privileged controls shall be clearly labeled and absent from future pilot builds. | Build/configuration test enforces the mode boundary. | Must |
 
-### 8.10 Code Execution
+### 8.11 Code Execution
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
@@ -289,6 +329,7 @@ W&B is not the canonical data store. Complete trajectories, policy tables, calib
 | NFR-REP-003 | Deterministic template episodes shall replay from seeds. | Content-equivalent trajectories excluding timestamps/generated IDs. |
 | NFR-REP-004 | Final reports shall reference trajectory, configuration, code, and policy hashes. | 100% report-to-source traceability. |
 | NFR-REP-005 | Held-out data shall not influence calibration or tuning. | Split-access tests and run manifests show no leakage. |
+| NFR-REP-006 | Benchmark validation and primary metrics shall reproduce without network access. | A clean checkout regenerates case counts, split checks, labels, and baseline metrics from one command. |
 
 ### 9.2 Reliability and Performance
 
@@ -326,51 +367,89 @@ Pass when one browser interaction completes the full critical path, writes a val
 
 No SMC, RL, LLM integration, sandbox, W&B, or advanced visualization work may block this gate.
 
-### Gate 2: Deterministic Simulator
+### Gate 2: Measurement and Benchmark Freeze
+
+Pass when the benchmark schema, minimum case matrix, evidence/criterion separation, context-isolation rules, executable oracles, criterion labels, task-family splits, primary metric, secondary metrics, negative controls, and exclusion rules are versioned and independently reviewed.
+
+No CBFM fitting, tracker comparison, learned-policy training, or held-out model evaluation may begin before this gate. Case-authoring defects discovered later require a new benchmark version and complete affected reruns.
+
+### Gate 3: Deterministic Simulator
 
 Pass when `SocraticTutor/POMDP-v0` passes `check_env`, deterministic replay, state-ownership, timing, reward, and termination tests.
 
-### Gate 3: CBFM
+### Gate 4: CBFM
 
 Pass when boundedness, monotonicity, recovery, complete ablation, calibration separation, and sensitivity tests pass. Failure means CBFM remains an analyzed but rejected component.
 
-### Gate 4: Tracking
+### Gate 5: Tracking
 
 Pass BKT before reduced SMC begins. Retain SMC only if it remains stable and improves calibration or policy-relevant uncertainty over the simpler tracker.
 
-### Gate 5: RL
+### Gate 6: RL
 
 Begin bandit and Q-learning only after heuristic trajectories are reproducible. Retain Q-learning only if it improves over heuristic and bandit controls without safety or cost regression.
 
-### Gate 6: Experiments
+### Gate 7: Experiments
 
 Pass when configurations, splits, seeds, policy artifacts, prompt/model routes, and analysis code are frozen before held-out execution.
 
-### Gate 7: Demo
+### Gate 8: Demo
 
 Pass when FastAPI + React reliably completes deterministic and LLM-rendered scenarios, clearly distinguishes evidence/estimates/truth, and survives provider failure through templates.
 
-### Gate 8: Dissertation
+### Gate 9: Dissertation
 
 Pass when final results, uncertainty, negative findings, costs, limitations, canonical artifacts, and reproduction instructions are complete.
 
 ## 11. Evaluation Requirements
 
-The final simulation study shall compare:
+### 11.1 Primary Study: Evidence Validity
+
+The primary study shall ask:
+
+> Does adding one context-isolated executable evidence probe improve prediction of performance on a different held-out criterion probe over dialogue-only evidence?
+
+The prespecified directional hypothesis is that probe-informed updates produce a lower paired Brier score against the unseen criterion-probe label than dialogue-only updates on held-out task families. The unit of analysis is the benchmark case, not the individual dialogue row or repeated model sample.
+
+Required conditions:
+
+- Dialogue-only evidence.
+- Dialogue plus the result of a context-isolated executable evidence probe.
+- Dialogue plus the result of an unrelated evidence probe as a negative control.
+- Dialogue plus a corrupted or result-shuffled evidence-probe result as a negative control.
+
+All conditions commit their mastery prediction and policy action before the common criterion probe is revealed.
+
+Required reporting:
+
+- Paired Brier-score difference against the unseen criterion-probe label as the primary endpoint.
+- False-mastery acceptance and unsafe-advancement rates.
+- False-mastery detection precision and recall.
+- Tracker confidence and calibration by concept and misconception stratum.
+- Policy-action disagreement under dialogue-only and probe-informed evidence.
+- Missing, invalid, ambiguous, excluded, and failed-sandbox cases.
+- Paired uncertainty intervals and case-level effect distributions.
+- Separate deterministic-fixture and LLM-student results.
+
+The primary claim is rejected or reported as inconclusive if improvement does not survive the unrelated/corrupted-probe controls, held-out task-family evaluation, or reasonable threshold sensitivity.
+
+### 11.2 Secondary Component Studies
+
+After the benchmark gate, the simulation study may compare:
 
 - Heuristic policy.
 - Contextual bandit.
 - Tabular Q-learning.
 - Optional static Socratic reference.
 
-Required controls:
+Secondary controls:
 
 - Simple/BKT tracker versus reduced SMC.
 - CBFM disabled versus enabled.
 - Template rendering versus pinned LLM rendering for selected evaluation episodes.
 - Guardrail disabled versus enabled on leakage fixtures.
 
-Required reporting:
+Secondary reporting:
 
 - Matched task/profile/seed results.
 - Episode return and decomposed reward.
@@ -386,11 +465,16 @@ Required reporting:
 
 W&B Sweeps may tune policy hyperparameters on policy-selection/validation data only. Held-out data shall never drive a sweep.
 
+No secondary component may redefine benchmark labels, primary metrics, exclusions, or splits after seeing held-out outcomes.
+
 ## 12. Success Metrics
 
 | Outcome | Success criterion |
 |---|---|
 | Working POC | A reviewer completes one browser turn and inspects the resulting state/action/log transition. |
+| Benchmark readiness | At least 24 reviewed cases pass schema, evidence/criterion separation, executable-oracle, context-isolation, balance, and task-family split validation. |
+| Primary evidence result | Evidence-probe-informed mastery estimates improve paired Brier score against unseen criterion probes over dialogue-only evidence, or the claim is explicitly rejected/inconclusive under frozen criteria. |
+| Measurement specificity | Any probe-informed gain weakens under unrelated and corrupted-probe controls; otherwise the mechanism is reported as non-specific. |
 | Reproducibility | A clean environment reproduces a deterministic episode and a representative report. |
 | Simulator validity | Environment invariants, timing, seeds, and feature-separation tests pass. |
 | CBFM utility | CBFM improves held-out load-proxy prediction beyond prompt features or is explicitly rejected. |
@@ -404,6 +488,12 @@ W&B Sweeps may tune policy hyperparameters on policy-selection/validation data o
 | Risk | Consequence | Required mitigation |
 |---|---|---|
 | Vertical slice delayed by architecture work | No working demo | Freeze advanced work until Gate 1 passes. |
+| Benchmark is authored to prove the desired claim | Tautological result | Freeze balanced true/false/ambiguous strata, use independent review, publish all cases, and retain negative results. |
+| Evidence or criterion probe repeats tutor wording or solution | Evidence channel remains dialogue-contaminated | Enforce context allowlists, transfer-task separation, lexical-overlap review, and unrelated-probe controls. |
+| The same probe supplies tracker evidence and evaluation label | Trivial self-fulfilling improvement | Separate evidence and criterion probes structurally and temporally; commit estimates before criterion reveal. |
+| Tracker and policy are tuned to held-out cases | Inflated evaluation result | Split by task family, gate access, hash manifests, and version any post-freeze correction. |
+| Executable success is treated as complete knowledge | Overstated construct validity | Report demonstrated mastery only, include transfer cases, and avoid claims about latent human understanding. |
+| Benchmark is too small for stable subgroup claims | Fragile or misleading intervals | Treat case as the analysis unit, report case-level effects/counts, restrict subgroup claims, and expand only before freeze. |
 | CBFM validates its own simulator assumptions | Circular result | Use external proxies, prompt-only control, negative controls, and held-out calibration. |
 | SMC becomes numerically or dimensionally unstable | Tracker blocks integration | Reduce state, retain BKT fallback, and require stability gate. |
 | Q-learning exploits authored transitions | Simulator-only policy gains | Use held-out tasks/profiles, parameter sweeps, strong heuristic/bandit baselines, and cautious claims. |
@@ -438,6 +528,7 @@ Synthetic success does not establish human educational efficacy.
 | Research objective | Primary requirements | Evidence gate |
 |---|---|---|
 | Working tutoring loop | FR-VS-001 through FR-VS-010 | Vertical-slice gate |
+| Dialogue versus demonstrated mastery | FR-BMK-001 through FR-BMK-016 | Measurement and benchmark gate |
 | Reproducible simulator | FR-EXP-001 through FR-SIM-008 | Simulator gate |
 | CBFM construct utility | FR-CBFM-001 through FR-CBFM-009 | CBFM gate |
 | Belief tracking | FR-TRK-001 through FR-TRK-009 | Tracking gate |
@@ -453,6 +544,8 @@ Synthetic success does not establish human educational efficacy.
 The Master's POC is complete when:
 
 - The browser vertical slice passes from task display through structured log.
+- The frozen benchmark contains at least 24 reviewed, execution-verifiable cases with separate context-isolated evidence and criterion probes, task-family splits, and negative controls.
+- The dialogue-only versus probe-informed primary study produces a reproducible accept/reject/inconclusive result from prespecified metrics.
 - The deterministic Gymnasium environment passes contract and replay tests.
 - The heuristic policy and simple/BKT tracker provide reliable baselines.
 - CBFM, reduced SMC, contextual bandit, and Q-learning each receive a clear retain/reject result where implemented.
