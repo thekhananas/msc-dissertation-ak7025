@@ -1,0 +1,52 @@
+schema_version: 1
+schema_id: benchmark.shortcut_audit_plan.v1
+created_at_utc: 2026-08-12T20:00:00Z
+maximum_surface_accuracy: 0.5
+training_examples:
+  - example_id: preserve_none
+    text: use is None so zero and empty strings remain valid values
+    label: true
+  - example_id: broad_falsy
+    text: use if not value because zero and empty strings mean missing
+    label: false
+audit_examples:
+  - example_id: preserve_none_rename
+    reference_id: preserve_none
+    variant_kind: identifier_rename
+    text: check item is None so zero and empty strings remain valid values
+    expected_label: true
+  - example_id: preserve_none_paraphrase
+    reference_id: preserve_none
+    variant_kind: paraphrase
+    text: recognise only None as absent and keep zero and empty text
+    expected_label: true
+  - example_id: preserve_none_clue_removed
+    reference_id: preserve_none
+    variant_kind: clue_removal
+    text: preserve supplied zero and empty values when the input is absent
+    expected_label: true
+  - example_id: preserve_none_semantic_change
+    reference_id: preserve_none
+    variant_kind: semantic_change
+    text: use is None but convert zero and empty strings into missing values
+    expected_label: false
+  - example_id: broad_falsy_rename
+    reference_id: broad_falsy
+    variant_kind: identifier_rename
+    text: use if not item because zero and empty strings mean missing
+    expected_label: false
+  - example_id: broad_falsy_paraphrase
+    reference_id: broad_falsy
+    variant_kind: paraphrase
+    text: treat every falsy value such as zero or empty text as absent
+    expected_label: false
+  - example_id: broad_falsy_clue_removed
+    reference_id: broad_falsy
+    variant_kind: clue_removal
+    text: classify zero and empty values as missing when checking the input
+    expected_label: false
+  - example_id: broad_falsy_semantic_change
+    reference_id: broad_falsy
+    variant_kind: semantic_change
+    text: use if not item only after preserving zero and empty strings as valid
+    expected_label: true

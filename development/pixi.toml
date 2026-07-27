@@ -70,6 +70,9 @@ cmd = "python scripts/benchmark_cli.py validate --manifest data/benchmarks/dev-v
 [tasks.benchmark-v1-validate]
 cmd = "python scripts/benchmark_cli.py validate --manifest data/benchmarks/v1/manifest.yaml"
 
+[tasks.benchmark-v1-shortcuts]
+cmd = "python scripts/benchmark_cli.py shortcuts --input configs/benchmark/v1-shortcuts.yaml --output artifacts/benchmark-checks/v1-shortcuts.json"
+
 [tasks.benchmark-smoke]
 cmd = "python scripts/benchmark_cli.py smoke --manifest data/benchmarks/dev-v0/manifest.yaml --decision-plan configs/benchmark/dev-v0-decision.yaml --criterion-plan configs/benchmark/dev-v0-criterion.yaml --output-root artifacts/benchmark-smoke/dev-v0"
 
