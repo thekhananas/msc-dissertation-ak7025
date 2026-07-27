@@ -55,7 +55,7 @@ def classify_evidence(task: TaskDefinition, submission: StudentSubmission) -> Ev
     elif supports_misconception:
         category = EvidenceCategory.MISCONCEPTION
         confidence = 0.9
-        rationale = "The response matches the authored mutable-copy misconception."
+        rationale = "The response matches an authored misconception rule for this task."
     else:
         category = EvidenceCategory.UNCERTAIN
         confidence = 0.5

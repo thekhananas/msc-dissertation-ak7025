@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
-import { createSession, submitTurn } from "./api";
-import type { SessionSnapshot } from "./types";
+import { createSession, listTasks, submitTurn } from "./api";
+import type { SessionSnapshot, TaskView } from "./types";
 
 type SessionState =
   | { kind: "loading" }
@@ -27,7 +27,9 @@ function readableLabel(value: string): string {
 
 export function App() {
   const initialCreateKey = useRef(newIdempotencyKey());
+  const selectedTaskId = useRef<string | null>(null);
   const [sessionState, setSessionState] = useState<SessionState>({ kind: "loading" });
+  const [availableTasks, setAvailableTasks] = useState<TaskView[]>([]);
   const [responseText, setResponseText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [failedSubmission, setFailedSubmission] = useState<FailedSubmission | null>(null);
@@ -36,7 +38,16 @@ export function App() {
 
   useEffect(() => {
     const controller = new AbortController();
-    void createSession(initialCreateKey.current, controller.signal)
+    void listTasks(controller.signal)
+      .then(async (tasks) => {
+        const firstTask = tasks.at(0);
+        if (firstTask === undefined) {
+          throw new Error("No practice tasks are available");
+        }
+        setAvailableTasks(tasks);
+        selectedTaskId.current = firstTask.task_id;
+        return createSession(initialCreateKey.current, firstTask.task_id, controller.signal);
+      })
       .then((session) => setSessionState({ kind: "ready", session }))
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") {
@@ -93,16 +104,37 @@ export function App() {
   }
 
   function handleReset(): void {
+    const taskId = selectedTaskId.current;
+    if (taskId === null) {
+      window.location.reload();
+      return;
+    }
     setSessionState({ kind: "loading" });
     setResponseText("");
     setFailedSubmission(null);
     setSubmissionError(null);
-    void createSession(newIdempotencyKey())
+    void createSession(newIdempotencyKey(), taskId)
       .then((session) => setSessionState({ kind: "ready", session }))
       .catch((error: unknown) =>
         setSessionState({
           kind: "error",
           message: error instanceof Error ? error.message : "Unable to reset the session",
+        }),
+      );
+  }
+
+  function handleTaskChange(taskId: string): void {
+    selectedTaskId.current = taskId;
+    setSessionState({ kind: "loading" });
+    setResponseText("");
+    setFailedSubmission(null);
+    setSubmissionError(null);
+    void createSession(newIdempotencyKey(), taskId)
+      .then((session) => setSessionState({ kind: "ready", session }))
+      .catch((error: unknown) =>
+        setSessionState({
+          kind: "error",
+          message: error instanceof Error ? error.message : "Unable to change task",
         }),
       );
   }
@@ -139,9 +171,28 @@ export function App() {
           <p className="eyebrow">Research proof of concept</p>
           <h1>Socratic Tutor</h1>
         </div>
-        <button className="secondary-button" type="button" onClick={handleReset}>
-          Reset session
-        </button>
+        <div className="header-actions">
+          <label>
+            <span>Practice task</span>
+            <span className="select-control">
+              <select
+                aria-label="Practice task"
+                value={session.task.task_id}
+                onChange={(event) => handleTaskChange(event.target.value)}
+                disabled={isSubmitting}
+              >
+                {availableTasks.map((task) => (
+                  <option key={task.task_id} value={task.task_id}>
+                    {task.title}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </label>
+          <button className="secondary-button" type="button" onClick={handleReset}>
+            Reset session
+          </button>
+        </div>
       </header>
 
       <main className="workspace-grid">

@@ -96,6 +96,46 @@ def test_repeated_evidence_advances_prompt_variants() -> None:
     assert len(set(prompts)) == 3
 
 
+@pytest.mark.parametrize(
+    ("response", "category", "mastery", "action", "prompt_fragment"),
+    [
+        (
+            "It prints score=0 and then missing because the condition is an identity check.",
+            EvidenceCategory.CORRECT,
+            0.7,
+            TutorAction.TRANSFER,
+            "empty string",
+        ),
+        (
+            "It prints missing twice because both are falsy, like using if not score.",
+            EvidenceCategory.MISCONCEPTION,
+            0.3,
+            TutorAction.HINT,
+            "general truthiness",
+        ),
+    ],
+)
+def test_none_versus_falsy_task_has_answer_dependent_paths(
+    response: str,
+    category: EvidenceCategory,
+    mastery: float,
+    action: TutorAction,
+    prompt_fragment: str,
+) -> None:
+    task = load_task("none-versus-falsy")
+
+    result = run_turn(
+        task,
+        StudentSubmission(response_text=response),
+        initial_tracker_state(task.concept),
+    )
+
+    assert result.evidence.category is category
+    assert result.tracker_after.mastery_probability == mastery
+    assert result.decision.action is action
+    assert prompt_fragment in result.next_prompt
+
+
 def test_task_public_view_does_not_expose_evaluator_rules() -> None:
     payload = load_task().public_view().model_dump()
 

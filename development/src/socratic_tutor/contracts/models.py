@@ -40,6 +40,27 @@ class EvidenceRules(ContractModel):
     misconception_explanation_markers: tuple[str, ...]
 
 
+class TutorPromptTemplates(ContractModel):
+    """Task-specific Socratic prompts for each transparent policy action."""
+
+    transfer: tuple[str, ...] = Field(min_length=1)
+    hint: tuple[str, ...] = Field(min_length=1)
+    clarify: tuple[str, ...] = Field(min_length=1)
+    probe: tuple[str, ...] = Field(min_length=1)
+    encourage: tuple[str, ...] = Field(min_length=1)
+
+    def for_action(self, action: TutorAction) -> tuple[str, ...]:
+        """Return the reviewed variants associated with one policy action."""
+
+        return {
+            TutorAction.TRANSFER: self.transfer,
+            TutorAction.HINT: self.hint,
+            TutorAction.CLARIFY: self.clarify,
+            TutorAction.PROBE: self.probe,
+            TutorAction.ENCOURAGE: self.encourage,
+        }[action]
+
+
 class TaskDefinition(ContractModel):
     """Full authored task, including rules that remain server-side."""
 
@@ -52,6 +73,7 @@ class TaskDefinition(ContractModel):
     starter_code: str = Field(min_length=1)
     initial_prompt: str = Field(min_length=1)
     evidence_rules: EvidenceRules
+    tutor_prompts: TutorPromptTemplates
 
     def public_view(self) -> "TaskView":
         """Return the task fields that are safe to show to a student."""

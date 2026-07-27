@@ -1,4 +1,4 @@
-import type { HealthResponse, SessionSnapshot } from "./types";
+import type { HealthResponse, SessionSnapshot, TaskView } from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -31,15 +31,20 @@ export async function getHealth(signal?: AbortSignal): Promise<HealthResponse> {
 
 export async function createSession(
   idempotencyKey: string,
+  taskId = "mutable-list-aliasing",
   signal?: AbortSignal,
 ): Promise<SessionSnapshot> {
   const response = await fetch("/api/sessions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idempotency_key: idempotencyKey }),
+    body: JSON.stringify({ idempotency_key: idempotencyKey, task_id: taskId }),
     signal,
   });
   return readJson<SessionSnapshot>(response);
+}
+
+export async function listTasks(signal?: AbortSignal): Promise<TaskView[]> {
+  return readJson<TaskView[]>(await fetch("/api/tasks", { signal }));
 }
 
 export async function getSession(

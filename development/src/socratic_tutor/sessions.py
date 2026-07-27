@@ -41,14 +41,19 @@ class SessionService:
         self._recover()
 
     def create(self, request: CreateSessionRequest) -> SessionSnapshot:
-        """Create the fixed task session, or replay a matching request."""
+        """Create one task session, or replay an exactly matching request."""
 
         with self._lock:
             prior_session_id = self._create_keys.get(request.idempotency_key)
             if prior_session_id is not None:
-                return self._sessions[prior_session_id]
+                existing = self._sessions[prior_session_id]
+                if existing.task.task_id != request.task_id:
+                    raise IdempotencyConflictError(
+                        "Idempotency key was already used for a different task"
+                    )
+                return existing
 
-            task = load_task()
+            task = load_task(request.task_id)
             now = datetime.now(UTC)
             snapshot = SessionSnapshot(
                 session_id=str(uuid4()),
