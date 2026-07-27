@@ -81,6 +81,14 @@ class ShortcutPrediction(ContractModel):
     correct: bool
 
 
+class ShortcutVariantSummary(ContractModel):
+    """Accuracy for one controlled wording transformation."""
+
+    variant_kind: ShortcutVariantKind
+    audit_count: int = Field(ge=1)
+    accuracy: float = Field(ge=0.0, le=1.0)
+
+
 class ShortcutAuditSummary(ContractModel):
     schema_version: Literal[1] = 1
     schema_id: Literal["benchmark.shortcut_audit_summary.v1"] = (
@@ -92,6 +100,7 @@ class ShortcutAuditSummary(ContractModel):
     surface_accuracy: float = Field(ge=0.0, le=1.0)
     maximum_surface_accuracy: float = Field(ge=0.0, le=1.0)
     gate_passed: bool
+    variant_summaries: tuple[ShortcutVariantSummary, ...] = Field(min_length=1)
     predictions: tuple[ShortcutPrediction, ...]
     plan_hash: Sha256
     summary_hash: Sha256
@@ -196,6 +205,18 @@ def run_shortcut_audit(
             )
         )
     accuracy = sum(item.correct for item in predictions) / len(predictions)
+    variant_summaries = tuple(
+        ShortcutVariantSummary(
+            variant_kind=variant_kind,
+            audit_count=sum(item.variant_kind is variant_kind for item in predictions),
+            accuracy=(
+                sum(item.correct for item in predictions if item.variant_kind is variant_kind)
+                / sum(item.variant_kind is variant_kind for item in predictions)
+            ),
+        )
+        for variant_kind in ShortcutVariantKind
+        if any(item.variant_kind is variant_kind for item in predictions)
+    )
     content: dict[str, object] = {
         "schema_version": 1,
         "schema_id": "benchmark.shortcut_audit_summary.v1",
@@ -205,6 +226,7 @@ def run_shortcut_audit(
         "surface_accuracy": accuracy,
         "maximum_surface_accuracy": plan.maximum_surface_accuracy,
         "gate_passed": accuracy <= plan.maximum_surface_accuracy,
+        "variant_summaries": variant_summaries,
         "predictions": tuple(predictions),
         "plan_hash": model_content_hash(plan),
     }

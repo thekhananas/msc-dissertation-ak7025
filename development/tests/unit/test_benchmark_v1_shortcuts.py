@@ -35,3 +35,9 @@ def test_v1_shortcut_audit_records_the_current_surface_leakage(tmp_path: Path) -
 
     assert summary.surface_accuracy == 0.625
     assert summary.gate_passed is False
+    assert {item.variant_kind.value: item.accuracy for item in summary.variant_summaries} == {
+        "identifier_rename": 1.0,
+        "paraphrase": 1.0,
+        "clue_removal": 0.5,
+        "semantic_change": 0.0,
+    }
