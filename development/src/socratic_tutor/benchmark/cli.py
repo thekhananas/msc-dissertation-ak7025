@@ -23,6 +23,10 @@ from socratic_tutor.benchmark.evaluator.projection import (
 )
 from socratic_tutor.benchmark.evaluator.reporting import evaluate_published_run
 from socratic_tutor.benchmark.evidence_scoring import score_evidence_responses
+from socratic_tutor.benchmark.failure_taxonomy import (
+    failure_taxonomy_hash,
+    load_failure_taxonomy,
+)
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
@@ -86,6 +90,9 @@ def build_parser() -> argparse.ArgumentParser:
     sensitivity.add_argument("--input", type=Path, required=True)
     sensitivity.add_argument("--output", type=Path, required=True)
 
+    taxonomy = commands.add_parser("failure-taxonomy-validate", help="Validate review taxonomy")
+    taxonomy.add_argument("--input", type=Path, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -143,6 +150,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return summary, summary.gate_passed
+    if command == "failure-taxonomy-validate":
+        taxonomy = load_failure_taxonomy(cast(Path, args.input))
+        return {
+            "taxonomy_version": taxonomy.taxonomy_version,
+            "category_count": len(taxonomy.categories),
+            "taxonomy_hash": failure_taxonomy_hash(taxonomy),
+        }, True
     if command == "evaluate":
         return (
             evaluate_published_run(

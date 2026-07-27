@@ -1,0 +1,47 @@
+schema_version: 1
+schema_id: benchmark.failure_taxonomy.v1
+taxonomy_version: v1
+categories:
+  - category: item_ambiguity_or_test_defect
+    meaning: The task, rubric, or executable tests do not support a clear judgement.
+    observable_signals: [conflicting rubric and test, multiple defensible answers, broken fixture]
+    examples: [criterion test rejects the rubric-supported answer]
+  - category: synthetic_student_inconsistency
+    meaning: The synthetic student behaves incompatibly across equivalent or paired contexts.
+    observable_signals: [different response under matched seed, paired context changes without cause]
+    examples: [same misconception produces contradictory evidence in a paired condition]
+  - category: evidence_extraction_or_execution_error
+    meaning: Parsing, sandboxing, or probe execution produces the wrong evidence.
+    observable_signals: [malformed output, execution timeout, parsed value differs from stdout]
+    examples: [valid student answer is marked invalid by the evidence runner]
+  - category: tracker_update_or_calibration_error
+    meaning: Evidence is valid but the estimate changes incorrectly or is poorly scaled.
+    observable_signals: [wrong posterior update, invalid probability, calibration drift]
+    examples: [correct evidence lowers the relevant mastery estimate]
+  - category: policy_selection_error
+    meaning: The tracker state is reasonable but the chosen teaching action is unsuitable.
+    observable_signals: [action contradicts policy rule, action ignores uncertainty, wrong difficulty]
+    examples: [policy gives an advanced task after clear non-mastery]
+  - category: tutor_response_failure
+    meaning: The tutor repeats, leaks an answer, gives incorrect guidance, or makes an unsupported claim.
+    observable_signals: [repeated prompt, answer literal exposed, incorrect explanation]
+    examples: [tutor supplies the solution instead of asking a Socratic question]
+  - category: provider_or_sandbox_failure
+    meaning: An external provider or execution service prevents a valid turn.
+    observable_signals: [timeout, refusal, retry exhaustion, provider error]
+    examples: [model request fails after the configured retry limit]
+  - category: unclassified
+    meaning: Available records do not support a more specific category.
+    observable_signals: [insufficient trace, conflicting records, missing artifact]
+    examples: [failure cannot be assigned without guessing hidden state]
+reviewer_instructions:
+  - Label from observable prompts, responses, traces, tests, and execution records only.
+  - Assign one primary category before adding a short secondary note.
+  - Label an identically sampled set of successful turns as well as failures.
+  - Do not infer hidden model reasoning or student mental state.
+adjudication_rules:
+  - Resolve disagreements by inspecting the frozen artifacts, not by changing the category definitions.
+  - Use unclassified when the available evidence cannot distinguish categories.
+  - Record the original labels, the adjudicated label, and the reason for resolution.
+forbidden_labels:
+  - hidden chain of thought
