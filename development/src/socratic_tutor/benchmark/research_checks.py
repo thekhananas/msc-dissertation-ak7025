@@ -85,8 +85,8 @@ class ShortcutVariantSummary(ContractModel):
     """Accuracy for one controlled wording transformation."""
 
     variant_kind: ShortcutVariantKind
-    audit_count: int = Field(ge=1) #audit_count >= 1
-    accuracy: float = Field(ge=0.0, le=1.0) #0.0 <= accuracy <= 1.0
+    audit_count: int = Field(ge=1)  # audit_count >= 1
+    accuracy: float = Field(ge=0.0, le=1.0)  # 0.0 <= accuracy <= 1.0
 
 
 class ShortcutAuditSummary(ContractModel):
