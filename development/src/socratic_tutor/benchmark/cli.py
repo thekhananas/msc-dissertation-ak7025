@@ -22,6 +22,7 @@ from socratic_tutor.benchmark.evaluator.projection import (
     project_public_manifest,
 )
 from socratic_tutor.benchmark.evaluator.reporting import evaluate_published_run
+from socratic_tutor.benchmark.evidence_scoring import score_evidence_responses
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
@@ -76,6 +77,11 @@ def build_parser() -> argparse.ArgumentParser:
     shortcuts.add_argument("--input", type=Path, required=True)
     shortcuts.add_argument("--output", type=Path, required=True)
 
+    evidence = commands.add_parser("evidence-score", help="Score recorded evidence responses")
+    evidence.add_argument("--manifest", type=Path, required=True)
+    evidence.add_argument("--responses", type=Path, required=True)
+    evidence.add_argument("--output", type=Path, required=True)
+
     sensitivity = commands.add_parser("sensitivity", help="Run seeded design sensitivity")
     sensitivity.add_argument("--input", type=Path, required=True)
     sensitivity.add_argument("--output", type=Path, required=True)
@@ -124,6 +130,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return summary, summary.gate_passed
+    if command == "evidence-score":
+        summary = score_evidence_responses(
+            manifest_path=cast(Path, args.manifest),
+            responses_path=cast(Path, args.responses),
+            output_path=cast(Path, args.output),
+        )
+        return summary, summary.complete
     if command == "sensitivity":
         summary = run_sensitivity_analysis(
             _load_model(cast(Path, args.input), SensitivityPlan),
