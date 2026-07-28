@@ -7,6 +7,7 @@ from typing import Any, Literal, cast
 from pydantic import Field, model_validator
 
 from socratic_tutor.benchmark.common import RelativePath, Sha256
+from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.public.models import (
     EXPECTED_CONDITIONS,
     BenchmarkCaseView,
@@ -217,6 +218,12 @@ class AuthoredBenchmarkManifest(ContractModel):
         if len(set(split_roles)) != len(split_roles):
             raise ValueError("Each split role may appear only once")
         return self
+
+
+def authored_manifest_content_hash(manifest: AuthoredBenchmarkManifest) -> Sha256:
+    """Hash the manifest while excluding its self-referential digest field."""
+
+    return model_content_hash(manifest, exclude={"manifest_hash"})
 
 
 class EvaluatorBenchmarkManifest(ContractModel):

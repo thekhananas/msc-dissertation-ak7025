@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -31,6 +32,7 @@ from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
     load_failure_taxonomy,
 )
+from socratic_tutor.benchmark.freeze import prepare_benchmark_freeze
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
@@ -101,6 +103,15 @@ def build_parser() -> argparse.ArgumentParser:
     readiness.add_argument("--manifest", type=Path, required=True)
     readiness.add_argument("--case-shortcut-summary", type=Path, required=True)
     readiness.add_argument("--output", type=Path, required=True)
+
+    freeze_prepare = commands.add_parser(
+        "freeze-prepare", help="Validate freeze inputs and calculate a frozen manifest digest"
+    )
+    freeze_prepare.add_argument("--manifest", type=Path, required=True)
+    freeze_prepare.add_argument("--readiness-report", type=Path, required=True)
+    freeze_prepare.add_argument("--analysis-specification", type=Path, required=True)
+    freeze_prepare.add_argument("--frozen-at-utc", type=_utc_datetime, required=True)
+    freeze_prepare.add_argument("--output", type=Path, required=True)
 
     evidence = commands.add_parser("evidence-score", help="Score recorded evidence responses")
     evidence.add_argument("--manifest", type=Path, required=True)
@@ -177,6 +188,17 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return report, report.gate_passed
+    if command == "freeze-prepare":
+        return (
+            prepare_benchmark_freeze(
+                manifest_path=cast(Path, args.manifest),
+                readiness_report_path=cast(Path, args.readiness_report),
+                analysis_specification_path=cast(Path, args.analysis_specification),
+                frozen_at_utc=cast(datetime, args.frozen_at_utc),
+                output_path=cast(Path, args.output),
+            ),
+            True,
+        )
     if command == "evidence-score":
         summary = score_evidence_responses(
             manifest_path=cast(Path, args.manifest),
@@ -306,6 +328,18 @@ def _load_model[ModelT: BaseModel](path: Path, model_type: type[ModelT]) -> Mode
     except (json.JSONDecodeError, yaml.YAMLError) as error:
         raise ValueError(f"Command input is not valid JSON or YAML: {path}") from error
     return model_type.model_validate(raw)
+
+
+def _utc_datetime(value: str) -> datetime:
+    """Parse one explicit ISO 8601 UTC timestamp for a freeze record."""
+
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("Expected an ISO 8601 UTC timestamp") from error
+    if parsed.tzinfo is None or parsed.utcoffset() != UTC.utcoffset(parsed):
+        raise argparse.ArgumentTypeError("Timestamp must use the UTC offset (+00:00 or Z)")
+    return parsed
 
 
 def _json_value(value: BaseModel | dict[str, object]) -> object:

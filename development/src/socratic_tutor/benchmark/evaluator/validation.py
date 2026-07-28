@@ -7,6 +7,7 @@ from socratic_tutor.benchmark.evaluator.models import (
     AuthoredBenchmarkManifest,
     ManifestStatus,
     ReviewDecision,
+    authored_manifest_content_hash,
 )
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.public.models import BenchmarkCaseView, BenchmarkSplit
@@ -142,6 +143,8 @@ def validate_manifest_structure(manifest: AuthoredBenchmarkManifest) -> None:
             violations.append("frozen-case-count")
         if manifest.manifest_hash is None:
             violations.append("frozen-manifest-hash")
+        elif manifest.manifest_hash != authored_manifest_content_hash(manifest):
+            violations.append("frozen-manifest-hash-mismatch")
         for review in manifest.reviews:
             if review.decision is not ReviewDecision.APPROVED:
                 violations.append(f"frozen-review:{review.review_id}")

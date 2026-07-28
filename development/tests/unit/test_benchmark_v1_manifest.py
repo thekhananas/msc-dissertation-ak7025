@@ -1,13 +1,20 @@
 """Regression checks for the draft v1 authored benchmark manifest."""
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
+
+import pytest
 
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.benchmark.evaluator.models import ArtifactClass, ManifestStatus
 from socratic_tutor.benchmark.evaluator.projection import (
     project_evaluator_manifest,
     project_public_manifest,
+)
+from socratic_tutor.benchmark.evaluator.validation import (
+    BenchmarkValidationError,
+    validate_manifest_structure,
 )
 from socratic_tutor.benchmark.public.safety import find_public_payload_violations
 
@@ -53,3 +60,17 @@ def test_v1_public_projection_excludes_evaluator_material() -> None:
     assert "criterion_probe_id" not in serialized
     assert "evidence_pattern" not in serialized
     assert "misconception_id" not in serialized
+
+
+def test_frozen_v1_manifest_requires_its_own_content_hash() -> None:
+    manifest = load_and_verify_manifest(MANIFEST_PATH)
+    frozen = manifest.model_copy(
+        update={
+            "status": ManifestStatus.FROZEN,
+            "frozen_at_utc": datetime(2026, 8, 22, tzinfo=UTC),
+            "manifest_hash": "0" * 64,
+        }
+    )
+
+    with pytest.raises(BenchmarkValidationError, match="frozen-manifest-hash-mismatch"):
+        validate_manifest_structure(frozen)
