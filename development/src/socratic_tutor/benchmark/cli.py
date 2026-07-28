@@ -36,6 +36,7 @@ from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
     run_offline_decision_phase,
 )
+from socratic_tutor.benchmark.readiness import build_benchmark_readiness_report
 from socratic_tutor.benchmark.research_checks import (
     CaseLinkedShortcutAuditPlan,
     SensitivityPlan,
@@ -93,6 +94,13 @@ def build_parser() -> argparse.ArgumentParser:
     case_shortcuts.add_argument("--manifest", type=Path, required=True)
     case_shortcuts.add_argument("--input", type=Path, required=True)
     case_shortcuts.add_argument("--output", type=Path, required=True)
+
+    readiness = commands.add_parser(
+        "readiness", help="Build the pre-freeze authored-content validation report"
+    )
+    readiness.add_argument("--manifest", type=Path, required=True)
+    readiness.add_argument("--case-shortcut-summary", type=Path, required=True)
+    readiness.add_argument("--output", type=Path, required=True)
 
     evidence = commands.add_parser("evidence-score", help="Score recorded evidence responses")
     evidence.add_argument("--manifest", type=Path, required=True)
@@ -162,6 +170,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return summary, summary.gate_passed
+    if command == "readiness":
+        report = build_benchmark_readiness_report(
+            manifest_path=cast(Path, args.manifest),
+            case_linked_shortcut_summary_path=cast(Path, args.case_shortcut_summary),
+            output_path=cast(Path, args.output),
+        )
+        return report, report.gate_passed
     if command == "evidence-score":
         summary = score_evidence_responses(
             manifest_path=cast(Path, args.manifest),

@@ -76,6 +76,10 @@ cmd = "python scripts/benchmark_cli.py shortcuts --input configs/benchmark/v1-sh
 [tasks.benchmark-v1-case-shortcuts]
 cmd = "python scripts/benchmark_cli.py case-shortcuts --manifest data/benchmarks/v1/manifest.yaml --input configs/benchmark/v1-case-linked-shortcuts.yaml --output artifacts/benchmark-checks/v1-case-shortcuts.json"
 
+[tasks.benchmark-v1-readiness]
+cmd = "python scripts/benchmark_cli.py readiness --manifest data/benchmarks/v1/manifest.yaml --case-shortcut-summary artifacts/benchmark-checks/v1-case-shortcuts.json --output artifacts/benchmark-checks/v1-readiness-v2.json"
+depends-on = ["benchmark-v1-case-shortcuts"]
+
 [tasks.benchmark-v1-failure-taxonomy]
 cmd = "python scripts/benchmark_cli.py failure-taxonomy-validate --input configs/benchmark/v1-failure-taxonomy.yaml"
 
@@ -108,4 +112,4 @@ cmd = "pnpm --dir apps/web build"
 
 [tasks.check]
 cmd = "python -c \"print('All workspace checks passed')\""
-depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "benchmark-validate", "benchmark-v1-validate", "benchmark-v1-case-shortcuts", "benchmark-v1-failure-taxonomy", "benchmark-v1-analysis-spec", "benchmark-design-validate", "docs-check", "build-web"]
+depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "benchmark-validate", "benchmark-v1-validate", "benchmark-v1-readiness", "benchmark-v1-failure-taxonomy", "benchmark-v1-analysis-spec", "benchmark-design-validate", "docs-check", "build-web"]

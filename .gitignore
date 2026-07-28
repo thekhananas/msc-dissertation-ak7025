@@ -43,6 +43,7 @@ development/apps/web/test-results/
 development/artifacts/**
 !development/artifacts/.gitignore
 
+review-packets
 development/.env
 development/.env.*
 !development/.env.example
