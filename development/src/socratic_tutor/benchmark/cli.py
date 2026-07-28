@@ -37,8 +37,10 @@ from socratic_tutor.benchmark.public.offline import (
     run_offline_decision_phase,
 )
 from socratic_tutor.benchmark.research_checks import (
+    CaseLinkedShortcutAuditPlan,
     SensitivityPlan,
     ShortcutAuditPlan,
+    run_case_linked_shortcut_audit,
     run_sensitivity_analysis,
     run_shortcut_audit,
 )
@@ -84,6 +86,13 @@ def build_parser() -> argparse.ArgumentParser:
     shortcuts = commands.add_parser("shortcuts", help="Run the lexical shortcut baseline")
     shortcuts.add_argument("--input", type=Path, required=True)
     shortcuts.add_argument("--output", type=Path, required=True)
+
+    case_shortcuts = commands.add_parser(
+        "case-shortcuts", help="Run the case-linked lexical retrieval baseline"
+    )
+    case_shortcuts.add_argument("--manifest", type=Path, required=True)
+    case_shortcuts.add_argument("--input", type=Path, required=True)
+    case_shortcuts.add_argument("--output", type=Path, required=True)
 
     evidence = commands.add_parser("evidence-score", help="Score recorded evidence responses")
     evidence.add_argument("--manifest", type=Path, required=True)
@@ -143,6 +152,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
     if command == "shortcuts":
         summary = run_shortcut_audit(
             _load_model(cast(Path, args.input), ShortcutAuditPlan),
+            output_path=cast(Path, args.output),
+        )
+        return summary, summary.gate_passed
+    if command == "case-shortcuts":
+        summary = run_case_linked_shortcut_audit(
+            _load_model(cast(Path, args.input), CaseLinkedShortcutAuditPlan),
+            manifest_path=cast(Path, args.manifest),
             output_path=cast(Path, args.output),
         )
         return summary, summary.gate_passed

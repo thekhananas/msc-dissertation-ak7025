@@ -1,0 +1,201 @@
+# Pre-freeze retrieval check for the real v1 probe families. The earlier generic
+# v1-shortcuts.yaml result remains a recorded pilot, not a discarded result.
+schema_version: 1
+schema_id: benchmark.case_linked_shortcut_audit_plan.v1
+benchmark_version: v1
+created_at_utc: 2026-08-22T17:30:00Z
+maximum_surface_accuracy: 0.25
+anchors:
+  - source_case_id: h-c1m1-01
+    expected_stdout: "24\n"
+  - source_case_id: h-c1m2-01
+    expected_stdout: "14 20\n"
+  - source_case_id: h-c2m1-01
+    expected_stdout: "dark\n"
+  - source_case_id: h-c2m2-01
+    expected_stdout: "['new', 'urgent']\n"
+  - source_case_id: h-c3m1-01
+    expected_stdout: "Anas\n"
+  - source_case_id: h-c3m2-01
+    expected_stdout: "old new\n"
+  - source_case_id: h-c4m1-01
+    expected_stdout: "cool\n"
+  - source_case_id: h-c4m2-03
+    expected_stdout: "False ['first', 'second']\n"
+audit_examples:
+  - example_id: c1m1-value-change
+    source_case_id: h-c1m1-01
+    variant_kind: value_change
+    code: |
+      units = 5
+      unit_price = 7
+      quote = units * unit_price
+      unit_price = 11
+      print(quote)
+    expected_stdout: "35\n"
+  - example_id: c1m1-semantic-change
+    source_case_id: h-c1m1-01
+    variant_kind: semantic_change
+    code: |
+      units = 3
+      unit_price = 8
+      quote = units * unit_price
+      quote = units * 10
+      print(quote)
+    expected_stdout: "30\n"
+  - example_id: c1m2-value-change
+    source_case_id: h-c1m2-01
+    variant_kind: value_change
+    code: |
+      score = 15
+      copied_score = score
+      score = 21
+      print(copied_score, score)
+    expected_stdout: "15 21\n"
+  - example_id: c1m2-semantic-change
+    source_case_id: h-c1m2-01
+    variant_kind: semantic_change
+    code: |
+      score = 14
+      copied_score = score
+      copied_score = 20
+      print(copied_score, score)
+    expected_stdout: "20 14\n"
+  - example_id: c2m1-value-change
+    source_case_id: h-c2m1-01
+    variant_kind: value_change
+    code: |
+      settings = {"theme": "light"}
+      active_settings = settings
+      active_settings["theme"] = "ocean"
+      print(settings["theme"])
+    expected_stdout: "ocean\n"
+  - example_id: c2m1-semantic-change
+    source_case_id: h-c2m1-01
+    variant_kind: semantic_change
+    code: |
+      settings = {"theme": "light"}
+      active_settings = dict(settings)
+      active_settings["theme"] = "dark"
+      print(settings["theme"])
+    expected_stdout: "light\n"
+  - example_id: c2m2-value-change
+    source_case_id: h-c2m2-01
+    variant_kind: value_change
+    code: |
+      labels = ["todo"]
+      record = {"labels": labels}
+      labels.append("done")
+      print(record["labels"])
+    expected_stdout: "['todo', 'done']\n"
+  - example_id: c2m2-semantic-change
+    source_case_id: h-c2m2-01
+    variant_kind: semantic_change
+    code: |
+      labels = ["todo"]
+      record = {"labels": list(labels)}
+      labels.append("done")
+      print(record["labels"])
+    expected_stdout: "['todo']\n"
+  - example_id: c3m1-value-change
+    source_case_id: h-c3m1-01
+    variant_kind: value_change
+    code: |
+      def rename(profile):
+          profile["name"] = "Ada"
+
+
+      student_profile = {"name": "John", "level": 2}
+      rename(student_profile)
+      print(student_profile["name"])
+    expected_stdout: "Ada\n"
+  - example_id: c3m1-semantic-change
+    source_case_id: h-c3m1-01
+    variant_kind: semantic_change
+    code: |
+      def rename(profile):
+          profile = {"name": "Ada"}
+
+
+      student_profile = {"name": "John", "level": 2}
+      rename(student_profile)
+      print(student_profile["name"])
+    expected_stdout: "John\n"
+  - example_id: c3m2-value-change
+    source_case_id: h-c3m2-01
+    variant_kind: value_change
+    code: |
+      def replace(settings):
+          settings = {"mode": "fresh"}
+          return settings
+
+
+      original = {"mode": "stale"}
+      returned = replace(original)
+      print(original["mode"], returned["mode"])
+    expected_stdout: "stale fresh\n"
+  - example_id: c3m2-semantic-change
+    source_case_id: h-c3m2-01
+    variant_kind: semantic_change
+    code: |
+      def replace(settings):
+          settings["mode"] = "fresh"
+          return settings
+
+
+      original = {"mode": "stale"}
+      returned = replace(original)
+      print(original["mode"], returned["mode"])
+    expected_stdout: "fresh fresh\n"
+  - example_id: c4m1-value-change
+    source_case_id: h-c4m1-01
+    variant_kind: value_change
+    code: |
+      temperature = 25
+      if temperature >= 20:
+          status = "warm"
+      else:
+          status = "cool"
+      print(status)
+    expected_stdout: "warm\n"
+  - example_id: c4m1-semantic-change
+    source_case_id: h-c4m1-01
+    variant_kind: semantic_change
+    code: |
+      temperature = 25
+      if temperature >= 20:
+          status = "hot"
+      else:
+          status = "cool"
+      print(status)
+    expected_stdout: "hot\n"
+  - example_id: c4m2-value-change
+    source_case_id: h-c4m2-03
+    variant_kind: value_change
+    code: |
+      calls = []
+
+
+      def check(label, result):
+          calls.append(label)
+          return result
+
+
+      accepted = check("alpha", True) and check("beta", True) and check("gamma", True)
+      print(accepted, calls)
+    expected_stdout: "True ['alpha', 'beta', 'gamma']\n"
+  - example_id: c4m2-semantic-change
+    source_case_id: h-c4m2-03
+    variant_kind: semantic_change
+    code: |
+      calls = []
+
+
+      def check(label, result):
+          calls.append(label)
+          return result
+
+
+      accepted = check("alpha", False) and check("beta", True) and check("gamma", True)
+      print(accepted, calls)
+    expected_stdout: "False ['alpha']\n"

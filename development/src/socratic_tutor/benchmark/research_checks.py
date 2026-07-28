@@ -13,6 +13,7 @@ from pydantic import Field, model_validator
 
 from socratic_tutor.benchmark.artifacts import write_immutable_json
 from socratic_tutor.benchmark.common import Sha256
+from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.contracts import ContractModel
 
@@ -111,6 +112,102 @@ class ShortcutAuditSummary(ContractModel):
             raise ValueError("Shortcut gate does not match the frozen threshold")
         if self.summary_hash != model_content_hash(self, exclude={"summary_hash"}):
             raise ValueError("Shortcut summary hash does not match its content")
+        return self
+
+
+class CaseLinkedShortcutVariantKind(StrEnum):
+    """Changes that preserve code shape while changing the expected output."""
+
+    VALUE_CHANGE = "value_change"
+    SEMANTIC_CHANGE = "semantic_change"
+
+
+class CaseLinkedShortcutAnchor(ContractModel):
+    """One real evidence probe used as a retrieval-baseline anchor."""
+
+    source_case_id: str = Field(min_length=1)
+    expected_stdout: str = Field(min_length=1)
+
+
+class CaseLinkedShortcutVariant(ContractModel):
+    """A trusted code variant with an independently checkable output."""
+
+    example_id: str = Field(min_length=1)
+    source_case_id: str = Field(min_length=1)
+    variant_kind: CaseLinkedShortcutVariantKind
+    code: str = Field(min_length=1)
+    expected_stdout: str = Field(min_length=1)
+
+
+class CaseLinkedShortcutAuditPlan(ContractModel):
+    """A retrieval audit anchored in representative v1 evidence probes."""
+
+    schema_version: Literal[1] = 1
+    schema_id: Literal["benchmark.case_linked_shortcut_audit_plan.v1"] = (
+        "benchmark.case_linked_shortcut_audit_plan.v1"
+    )
+    benchmark_version: Literal["v1"] = "v1"
+    anchors: tuple[CaseLinkedShortcutAnchor, ...] = Field(min_length=8)
+    audit_examples: tuple[CaseLinkedShortcutVariant, ...] = Field(min_length=16)
+    maximum_surface_accuracy: float = Field(ge=0.0, le=1.0)
+    created_at_utc: datetime
+
+    @model_validator(mode="after")
+    def validate_case_linked_audit(self) -> "CaseLinkedShortcutAuditPlan":
+        _require_utc(self.created_at_utc, "Case-linked shortcut plan creation time")
+        anchors = {item.source_case_id: item for item in self.anchors}
+        if len(anchors) != len(self.anchors):
+            raise ValueError("Case-linked shortcut anchors must reference unique cases")
+        if len({item.example_id for item in self.audit_examples}) != len(self.audit_examples):
+            raise ValueError("Case-linked shortcut audit IDs must be unique")
+        kinds = {item.variant_kind for item in self.audit_examples}
+        if kinds != set(CaseLinkedShortcutVariantKind):
+            raise ValueError("Case-linked shortcut audit must include both variant kinds")
+        for item in self.audit_examples:
+            anchor = anchors.get(item.source_case_id)
+            if anchor is None:
+                raise ValueError("Case-linked shortcut variant references an unknown anchor")
+            if item.expected_stdout == anchor.expected_stdout:
+                raise ValueError("Case-linked shortcut variants must change the expected output")
+        return self
+
+
+class CaseLinkedShortcutPrediction(ContractModel):
+    example_id: str
+    source_case_id: str
+    variant_kind: CaseLinkedShortcutVariantKind
+    expected_stdout: str
+    predicted_stdout: str
+    nearest_source_case_id: str
+    lexical_similarity: float = Field(ge=0.0, le=1.0)
+    correct: bool
+
+
+class CaseLinkedShortcutAuditSummary(ContractModel):
+    schema_version: Literal[1] = 1
+    schema_id: Literal["benchmark.case_linked_shortcut_audit_summary.v1"] = (
+        "benchmark.case_linked_shortcut_audit_summary.v1"
+    )
+    method: Literal["source_prompt_token_jaccard_1nn_v1"] = "source_prompt_token_jaccard_1nn_v1"
+    benchmark_version: str
+    source_manifest_hash: Sha256
+    anchor_count: int = Field(ge=8)
+    audit_count: int = Field(ge=16)
+    covered_concepts: tuple[str, ...] = Field(min_length=4)
+    covered_misconceptions: tuple[str, ...] = Field(min_length=8)
+    surface_accuracy: float = Field(ge=0.0, le=1.0)
+    maximum_surface_accuracy: float = Field(ge=0.0, le=1.0)
+    gate_passed: bool
+    predictions: tuple[CaseLinkedShortcutPrediction, ...]
+    plan_hash: Sha256
+    summary_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_summary(self) -> "CaseLinkedShortcutAuditSummary":
+        if self.gate_passed is not (self.surface_accuracy <= self.maximum_surface_accuracy):
+            raise ValueError("Case-linked shortcut gate does not match the frozen threshold")
+        if self.summary_hash != model_content_hash(self, exclude={"summary_hash"}):
+            raise ValueError("Case-linked shortcut summary hash does not match its content")
         return self
 
 
@@ -236,6 +333,88 @@ def run_shortcut_audit(
         summary_hash="0" * 64,
     )
     summary = ShortcutAuditSummary.model_validate(
+        {**content, "summary_hash": model_content_hash(draft, exclude={"summary_hash"})}
+    )
+    write_immutable_json(output_path, summary)
+    return summary
+
+
+def run_case_linked_shortcut_audit(
+    plan: CaseLinkedShortcutAuditPlan,
+    *,
+    manifest_path: Path,
+    output_path: Path,
+) -> CaseLinkedShortcutAuditSummary:
+    """Test whether retrieval can reuse answers across changed real probe variants."""
+
+    manifest = load_and_verify_manifest(manifest_path)
+    if manifest.benchmark_version != plan.benchmark_version:
+        raise ValueError("Case-linked shortcut plan belongs to another benchmark version")
+    cases = {item.public.case_id: item for item in manifest.cases}
+    anchors = {item.source_case_id: item for item in plan.anchors}
+    unknown_case_ids = set(anchors) - set(cases)
+    if unknown_case_ids:
+        raise ValueError(
+            f"Case-linked shortcut anchors are absent from the manifest: {sorted(unknown_case_ids)}"
+        )
+
+    covered_concepts = tuple(sorted({cases[case_id].public.target_concept for case_id in anchors}))
+    covered_misconceptions = tuple(
+        sorted({cases[case_id].criterion.misconception_id for case_id in anchors})
+    )
+    if len(covered_concepts) != 4 or len(covered_misconceptions) != 8:
+        raise ValueError("Case-linked shortcut audit must cover all concepts and misconceptions")
+
+    root = manifest_path.resolve().parent
+    training = tuple(
+        (
+            anchor,
+            _tokens((root / cases[case_id].public.evidence_probe_ref).read_text(encoding="utf-8")),
+        )
+        for case_id, anchor in anchors.items()
+    )
+    predictions: list[CaseLinkedShortcutPrediction] = []
+    for audit in plan.audit_examples:
+        audit_tokens = _tokens(audit.code)
+        nearest, similarity = max(
+            ((anchor, _jaccard(audit_tokens, tokens)) for anchor, tokens in training),
+            key=lambda item: (item[1], item[0].source_case_id),
+        )
+        predictions.append(
+            CaseLinkedShortcutPrediction(
+                example_id=audit.example_id,
+                source_case_id=audit.source_case_id,
+                variant_kind=audit.variant_kind,
+                expected_stdout=audit.expected_stdout,
+                predicted_stdout=nearest.expected_stdout,
+                nearest_source_case_id=nearest.source_case_id,
+                lexical_similarity=similarity,
+                correct=nearest.expected_stdout == audit.expected_stdout,
+            )
+        )
+    accuracy = sum(item.correct for item in predictions) / len(predictions)
+    content: dict[str, object] = {
+        "schema_version": 1,
+        "schema_id": "benchmark.case_linked_shortcut_audit_summary.v1",
+        "method": "source_prompt_token_jaccard_1nn_v1",
+        "benchmark_version": manifest.benchmark_version,
+        "source_manifest_hash": model_content_hash(manifest),
+        "anchor_count": len(training),
+        "audit_count": len(predictions),
+        "covered_concepts": covered_concepts,
+        "covered_misconceptions": covered_misconceptions,
+        "surface_accuracy": accuracy,
+        "maximum_surface_accuracy": plan.maximum_surface_accuracy,
+        "gate_passed": accuracy <= plan.maximum_surface_accuracy,
+        "predictions": tuple(predictions),
+        "plan_hash": model_content_hash(plan),
+    }
+    draft = CaseLinkedShortcutAuditSummary.model_construct(
+        _fields_set=set(content),
+        **content,
+        summary_hash="0" * 64,
+    )
+    summary = CaseLinkedShortcutAuditSummary.model_validate(
         {**content, "summary_hash": model_content_hash(draft, exclude={"summary_hash"})}
     )
     write_immutable_json(output_path, summary)
