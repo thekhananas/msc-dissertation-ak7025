@@ -1,9 +1,9 @@
 schema_version: 1
 schema_id: benchmark.design_plan.v1
 benchmark_version: v1
-status: draft
+status: frozen
 prepared_at_utc: 2026-08-11T10:50:00Z
-frozen_at_utc: null
+frozen_at_utc: 2026-08-22T17:08:51Z
 
 concepts:
   - concept_id: assignment-evaluation

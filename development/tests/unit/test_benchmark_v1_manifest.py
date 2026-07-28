@@ -1,4 +1,4 @@
-"""Regression checks for the draft v1 authored benchmark manifest."""
+"""Regression checks for the frozen v1 authored benchmark manifest."""
 
 import json
 from datetime import UTC, datetime
@@ -23,11 +23,15 @@ BENCHMARK_ROOT = WORKSPACE_ROOT / "data" / "benchmarks" / "v1"
 MANIFEST_PATH = BENCHMARK_ROOT / "manifest.yaml"
 
 
-def test_v1_manifest_is_complete_draft_and_content_addressed() -> None:
+def test_v1_manifest_is_complete_frozen_and_content_addressed() -> None:
     manifest = load_and_verify_manifest(MANIFEST_PATH)
 
     assert manifest.benchmark_version == "v1"
-    assert manifest.status is ManifestStatus.DRAFT
+    assert manifest.status is ManifestStatus.FROZEN
+    assert manifest.frozen_at_utc == datetime(2026, 8, 22, 17, 8, 51, tzinfo=UTC)
+    assert manifest.manifest_hash == (
+        "cd68ac06118ed60bb7ca70face733622052bf9723bbb34240a93ff56fb3836cc"
+    )
     assert len(manifest.cases) == 24
     assert len(manifest.reviews) == 24
     assert all(review.decision.value == "approved" for review in manifest.reviews)

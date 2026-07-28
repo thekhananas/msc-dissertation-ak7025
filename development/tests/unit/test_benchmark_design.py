@@ -6,7 +6,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from socratic_tutor.benchmark.design import BenchmarkDesignPlan, load_design
+from socratic_tutor.benchmark.design import BenchmarkDesignPlan, DesignStatus, load_design
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 DESIGN_ROOT = WORKSPACE_ROOT / "data" / "benchmark-design" / "v1"
@@ -16,6 +16,7 @@ PLAN_PATH = DESIGN_ROOT / "case-allocation.yaml"
 def test_v1_design_has_balanced_24_case_allocation() -> None:
     plan = load_design(PLAN_PATH)
 
+    assert plan.status is DesignStatus.FROZEN
     assert len(plan.concepts) == 4
     assert sum(len(concept.misconception_ids) for concept in plan.concepts) == 8
     assert len(plan.held_out_cases) == 24

@@ -1,10 +1,10 @@
 schema_version: 1
 schema_id: benchmark.manifest.v1
 benchmark_version: v1
-status: draft
-frozen_at_utc: null
+status: frozen
+frozen_at_utc: 2026-08-22T17:08:51Z
 parent_version: null
-manifest_hash: null
+manifest_hash: cd68ac06118ed60bb7ca70face733622052bf9723bbb34240a93ff56fb3836cc
 conditions:
 - dialogue_only
 - probe_informed

@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime
 from pathlib import Path
+from shutil import copytree
 
 import yaml
 
@@ -25,31 +26,44 @@ ANALYSIS_SPEC_PATH = WORKSPACE_ROOT / "configs" / "benchmark" / "v1-analysis-spe
 
 
 def test_freeze_preparation_binds_current_manifest_readiness_and_analysis(tmp_path: Path) -> None:
+    benchmark_root = tmp_path / "v1"
+    copytree(MANIFEST_PATH.parent, benchmark_root)
+    manifest_path = benchmark_root / "manifest.yaml"
+    raw_manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    raw_manifest.update(
+        {
+            "status": "draft",
+            "frozen_at_utc": None,
+            "manifest_hash": None,
+        }
+    )
+    manifest_path.write_text(yaml.safe_dump(raw_manifest, sort_keys=False), encoding="utf-8")
+
     shortcut_summary_path = tmp_path / "case-shortcuts.json"
     run_case_linked_shortcut_audit(
         plan=CaseLinkedShortcutAuditPlan.model_validate(
             yaml.safe_load(SHORTCUT_PLAN_PATH.read_text(encoding="utf-8"))
         ),
-        manifest_path=MANIFEST_PATH,
+        manifest_path=manifest_path,
         output_path=shortcut_summary_path,
     )
     readiness_path = tmp_path / "readiness.json"
     readiness = build_benchmark_readiness_report(
-        manifest_path=MANIFEST_PATH,
+        manifest_path=manifest_path,
         case_linked_shortcut_summary_path=shortcut_summary_path,
         output_path=readiness_path,
     )
 
     freeze_time = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     preparation = prepare_benchmark_freeze(
-        manifest_path=MANIFEST_PATH,
+        manifest_path=manifest_path,
         readiness_report_path=readiness_path,
         analysis_specification_path=ANALYSIS_SPEC_PATH,
         frozen_at_utc=freeze_time,
         output_path=tmp_path / "freeze-preparation.json",
     )
 
-    manifest = load_and_verify_manifest(MANIFEST_PATH)
+    manifest = load_and_verify_manifest(manifest_path)
     expected = manifest.model_copy(
         update={
             "status": ManifestStatus.FROZEN,
