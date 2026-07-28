@@ -1,8 +1,8 @@
 schema_id: benchmark.review_file.v1
 case_id: h-c4m1-01
-status: pending
+status: approved
 author: Anas Khan
-reviewer: independent-reviewer-tbd
+reviewer: Konstantinos Gkoutzis
 review_scope:
 - public_dialogue_matches_declared_pattern
 - evidence_and_criterion_measure_the_same_concept

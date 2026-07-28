@@ -1,8 +1,8 @@
 """Evaluator-private authored definitions and outcome specifications."""
 
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal, cast
 
 from pydantic import Field, model_validator
 
@@ -122,18 +122,31 @@ class ReviewRecord(ContractModel):
     case_id: str = Field(min_length=1)
     author: str = Field(min_length=1)
     reviewer: str = Field(min_length=1)
-    reviewed_at_utc: datetime | None = None
+    reviewed_on: date | None = None
     decision: ReviewDecision
     concerns: tuple[str, ...] = ()
     adjudication: str | None = None
     reviewed_files: tuple[ReviewedFile, ...] = Field(min_length=1)
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_completion_timestamp(cls, value: Any) -> Any:
+        """Read prior timestamp-based manifests without preserving a time value."""
+
+        if not isinstance(value, dict) or "reviewed_at_utc" not in value:
+            return cast(Any, value)
+        normalized: dict[str, Any] = cast(dict[str, Any], value).copy()
+        legacy_value: Any = normalized.pop("reviewed_at_utc")
+        if "reviewed_on" not in normalized:
+            normalized["reviewed_on"] = (
+                legacy_value[:10] if isinstance(legacy_value, str) else legacy_value
+            )
+        return cast(Any, normalized)
+
     @model_validator(mode="after")
     def validate_review_completion(self) -> "ReviewRecord":
-        if self.decision is ReviewDecision.PENDING and self.reviewed_at_utc is not None:
-            raise ValueError("Pending reviews cannot have a completion timestamp")
-        if self.decision is not ReviewDecision.PENDING and self.reviewed_at_utc is None:
-            raise ValueError("Completed reviews require a timestamp")
+        if self.decision is ReviewDecision.PENDING and self.reviewed_on is not None:
+            raise ValueError("Pending reviews cannot have a completion date")
         return self
 
 

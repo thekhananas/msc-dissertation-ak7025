@@ -17,6 +17,7 @@ from socratic_tutor.benchmark.evaluator.loader import (
 from socratic_tutor.benchmark.evaluator.models import (
     ArtifactClass,
     ManifestStatus,
+    ReviewDecision,
 )
 from socratic_tutor.benchmark.evaluator.projection import (
     project_evaluator_manifest,
@@ -77,7 +78,7 @@ def test_development_manifest_passes_structure_and_inventory_checks() -> None:
     assert manifest.status is ManifestStatus.DRAFT
     assert len(manifest.cases) == 2
     assert manifest.conditions == EXPECTED_CONDITIONS
-    assert all(review.decision.value == "pending" for review in manifest.reviews)
+    assert all(review.decision.value == "approved" for review in manifest.reviews)
 
 
 def test_generation_prompt_is_inventoried_and_content_addressed() -> None:
@@ -238,6 +239,10 @@ def test_two_case_development_fixture_cannot_pass_as_frozen_benchmark() -> None:
             "status": ManifestStatus.FROZEN,
             "frozen_at_utc": datetime(2026, 7, 25, tzinfo=UTC),
             "manifest_hash": "0" * 64,
+            "reviews": tuple(
+                review.model_copy(update={"decision": ReviewDecision.PENDING})
+                for review in manifest.reviews
+            ),
         }
     )
 

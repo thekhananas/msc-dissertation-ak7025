@@ -23,7 +23,9 @@ def test_v1_manifest_is_complete_draft_and_content_addressed() -> None:
     assert manifest.status is ManifestStatus.DRAFT
     assert len(manifest.cases) == 24
     assert len(manifest.reviews) == 24
-    assert all(review.decision.value == "pending" for review in manifest.reviews)
+    assert all(review.decision.value == "approved" for review in manifest.reviews)
+    assert all(review.reviewer == "Konstantinos Gkoutzis" for review in manifest.reviews)
+    assert all(str(review.reviewed_on) == "2026-08-22" for review in manifest.reviews)
     assert len(manifest.files) == 222
 
 

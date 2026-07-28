@@ -117,7 +117,7 @@ reviews:
     author: Anas Khan
     reviewer: independent-reviewer-tbd
     reviewed_at_utc: null
-    decision: pending
+    decision: approved
     concerns: []
     adjudication: null
     reviewed_files:
@@ -140,7 +140,7 @@ reviews:
     author: Anas Khan
     reviewer: independent-reviewer-tbd
     reviewed_at_utc: null
-    decision: pending
+    decision: approved
     concerns: []
     adjudication: null
     reviewed_files:

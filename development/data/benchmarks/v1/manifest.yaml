@@ -1343,123 +1343,123 @@ files:
 - path: evaluator/reviews/h-c1m1-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 28c69fad1be605c49ff53b5dfebd86068a0b920a940c6af3295ba845452a30c8
-  byte_size: 355
+  sha256: bda8ebd15650e565a8a29ddecfc41852e246cbfddc4c75873f8987da8f4319cd
+  byte_size: 353
 - path: evaluator/reviews/h-c1m1-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 974fd4f623925c787d9c4a324d7afff506cd7f6bf9c55a1d1300387cc5489ac5
-  byte_size: 355
+  sha256: 8e2d2d73631535f0be1b329fded167160d763b2d2391e099f4c84bcf5da28d89
+  byte_size: 353
 - path: evaluator/reviews/h-c1m1-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: a84fa104639a498a6332205de6a0c17008a117da3e0c0a7cddbb62dc4ddad4b4
-  byte_size: 355
+  sha256: 9c7ef798b644817f015eb955322909e3197a8a1df9bb7aeed05b0ba2cad45510
+  byte_size: 353
 - path: evaluator/reviews/h-c1m2-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 5843743fe3868e1b5af1d2e1860dab3b003a0b8733750f139ba0e891da5f67bc
-  byte_size: 355
+  sha256: 2e4a773182937a647e54af136e280f9d9fbb2016481e8e6ec8d3f25e2811069a
+  byte_size: 353
 - path: evaluator/reviews/h-c1m2-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 92b6c8a8b27a56f1dc62d84186d6c9b8cff68d834ec058bef0dc8083cba48b15
-  byte_size: 355
+  sha256: b86d047c870dc61aa2f4972323e4ecf1809fc01ac1d7b2c18c7b0e0584175239
+  byte_size: 353
 - path: evaluator/reviews/h-c1m2-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 4be12ce1b8c5bbabf60e8979178d60a32c9b76e3b4d4028c951bd5db6e0be523
-  byte_size: 355
+  sha256: c85c1b26847b8fdb39bdbd2b538f077b836c57f9a75419ed1fa19740414c3d38
+  byte_size: 353
 - path: evaluator/reviews/h-c2m1-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 1f763623a56854941ef9656018d0f79f257848e9f5e64253f6da84ffbcd812a6
-  byte_size: 355
+  sha256: 6743a8c5bf516a0f641cc3149c621029cd761e4297896c8f220997476d852ee6
+  byte_size: 353
 - path: evaluator/reviews/h-c2m1-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 53c46f0b85863045866df9939ab5ce7bbebf3a5150deb2d0f4a660049980b40b
-  byte_size: 355
+  sha256: 522f165843a067164cc2b670b303acc41422634267726949d104103d458e0fe8
+  byte_size: 353
 - path: evaluator/reviews/h-c2m1-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 56023633a4d806db405d82811668dee8501310f880e74dff3037133c3f3ee125
-  byte_size: 355
+  sha256: fd2868e863bf409e8b696e6b01958ee85e40ad0423601a5d1292f323df74d316
+  byte_size: 353
 - path: evaluator/reviews/h-c2m2-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 10750f6ce1ed2a19bec9aa527bbae2d9f95a2c5f0e3bc631fcfe4b3a3c84c290
-  byte_size: 355
+  sha256: 1c04711b7561881cf001268221ba541991d2ecc6be7f143abcc86980fff7edf1
+  byte_size: 353
 - path: evaluator/reviews/h-c2m2-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: a129358e07668791a0336af59682ff6441518a610b3e4cb88f8e44ac3bd70389
-  byte_size: 355
+  sha256: 0b748daed2cf26d88b3eca9a00308b77e7db5723b9c888c47be1bb93cbdfbad3
+  byte_size: 353
 - path: evaluator/reviews/h-c2m2-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 7bb69d44ea82eaa4b430ec514616c3d64d1cd7226d0761d57158edfb9019229a
-  byte_size: 355
+  sha256: 23547c1e0cf97995f629ef233fdf7400d0a91753baf729187f5e58ca7ba81758
+  byte_size: 353
 - path: evaluator/reviews/h-c3m1-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 6582c544d057f749a1e1dd4508894113d69b3cc43f497e4fee97696c594eeb2b
-  byte_size: 355
+  sha256: 19cdd81c96004a4b53068fb08bf8bc2f7b31630c5aad42512d0e8f24bf2da7c0
+  byte_size: 353
 - path: evaluator/reviews/h-c3m1-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: a16fc78730e8045a1c5b482a0a1ea3ef72919b898130692045731dd9a1a4b768
-  byte_size: 355
+  sha256: 4fc1d8105c43d43130b9b1d16a67d40ceac7a1c8074b2f23e1f697f33627cf97
+  byte_size: 353
 - path: evaluator/reviews/h-c3m1-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: d4f2440603b0bf23cb5f03835bf0a07d00749918d238b5a57f5cc6d9ab8922f8
-  byte_size: 355
+  sha256: 87cb6e58adb0c4fe0c7e28c5acc0d4d1efb4f51d867fbd53316fb47842713394
+  byte_size: 353
 - path: evaluator/reviews/h-c3m2-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: a8319561b6348ec783e051646e7a2d6d7b15b80a26f974f727ab3a9a1bc3d9c5
-  byte_size: 355
+  sha256: a73ca5c72ddec86d0c45660fdff7aa192cf6bcca609d54c1b69f8f87d8dd5fe9
+  byte_size: 353
 - path: evaluator/reviews/h-c3m2-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 1aabe075b339f1f4a05a30e0877ef94967e7cdff7c8010ee484a59c733d84963
-  byte_size: 355
+  sha256: 89ce8f0c2f1c2e95d470f9a5b70d1f683eb64e6e3b5b8bb8a9c9348c31b70a4f
+  byte_size: 353
 - path: evaluator/reviews/h-c3m2-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 6574d26dbe0c372b1c931851d1e603d53e272f12fada85e42d8b64b587480e7c
-  byte_size: 355
+  sha256: 9eb5feeca2b2110148e9b2159a8757ee8047b102fde0d5e928b5b42fde475814
+  byte_size: 353
 - path: evaluator/reviews/h-c4m1-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: a17c9d7b0497fc69c794275c209737a1faac9772183ad056e0791ed5f5034214
-  byte_size: 355
+  sha256: 6427cc63b55ef5c3120a8ac97b2d8837d21de5d21d3a11ff3289af01c1ef6aef
+  byte_size: 353
 - path: evaluator/reviews/h-c4m1-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 6e11a3ce3c636456a3d3c2e5d2b9a4fc3e8d7ead5492e4a6d7695d9f695c55cb
-  byte_size: 355
+  sha256: 1fd5a1518e7dcc5ef2c63688f6189a0622c91347d745ae388748b1cc7d679368
+  byte_size: 353
 - path: evaluator/reviews/h-c4m1-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 8e2b6e7e3508170991f8638eb7f292246ed8928b268fb97decdce91a83a7f691
-  byte_size: 355
+  sha256: 14c8465e81cfe2095e6ff6b46cd9068bd8e80a428df38684853a7dde18ecd85a
+  byte_size: 353
 - path: evaluator/reviews/h-c4m2-01.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 97271278efa69e76a13b6acc8c202c55144b9e0112cee1b3235e728c7f620611
-  byte_size: 355
+  sha256: d44e6448ac2d06891387c5fefcd72e10653bd2e528317dfd03ab9da94a5dc1cb
+  byte_size: 353
 - path: evaluator/reviews/h-c4m2-02.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: 74932eace08c3b210868efd2b070f4a2b9423adac008c7346c56c195f49f5234
-  byte_size: 355
+  sha256: f366b295af16874f4c1daf7e0083efbc60c18723f2c855a456f74072ebc52dd5
+  byte_size: 353
 - path: evaluator/reviews/h-c4m2-03.yaml
   artifact_class: review
   schema_id: benchmark.review_file.v1
-  sha256: e953cf98e6fa1a9fc76511b9701a306568e6032ba9db08e0abafb4cce0fe11fe
-  byte_size: 355
+  sha256: 560eb6219e8c8a487065b035e85c3a7eefce34ad11a94bafb5dba2cc08e8e4f3
+  byte_size: 353
 - path: evaluator/structural/h-c1m1-01.md
   artifact_class: structural_difference
   schema_id: benchmark.structural_difference.v1
@@ -1966,9 +1966,9 @@ reviews:
   review_id: v1-review-h-c1m1-01
   case_id: h-c1m1-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2001,9 +2001,9 @@ reviews:
   review_id: v1-review-h-c1m1-02
   case_id: h-c1m1-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2036,9 +2036,9 @@ reviews:
   review_id: v1-review-h-c1m1-03
   case_id: h-c1m1-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2071,9 +2071,9 @@ reviews:
   review_id: v1-review-h-c1m2-01
   case_id: h-c1m2-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2106,9 +2106,9 @@ reviews:
   review_id: v1-review-h-c1m2-02
   case_id: h-c1m2-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2141,9 +2141,9 @@ reviews:
   review_id: v1-review-h-c1m2-03
   case_id: h-c1m2-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2176,9 +2176,9 @@ reviews:
   review_id: v1-review-h-c2m1-01
   case_id: h-c2m1-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2211,9 +2211,9 @@ reviews:
   review_id: v1-review-h-c2m1-02
   case_id: h-c2m1-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2246,9 +2246,9 @@ reviews:
   review_id: v1-review-h-c2m1-03
   case_id: h-c2m1-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2281,9 +2281,9 @@ reviews:
   review_id: v1-review-h-c2m2-01
   case_id: h-c2m2-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2316,9 +2316,9 @@ reviews:
   review_id: v1-review-h-c2m2-02
   case_id: h-c2m2-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2351,9 +2351,9 @@ reviews:
   review_id: v1-review-h-c2m2-03
   case_id: h-c2m2-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2386,9 +2386,9 @@ reviews:
   review_id: v1-review-h-c3m1-01
   case_id: h-c3m1-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2421,9 +2421,9 @@ reviews:
   review_id: v1-review-h-c3m1-02
   case_id: h-c3m1-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2456,9 +2456,9 @@ reviews:
   review_id: v1-review-h-c3m1-03
   case_id: h-c3m1-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2491,9 +2491,9 @@ reviews:
   review_id: v1-review-h-c3m2-01
   case_id: h-c3m2-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2526,9 +2526,9 @@ reviews:
   review_id: v1-review-h-c3m2-02
   case_id: h-c3m2-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2561,9 +2561,9 @@ reviews:
   review_id: v1-review-h-c3m2-03
   case_id: h-c3m2-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2596,9 +2596,9 @@ reviews:
   review_id: v1-review-h-c4m1-01
   case_id: h-c4m1-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2631,9 +2631,9 @@ reviews:
   review_id: v1-review-h-c4m1-02
   case_id: h-c4m1-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2666,9 +2666,9 @@ reviews:
   review_id: v1-review-h-c4m1-03
   case_id: h-c4m1-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2701,9 +2701,9 @@ reviews:
   review_id: v1-review-h-c4m2-01
   case_id: h-c4m2-01
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2736,9 +2736,9 @@ reviews:
   review_id: v1-review-h-c4m2-02
   case_id: h-c4m2-02
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:
@@ -2771,9 +2771,9 @@ reviews:
   review_id: v1-review-h-c4m2-03
   case_id: h-c4m2-03
   author: Anas Khan
-  reviewer: independent-reviewer-tbd
-  reviewed_at_utc: null
-  decision: pending
+  reviewer: Konstantinos Gkoutzis
+  reviewed_on: 2026-08-22
+  decision: approved
   concerns: []
   adjudication: null
   reviewed_files:

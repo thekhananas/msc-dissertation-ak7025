@@ -233,7 +233,7 @@ def _review(
         "case_id": case_id,
         "author": "Anas Khan",
         "reviewer": "independent-reviewer-tbd",
-        "reviewed_at_utc": None,
+        "reviewed_on": None,
         "decision": "pending",
         "concerns": [],
         "adjudication": None,
