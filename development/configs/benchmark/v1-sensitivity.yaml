@@ -1,0 +1,18 @@
+# Design scenario only. These variance and missingness values are not observed
+# benchmark results. The report will state that its conclusions are conditional
+# on these assumptions.
+schema_version: 1
+schema_id: benchmark.sensitivity_plan.v1
+case_count: 24
+repeats_per_case: 3
+simulation_count: 10000
+true_effects: [-0.10, 0.0, 0.10, 0.20]
+between_case_sd: 0.12
+within_case_sd: 0.08
+repeat_missing_probability: 0.10
+minimum_interpretable_effect: 0.10
+minimum_power: 0.80
+maximum_false_positive_rate: 0.075
+minimum_mean_eligible_cases: 20.0
+seed: 20260813
+created_at_utc: 2026-08-22T17:48:59Z

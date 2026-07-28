@@ -3,15 +3,18 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
 from socratic_tutor.benchmark.analysis_spec import (
     AnalysisSpecification,
     analysis_specification_hash,
     load_analysis_specification,
 )
+from socratic_tutor.benchmark.research_checks import SensitivityPlan
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 SPEC_PATH = WORKSPACE_ROOT / "configs" / "benchmark" / "v1-analysis-spec.yaml"
+SENSITIVITY_PATH = WORKSPACE_ROOT / "configs" / "benchmark" / "v1-sensitivity.yaml"
 
 
 def test_v1_analysis_specification_is_hashable_and_pre_registered() -> None:
@@ -40,3 +43,15 @@ def test_analysis_specification_rejects_non_case_exclusion_rule() -> None:
 
     with pytest.raises(ValueError, match="case-level independence"):
         AnalysisSpecification.model_validate(payload)
+
+
+def test_v1_sensitivity_plan_matches_the_frozen_study_shape() -> None:
+    specification = load_analysis_specification(SPEC_PATH)
+    plan = SensitivityPlan.model_validate(
+        yaml.safe_load(SENSITIVITY_PATH.read_text(encoding="utf-8"))
+    )
+
+    assert plan.case_count == 24
+    assert plan.repeats_per_case == 3
+    assert plan.simulation_count == 10_000
+    assert plan.minimum_interpretable_effect == specification.minimum_interpretable_effect
