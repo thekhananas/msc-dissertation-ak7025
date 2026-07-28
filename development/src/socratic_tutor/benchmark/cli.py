@@ -9,6 +9,10 @@ from typing import Any, Literal, cast
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
+from socratic_tutor.benchmark.analysis_spec import (
+    analysis_specification_hash,
+    load_analysis_specification,
+)
 from socratic_tutor.benchmark.artifacts import write_immutable_json
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
@@ -93,6 +97,11 @@ def build_parser() -> argparse.ArgumentParser:
     taxonomy = commands.add_parser("failure-taxonomy-validate", help="Validate review taxonomy")
     taxonomy.add_argument("--input", type=Path, required=True)
 
+    analysis = commands.add_parser(
+        "analysis-spec-validate", help="Validate pre-registered analysis rules"
+    )
+    analysis.add_argument("--input", type=Path, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -156,6 +165,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             "taxonomy_version": taxonomy.taxonomy_version,
             "category_count": len(taxonomy.categories),
             "taxonomy_hash": failure_taxonomy_hash(taxonomy),
+        }, True
+    if command == "analysis-spec-validate":
+        specification = load_analysis_specification(cast(Path, args.input))
+        return {
+            "benchmark_version": specification.benchmark_version,
+            "primary_metric": specification.primary_metric,
+            "specification_hash": analysis_specification_hash(specification),
         }, True
     if command == "evaluate":
         return (

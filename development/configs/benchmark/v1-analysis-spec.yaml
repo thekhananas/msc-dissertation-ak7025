@@ -1,0 +1,25 @@
+schema_version: 1
+schema_id: benchmark.analysis_specification.v1
+benchmark_version: v1
+primary_metric: paired_brier_difference
+uncalibrated_fallback_metric: paired_classification_error_difference
+aggregation_unit: case
+aggregation_version: case-mean-v1
+missingness_rule: exclude_missing_criterion_and_report_denominator
+minimum_interpretable_effect: 0.10
+policy_threshold: 0.60
+bootstrap_method: paired_case_percentile
+bootstrap_resamples: 10000
+permutation_method: within_case_sign_swap
+permutation_resamples: 10000
+random_seed: 20260813
+confirmatory_exclusions:
+  - The benchmark case is the independent unit; repeated generations are aggregated within case.
+  - Do not convert missing criterion or execution outcomes into incorrect outcomes.
+  - Do not remove cases after seeing held-out outcomes.
+exploratory_metrics:
+  - paired classification error difference
+  - median case effect
+  - repeat-level standard deviation
+  - exact McNemar analysis for paired binary decisions
+  - Wilcoxon signed-rank sensitivity analysis
