@@ -1,8 +1,11 @@
 """Append-only, hash-chained JSONL events for local demo recovery."""
 
+import fcntl
 import hashlib
 import json
 import os
+from collections.abc import Generator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -65,8 +68,10 @@ class JsonlEventStore:
 
     def __init__(self, path: Path) -> None:
         self.path = path
+        self._lock_path = path.with_suffix(f"{path.suffix}.lock")
         self._lock = RLock()
-        self._events = self._load()
+        with self._file_lock():
+            self._events = self._load()
 
     def read_all(self) -> tuple[StoredEvent, ...]:
         """Return the verified events in append order."""
@@ -84,7 +89,8 @@ class JsonlEventStore:
     ) -> StoredEvent:
         """Persist and fsync one event before exposing it to the caller."""
 
-        with self._lock:
+        with self._lock, self._file_lock():
+            self._events = self._load()
             event_data: dict[str, Any] = {
                 "schema_version": 1,
                 "sequence": len(self._events) + 1,
@@ -100,13 +106,22 @@ class JsonlEventStore:
             event_data["event_hash"] = _event_hash(_hashable_data(draft))
             event = StoredEvent.model_validate(event_data)
 
-            self.path.parent.mkdir(parents=True, exist_ok=True)
             with self.path.open("a", encoding="utf-8") as handle:
                 handle.write(event.model_dump_json() + "\n")
                 handle.flush()
                 os.fsync(handle.fileno())
             self._events.append(event)
             return event
+
+    @contextmanager
+    def _file_lock(self) -> Generator[None]:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self._lock_path.open("a", encoding="utf-8") as lock_handle:
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
     def _load(self) -> list[StoredEvent]:
         if not self.path.exists():
