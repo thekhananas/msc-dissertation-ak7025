@@ -10,6 +10,9 @@ sampling:
   temperature: 0.0
   max_output_tokens: 256
   seed: 20260822
+system_prompt_version: student-system-v1
+system_prompt_ref: prompts/student-system-v1.md
+system_prompt_sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
 transport:
   timeout_seconds: 60.0
   max_attempts: 2
@@ -17,6 +20,7 @@ transport:
 qualification_cases:
   manifest: data/benchmarks/dev-v0/manifest.yaml
   permitted_case_ids: [dev-aliasing-001, dev-none-falsy-001]
+require_backend_fingerprint: true
 record:
   provider_request_id: true
   resolved_model_id: true

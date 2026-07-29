@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_prefix="SOCRATIC_",
-        extra="forbid",
+        # The shared ignored .env also holds benchmark-provider credentials.
+        extra="ignore",
         frozen=True,
     )
 

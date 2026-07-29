@@ -42,6 +42,10 @@ from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
     run_offline_decision_phase,
 )
+from socratic_tutor.benchmark.qualification import (
+    load_provider_qualification_plan,
+    run_provider_qualification_from_environment,
+)
 from socratic_tutor.benchmark.readiness import build_benchmark_readiness_report
 from socratic_tutor.benchmark.research_checks import (
     CaseLinkedShortcutAuditPlan,
@@ -143,6 +147,14 @@ def build_parser() -> argparse.ArgumentParser:
         "analysis-spec-validate", help="Validate pre-registered analysis rules"
     )
     analysis.add_argument("--input", type=Path, required=True)
+
+    qualification = commands.add_parser(
+        "provider-qualify", help="Run one direct provider against development-only public cases"
+    )
+    qualification.add_argument("--plan", type=Path, required=True)
+    qualification.add_argument("--manifest", type=Path, required=True)
+    qualification.add_argument("--output-root", type=Path, required=True)
+    qualification.add_argument("--run-id", required=True)
 
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
@@ -249,6 +261,14 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             "primary_metric": specification.primary_metric,
             "specification_hash": analysis_specification_hash(specification),
         }, True
+    if command == "provider-qualify":
+        report = run_provider_qualification_from_environment(
+            plan=load_provider_qualification_plan(cast(Path, args.plan)),
+            manifest_path=cast(Path, args.manifest),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+        )
+        return report, report.gate_passed
     if command == "evaluate":
         return (
             evaluate_published_run(
