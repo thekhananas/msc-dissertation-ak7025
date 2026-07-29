@@ -87,7 +87,7 @@ cmd = "python scripts/benchmark_cli.py failure-taxonomy-validate --input configs
 cmd = "python scripts/benchmark_cli.py analysis-spec-validate --input configs/benchmark/v1-analysis-spec.yaml"
 
 [tasks.benchmark-smoke]
-cmd = "python scripts/benchmark_cli.py smoke --manifest data/benchmarks/dev-v0/manifest.yaml --decision-plan configs/benchmark/dev-v0-decision.yaml --criterion-plan configs/benchmark/dev-v0-criterion.yaml --output-root artifacts/benchmark-smoke/dev-v0"
+cmd = "python scripts/benchmark_cli.py smoke --manifest data/benchmarks/dev-v0/manifest.yaml --decision-plan configs/benchmark/dev-v0-replay-decision.yaml --criterion-plan configs/benchmark/dev-v0-replay-criterion.yaml --output-root artifacts/benchmark-smoke/dev-v0-replay-20260822-003"
 
 [tasks.benchmark-shortcuts]
 cmd = "python scripts/benchmark_cli.py shortcuts --input configs/benchmark/dev-v0-shortcuts.yaml --output artifacts/benchmark-checks/dev-v0-shortcuts.json"

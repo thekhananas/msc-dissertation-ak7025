@@ -1,0 +1,54 @@
+schema_version: 1
+schema_id: benchmark.offline_decision_plan.v1
+mode: development_offline
+run_id: dev-v0-offline-smoke-002
+sample_ids: [sample-001]
+model_route:
+  provider: recorded_fixture
+  model: authored-deterministic
+sampling:
+  temperature: 0.0
+  max_output_tokens: 512
+  seed: 20260812
+system_prompt_version: student-system-v1
+system_prompt_ref: prompts/student-system-v1.md
+system_prompt_sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
+tracker_version: simple-v1
+policy_version: heuristic-v1
+code_revision: development-offline-smoke-v2
+dirty_worktree: true
+environment_lock_hash: 4c204c26bbffa9a93b59c9c636fa43b16e008f54ea0b3c8afc8bb0aa384edf3a
+calibration_decision_hash: null
+root_seed: 20260812
+created_at_utc: 2026-08-22T17:55:00Z
+cases:
+  - case_id: dev-aliasing-001
+    public_response: >-
+      Assignment creates a separate copy, so appending through the second name leaves the first list unchanged.
+    evidence_response: |-
+      def add_marker(items):
+          copied = list(items)
+          copied.append("checked")
+          return copied
+    public_evidence:
+      category: misconception
+      confidence: 0.95
+      rationale: The response explicitly states the assignment-copies-list misconception.
+      observed_signals: [separate copy, unchanged]
+    probe_passed: 0
+    probe_failed: 2
+  - case_id: dev-none-falsy-001
+    public_response: >-
+      I would check score is None so that zero remains a valid score, but I am not fully confident.
+    evidence_response: |-
+      def display_score(score):
+          if score is None:
+              return "missing"
+          return str(score)
+    public_evidence:
+      category: uncertain
+      confidence: 0.7
+      rationale: The response names the correct distinction but expresses uncertainty.
+      observed_signals: [is None, zero remains valid]
+    probe_passed: 3
+    probe_failed: 0
