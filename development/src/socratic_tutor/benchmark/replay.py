@@ -22,7 +22,7 @@ class OriginalGenerationSource(StrEnum):
     """Source that produced the response before it was recorded."""
 
     AUTHORED = "authored"
-    OPENROUTER = "openrouter"
+    CEREBRAS = "cerebras"
 
 
 class ProviderResponseMetadata(ContractModel):
@@ -34,6 +34,7 @@ class ProviderResponseMetadata(ContractModel):
     model_id: str | None = None
     resolved_provider_id: str | None = None
     resolved_model_id: str | None = None
+    backend_fingerprint: str | None = None
     finish_reason: str | None = None
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
@@ -65,10 +66,10 @@ class RecordedGenerationResponse(ContractModel):
             raise ValueError("Recorded provider does not match requested provider")
         if metadata.model_id is not None and metadata.model_id != route.model:
             raise ValueError("Recorded model does not match requested model")
-        if self.original_source is OriginalGenerationSource.OPENROUTER and (
+        if self.original_source is OriginalGenerationSource.CEREBRAS and (
             metadata.provider_id is None or metadata.model_id is None
         ):
-            raise ValueError("OpenRouter recordings require requested provider and model metadata")
+            raise ValueError("Provider recordings require requested provider and model metadata")
         expected_hash = recorded_response_content_hash(self)
         if self.response_hash != expected_hash:
             raise ValueError("Recorded response hash does not match response content")

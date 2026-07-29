@@ -418,7 +418,7 @@ def test_recorded_response_file_rejects_tampering(tmp_path: Path) -> None:
     )
     record = create_recorded_response(
         request=request,
-        original_source=OriginalGenerationSource.OPENROUTER,
+        original_source=OriginalGenerationSource.CEREBRAS,
         final_response="Original response",
         provider_metadata=ProviderResponseMetadata(
             provider_id=request.model_route.provider,
@@ -447,7 +447,7 @@ def test_recorded_response_rejects_provider_or_model_mismatch() -> None:
     with pytest.raises(ValidationError, match="provider does not match"):
         create_recorded_response(
             request=request,
-            original_source=OriginalGenerationSource.OPENROUTER,
+            original_source=OriginalGenerationSource.CEREBRAS,
             final_response="Response from the wrong route",
             provider_metadata=ProviderResponseMetadata(
                 provider_id="different-provider",
@@ -458,7 +458,7 @@ def test_recorded_response_rejects_provider_or_model_mismatch() -> None:
     with pytest.raises(ValidationError, match="model does not match"):
         create_recorded_response(
             request=request,
-            original_source=OriginalGenerationSource.OPENROUTER,
+            original_source=OriginalGenerationSource.CEREBRAS,
             final_response="Response from the wrong model",
             provider_metadata=ProviderResponseMetadata(
                 provider_id=request.model_route.provider,

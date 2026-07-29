@@ -1,4 +1,4 @@
-"""Template and optional OpenRouter tutor prompt rendering."""
+"""Template-based tutor prompt rendering."""
 
 from socratic_tutor.generation.templates import generate_prompt
 
