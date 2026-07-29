@@ -15,6 +15,10 @@ from socratic_tutor.benchmark.analysis_spec import (
     load_analysis_specification,
 )
 from socratic_tutor.benchmark.artifacts import write_immutable_json
+from socratic_tutor.benchmark.calibration import (
+    load_uncalibrated_decision_plan,
+    record_uncalibrated_decision,
+)
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.benchmark.evaluator.models import ManifestStatus
@@ -122,6 +126,16 @@ def build_parser() -> argparse.ArgumentParser:
     sensitivity.add_argument("--input", type=Path, required=True)
     sensitivity.add_argument("--output", type=Path, required=True)
 
+    calibration = commands.add_parser(
+        "calibration-decision",
+        help="Record the allowed scoring metric before held-out criterion access",
+    )
+    calibration.add_argument("--input", type=Path, required=True)
+    calibration.add_argument("--heldout-manifest", type=Path, required=True)
+    calibration.add_argument("--benchmark-root", type=Path, required=True)
+    calibration.add_argument("--analysis-specification", type=Path, required=True)
+    calibration.add_argument("--output", type=Path, required=True)
+
     taxonomy = commands.add_parser("failure-taxonomy-validate", help="Validate review taxonomy")
     taxonomy.add_argument("--input", type=Path, required=True)
 
@@ -212,6 +226,15 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return summary, summary.gate_passed
+    if command == "calibration-decision":
+        report = record_uncalibrated_decision(
+            plan=load_uncalibrated_decision_plan(cast(Path, args.input)),
+            heldout_manifest_path=cast(Path, args.heldout_manifest),
+            benchmark_root=cast(Path, args.benchmark_root),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            output_path=cast(Path, args.output),
+        )
+        return report, True
     if command == "failure-taxonomy-validate":
         taxonomy = load_failure_taxonomy(cast(Path, args.input))
         return {

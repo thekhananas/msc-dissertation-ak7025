@@ -1,0 +1,9 @@
+schema_version: 1
+schema_id: benchmark.uncalibrated_decision_plan.v1
+benchmark_version: v1
+tracker_version: simple-v1
+policy_threshold: 0.60
+decision_owner: researcher
+decided_at_utc: 2026-08-22T18:30:42Z
+reason: no_independent_calibration_cases
+expected_calibration_case_count: 0
