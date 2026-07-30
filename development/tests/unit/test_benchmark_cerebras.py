@@ -130,15 +130,38 @@ def test_gateway_records_a_direct_response_and_replayable_backend_fingerprint() 
 
 
 def test_gateway_retries_only_retryable_provider_responses() -> None:
+    delays: list[float] = []
+
+    async def collect_delay(delay: float) -> None:
+        delays.append(delay)
+
     transport = FakeTransport(
-        [CerebrasTransportResponse(status_code=429, body={"error": "rate limited"}), _success()]
+        [
+            CerebrasTransportResponse(
+                status_code=429,
+                body={"error": "rate limited"},
+                retry_after_seconds=3.0,
+            ),
+            _success(),
+        ]
     )
 
-    result = asyncio.run(_gateway(transport).generate(_request()))
+    gateway = CerebrasGateway(
+        config=CerebrasGatewayConfig(
+            api_key=SecretStr("test-key"),
+            timeout_seconds=12.0,
+            max_attempts=2,
+            retry_delay_seconds=1.0,
+        ),
+        transport=transport,
+        sleeper=collect_delay,
+    )
+    result = asyncio.run(gateway.generate(_request()))
 
     assert result.attempt_count == 2
     assert result.retried_status_codes == (429,)
     assert len(transport.calls) == 2
+    assert delays == [3.0]
 
 
 def test_gateway_rejects_wrong_route_nonretryable_and_malformed_responses() -> None:

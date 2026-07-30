@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal, Protocol
@@ -38,8 +38,9 @@ class BehaviorAuditTransportConfig(ContractModel):
     """Bounded direct-provider controls for a development-only audit."""
 
     timeout_seconds: float = Field(gt=0.0, le=120.0)
-    max_attempts: int = Field(ge=1, le=3)
+    max_attempts: int = Field(ge=1, le=5)
     retry_delay_seconds: float = Field(ge=0.0, le=10.0)
+    inter_request_delay_seconds: float = Field(default=0.0, ge=0.0, le=60.0)
 
 
 class BehaviorAuditScenario(ContractModel):
@@ -150,6 +151,7 @@ class BehaviorAuditGateway(Protocol):
 
 
 type Clock = Callable[[], datetime]
+type Sleeper = Callable[[float], Awaitable[None]]
 
 
 def load_student_behavior_audit_plan(path: Path) -> StudentBehaviorAuditPlan:
@@ -203,6 +205,7 @@ async def run_student_behavior_audit(
     run_id: str,
     gateway: BehaviorAuditGateway,
     clock: Clock | None = None,
+    sleeper: Sleeper = asyncio.sleep,
 ) -> StudentBehaviorAuditReport:
     """Generate one response per stated learner state and publish review artifacts."""
 
@@ -220,7 +223,7 @@ async def run_student_behavior_audit(
     )
     records: list[RecordedGenerationResponse] = []
     results: list[BehaviorAuditResult] = []
-    for scenario in plan.scenarios:
+    for index, scenario in enumerate(plan.scenarios):
         request = create_student_generation_request(
             spec=spec,
             payload=PublicTaskPayload(
@@ -243,19 +246,21 @@ async def run_student_behavior_audit(
                     error_message=str(error),
                 )
             )
-            continue
-        records.append(generation.response)
-        metadata = generation.response.provider_metadata
-        results.append(
-            BehaviorAuditResult(
-                scenario_id=scenario.scenario_id,
-                request_hash=request.request_hash,
-                response_hash=generation.response.response_hash,
-                status="success",
-                backend_fingerprint=metadata.backend_fingerprint,
-                latency_ms=metadata.latency_ms,
+        else:
+            records.append(generation.response)
+            metadata = generation.response.provider_metadata
+            results.append(
+                BehaviorAuditResult(
+                    scenario_id=scenario.scenario_id,
+                    request_hash=request.request_hash,
+                    response_hash=generation.response.response_hash,
+                    status="success",
+                    backend_fingerprint=metadata.backend_fingerprint,
+                    latency_ms=metadata.latency_ms,
+                )
             )
-        )
+        if index < len(plan.scenarios) - 1 and plan.transport.inter_request_delay_seconds > 0:
+            await sleeper(plan.transport.inter_request_delay_seconds)
 
     content = {
         "schema_version": 1,

@@ -50,6 +50,10 @@ class FakeGateway:
 
 def test_behavior_audit_writes_records_for_manual_review(tmp_path: Path) -> None:
     plan = load_student_behavior_audit_plan(PLAN)
+    delays: list[float] = []
+
+    async def collect_delay(delay: float) -> None:
+        delays.append(delay)
 
     report = asyncio.run(
         run_student_behavior_audit(
@@ -58,6 +62,7 @@ def test_behavior_audit_writes_records_for_manual_review(tmp_path: Path) -> None
             run_id="behavior-audit-test",
             gateway=FakeGateway(),
             clock=lambda: datetime(2026, 8, 23, 11, 0, tzinfo=UTC),
+            sleeper=collect_delay,
         )
     )
 
@@ -68,6 +73,7 @@ def test_behavior_audit_writes_records_for_manual_review(tmp_path: Path) -> None
     assert (tmp_path / "student_behavior_audit_plan.json").exists()
     records = (tmp_path / "recorded_responses.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(records) == 4
+    assert delays == []
 
 
 def test_behavior_audit_plan_requires_four_scenarios() -> None:
@@ -96,3 +102,25 @@ def test_behavior_audit_v2_predeclares_manual_acceptance_rule() -> None:
         "supported-mastery",
         "cautious-partial",
     }
+    assert plan.transport.inter_request_delay_seconds == 13.0
+
+
+def test_behavior_audit_v2_paces_each_request(tmp_path: Path) -> None:
+    delays: list[float] = []
+
+    async def collect_delay(delay: float) -> None:
+        delays.append(delay)
+
+    report = asyncio.run(
+        run_student_behavior_audit(
+            plan=load_student_behavior_audit_plan(PLAN_V2),
+            output_root=tmp_path,
+            run_id="behavior-audit-v2-pacing-test",
+            gateway=FakeGateway(),
+            clock=lambda: datetime(2026, 8, 23, 11, 0, tzinfo=UTC),
+            sleeper=collect_delay,
+        )
+    )
+
+    assert report.generation_complete is True
+    assert delays == [13.0] * 7

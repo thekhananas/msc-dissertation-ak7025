@@ -95,7 +95,7 @@ class CerebrasGatewayConfig(ContractModel):
     api_base_url: str = "https://api.cerebras.ai/v1"
     reasoning_effort: Literal["low", "medium", "high"] = "medium"
     timeout_seconds: float = Field(default=60.0, gt=0.0, le=120.0)
-    max_attempts: int = Field(default=2, ge=1, le=3)
+    max_attempts: int = Field(default=2, ge=1, le=5)
     retry_delay_seconds: float = Field(default=1.0, ge=0.0, le=10.0)
 
 
@@ -105,6 +105,7 @@ class CerebrasTransportResponse(ContractModel):
     status_code: int = Field(ge=100, le=599)
     body: dict[str, object]
     request_id: str | None = None
+    retry_after_seconds: float | None = Field(default=None, ge=0.0, le=120.0)
 
 
 class CerebrasTransport(Protocol):
@@ -150,6 +151,7 @@ class HttpxCerebrasTransport:
             status_code=response.status_code,
             body=_mapping(cast(object, body)),
             request_id=response.headers.get("x-request-id"),
+            retry_after_seconds=_retry_after_seconds(response.headers),
         )
 
 
@@ -212,7 +214,7 @@ class CerebrasGateway:
             except CerebrasUnavailableError:
                 if attempt == self._config.max_attempts:
                     raise
-                await self._sleeper(self._config.retry_delay_seconds)
+                await self._sleeper(_retry_delay_seconds(self._config, attempt))
                 continue
 
             latency_ms = round((perf_counter() - started_at) * 1_000)
@@ -225,7 +227,7 @@ class CerebrasGateway:
                         "Cerebras retryable response exhausted configured attempts: "
                         f"{provider_response.status_code}"
                     )
-                await self._sleeper(self._config.retry_delay_seconds)
+                await self._sleeper(_retry_delay_seconds(self._config, attempt, provider_response))
                 continue
             if not 200 <= provider_response.status_code <= 299:
                 raise CerebrasRequestError(
@@ -334,6 +336,27 @@ def _bounded_text(value: object, *, limit: int = 500) -> str | None:
     if not normalized:
         return None
     return normalized[:limit]
+
+
+def _retry_after_seconds(headers: httpx.Headers) -> float | None:
+    value = headers.get("retry-after")
+    if value is None:
+        return None
+    try:
+        parsed = float(value)
+    except ValueError:
+        return None
+    return parsed if 0.0 <= parsed <= 120.0 else None
+
+
+def _retry_delay_seconds(
+    config: CerebrasGatewayConfig,
+    attempt: int,
+    response: CerebrasTransportResponse | None = None,
+) -> float:
+    exponential_delay = config.retry_delay_seconds * (2 ** (attempt - 1))
+    retry_after_seconds = response.retry_after_seconds if response is not None else 0.0
+    return max(exponential_delay, retry_after_seconds or 0.0)
 
 
 def _provider_metadata(
