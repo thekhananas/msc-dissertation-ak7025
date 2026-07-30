@@ -77,11 +77,11 @@ class OfflineDecisionCase(ContractModel):
 
 
 class OfflineDecisionPlan(ContractModel):
-    """Typed, development-only input for a reproducible decision phase."""
+    """Typed local input for a reproducible, network-free decision phase."""
 
     schema_version: Literal[1] = 1
     schema_id: Literal["benchmark.offline_decision_plan.v1"] = "benchmark.offline_decision_plan.v1"
-    mode: Literal["development_offline"] = "development_offline"
+    mode: Literal["development_offline", "reference_heldout"] = "development_offline"
     run_id: str = Field(min_length=1)
     sample_ids: tuple[str, ...] = Field(min_length=1, max_length=100)
     model_route: ModelRoute
@@ -159,7 +159,7 @@ def run_offline_decision_phase(
     plan: OfflineDecisionPlan,
     output_root: Path,
 ) -> DecisionGenerationSummary:
-    """Run, commit, globally seal, and publish development-only predictions."""
+    """Run, commit, globally seal, and publish network-free predictions."""
 
     _validate_decision_scope(manifest, plan)
     root = output_root.resolve()
@@ -359,10 +359,23 @@ def _validate_decision_scope(
     manifest: PublicBenchmarkManifest,
     plan: OfflineDecisionPlan,
 ) -> None:
-    if any(case.split is not BenchmarkSplit.DEVELOPMENT for case in manifest.cases):
+    splits = {case.split for case in manifest.cases}
+    if plan.mode == "development_offline" and splits != {BenchmarkSplit.DEVELOPMENT}:
         raise OfflineDecisionError(
             "Offline generation accepts development cases only; held-out generation is disabled"
         )
+    if plan.mode == "reference_heldout":
+        if splits != {BenchmarkSplit.HELD_OUT}:
+            raise OfflineDecisionError(
+                "Reference generation requires an all-held-out benchmark projection"
+            )
+        if plan.model_route != ModelRoute(
+            provider="recorded_fixture",
+            model="authored-deterministic",
+        ):
+            raise OfflineDecisionError(
+                "Reference generation requires the recorded_fixture/authored-deterministic route"
+            )
     if tuple(case.case_id for case in plan.cases) != tuple(case.case_id for case in manifest.cases):
         raise OfflineDecisionError("Offline decision plan must cover every case in manifest order")
 
