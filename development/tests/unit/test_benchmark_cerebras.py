@@ -12,8 +12,8 @@ from socratic_tutor.benchmark.cerebras import (
     CerebrasGatewayConfig,
     CerebrasGatewayError,
     CerebrasRequestError,
+    CerebrasResponseFormatError,
     CerebrasTransportResponse,
-    CerebrasUnavailableError,
 )
 from socratic_tutor.benchmark.generation import (
     GenerationRequestSpec,
@@ -126,6 +126,7 @@ def test_gateway_records_a_direct_response_and_replayable_backend_fingerprint() 
     assert payload["temperature"] == 0.0
     assert payload["max_completion_tokens"] == 64
     assert payload["seed"] == 7
+    assert payload["reasoning_effort"] == "medium"
 
 
 def test_gateway_retries_only_retryable_provider_responses() -> None:
@@ -143,15 +144,35 @@ def test_gateway_retries_only_retryable_provider_responses() -> None:
 def test_gateway_rejects_wrong_route_nonretryable_and_malformed_responses() -> None:
     with pytest.raises(CerebrasGatewayError, match="cerebras model route"):
         asyncio.run(_gateway(FakeTransport([_success()])).generate(_request("other-provider")))
-    with pytest.raises(CerebrasRequestError, match="400"):
+    with pytest.raises(CerebrasRequestError, match="provider_code=invalid_request") as error:
         asyncio.run(
             _gateway(
-                FakeTransport([CerebrasTransportResponse(status_code=400, body={"error": "bad"})])
+                FakeTransport(
+                    [
+                        CerebrasTransportResponse(
+                            status_code=400,
+                            request_id="request-invalid",
+                            body={
+                                "error": {
+                                    "code": "invalid_request",
+                                    "message": "The requested parameter is invalid.",
+                                }
+                            },
+                        )
+                    ]
+                )
             ).generate(_request())
         )
-    with pytest.raises(CerebrasUnavailableError, match="no completion choice"):
+    assert error.value.status_code == 400
+    assert error.value.request_id == "request-invalid"
+    assert error.value.provider_error_code == "invalid_request"
+    assert error.value.provider_error_message == "The requested parameter is invalid."
+
+    with pytest.raises(CerebrasResponseFormatError, match="status=200") as malformed:
         asyncio.run(
             _gateway(
                 FakeTransport([CerebrasTransportResponse(status_code=200, body={"choices": [{}]})])
             ).generate(_request())
         )
+    assert malformed.value.latency_ms >= 0
+    assert malformed.value.message_fields == ()

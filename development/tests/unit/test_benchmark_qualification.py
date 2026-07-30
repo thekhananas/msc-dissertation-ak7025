@@ -7,7 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from socratic_tutor.benchmark.cerebras import GatewayGenerationResult
+from socratic_tutor.benchmark.cerebras import (
+    CerebrasRequestError,
+    CerebrasResponseFormatError,
+    CerebrasTransportResponse,
+    GatewayGenerationResult,
+)
 from socratic_tutor.benchmark.cli import main
 from socratic_tutor.benchmark.generation import StudentGenerationRequest
 from socratic_tutor.benchmark.hashing import model_content_hash
@@ -29,7 +34,11 @@ PLAN = WORKSPACE_ROOT / "configs" / "benchmark" / "provider-qualification-cerebr
 
 
 class FakeGateway:
+    def __init__(self) -> None:
+        self.call_count = 0
+
     async def generate(self, request: StudentGenerationRequest) -> GatewayGenerationResult:
+        self.call_count += 1
         response = create_recorded_response(
             request=request,
             original_source=OriginalGenerationSource.CEREBRAS,
@@ -62,8 +71,43 @@ class FakeGateway:
         )
 
 
+class FailingGateway:
+    async def generate(self, request: StudentGenerationRequest) -> GatewayGenerationResult:
+        del request
+        raise CerebrasRequestError(
+            status_code=402,
+            request_id="request-payment",
+            provider_error_code="insufficient_credits",
+            provider_error_message="Add credits before requesting this model.",
+        )
+
+
+class EmptyCompletionGateway:
+    async def generate(self, request: StudentGenerationRequest) -> GatewayGenerationResult:
+        del request
+        raise CerebrasResponseFormatError(
+            response=CerebrasTransportResponse(
+                status_code=200,
+                request_id="request-empty",
+                body={
+                    "model": "gpt-oss-120b",
+                    "system_fingerprint": "fp-empty",
+                    "choices": [
+                        {
+                            "finish_reason": "length",
+                            "message": {"content": "", "reasoning": "hidden"},
+                        }
+                    ],
+                },
+            ),
+            latency_ms=123,
+            reason="Cerebras completion content must be non-empty text",
+        )
+
+
 def test_qualification_generates_only_development_public_records(tmp_path: Path) -> None:
     plan = load_provider_qualification_plan(PLAN)
+    gateway = FakeGateway()
 
     report = asyncio.run(
         run_provider_qualification(
@@ -71,7 +115,7 @@ def test_qualification_generates_only_development_public_records(tmp_path: Path)
             manifest_path=MANIFEST,
             output_root=tmp_path,
             run_id="development-qualification-test",
-            gateway=FakeGateway(),
+            gateway=gateway,
             clock=lambda: datetime(2026, 8, 23, 9, 0, tzinfo=UTC),
         )
     )
@@ -83,9 +127,23 @@ def test_qualification_generates_only_development_public_records(tmp_path: Path)
         "dev-none-falsy-001",
     }
     assert all(result.backend_fingerprint for result in report.results)
+    assert gateway.call_count == 2
     records = (tmp_path / "recorded_responses.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(records) == 2
     assert all(json.loads(record)["request"]["channel"] == "public" for record in records)
+
+    replayed = asyncio.run(
+        run_provider_qualification(
+            plan=plan,
+            manifest_path=MANIFEST,
+            output_root=tmp_path,
+            run_id="development-qualification-test",
+            gateway=gateway,
+            clock=lambda: datetime(2026, 8, 23, 10, 0, tzinfo=UTC),
+        )
+    )
+    assert replayed.qualification_hash == report.qualification_hash
+    assert gateway.call_count == 2
 
 
 def test_qualification_cli_refuses_to_run_without_explicit_local_key(
@@ -132,3 +190,54 @@ def test_qualification_plan_rejects_non_cerebras_route() -> None:
 
     with pytest.raises(ValueError, match="direct cerebras"):
         ProviderQualificationPlan.model_validate(raw)
+
+
+def test_qualification_plan_pins_low_reasoning_effort() -> None:
+    plan = load_provider_qualification_plan(PLAN)
+
+    assert plan.reasoning_effort == "low"
+    assert plan.sampling.max_output_tokens == 512
+
+
+def test_qualification_records_safe_provider_failure_details(tmp_path: Path) -> None:
+    report = asyncio.run(
+        run_provider_qualification(
+            plan=load_provider_qualification_plan(PLAN),
+            manifest_path=MANIFEST,
+            output_root=tmp_path,
+            run_id="development-failure-details-test",
+            gateway=FailingGateway(),
+            clock=lambda: datetime(2026, 8, 23, 10, 0, tzinfo=UTC),
+        )
+    )
+
+    assert report.gate_passed is False
+    assert report.success_count == 0
+    assert all(result.error_http_status == 402 for result in report.results)
+    assert all(result.provider_request_id == "request-payment" for result in report.results)
+    assert all(result.provider_error_code == "insufficient_credits" for result in report.results)
+    assert all(
+        result.provider_error_message == "Add credits before requesting this model."
+        for result in report.results
+    )
+
+
+def test_qualification_records_safe_empty_completion_shape(tmp_path: Path) -> None:
+    report = asyncio.run(
+        run_provider_qualification(
+            plan=load_provider_qualification_plan(PLAN),
+            manifest_path=MANIFEST,
+            output_root=tmp_path,
+            run_id="development-empty-completion-test",
+            gateway=EmptyCompletionGateway(),
+            clock=lambda: datetime(2026, 8, 23, 10, 0, tzinfo=UTC),
+        )
+    )
+
+    assert all(result.error_http_status == 200 for result in report.results)
+    assert all(result.latency_ms == 123 for result in report.results)
+    assert all(result.backend_fingerprint == "fp-empty" for result in report.results)
+    assert all(result.provider_finish_reason == "length" for result in report.results)
+    assert all(
+        result.provider_message_fields == ("content", "reasoning") for result in report.results
+    )

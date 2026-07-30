@@ -8,8 +8,9 @@ model_route:
   model: gpt-oss-120b
 sampling:
   temperature: 0.0
-  max_output_tokens: 256
+  max_output_tokens: 512
   seed: 20260822
+reasoning_effort: low
 system_prompt_version: student-system-v1
 system_prompt_ref: prompts/student-system-v1.md
 system_prompt_sha256: 05bfc161f91ef48303e0d9b7bad7140dddbf3b06f63af349cffebef578e1340a
@@ -32,4 +33,5 @@ selection_rules:
   - Use development-only cases only.
   - Do not compare held-out v1 outcomes when selecting a provider.
   - Record unavailable or invalid responses as qualification failures.
+  - Use low reasoning effort and a 512-token completion limit, based on the development-only route diagnostic.
   - Choose one primary provider and route before starting v1 generation.

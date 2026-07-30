@@ -3,20 +3,27 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import Literal, Protocol, TypedDict
 
 import httpx
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from socratic_tutor.benchmark.artifacts import write_immutable_json, write_immutable_jsonl
+from socratic_tutor.benchmark.artifacts import (
+    ArtifactConflictError,
+    write_immutable_json,
+    write_immutable_jsonl,
+)
 from socratic_tutor.benchmark.cerebras import (
     CerebrasGateway,
     CerebrasGatewayConfig,
     CerebrasGatewayError,
+    CerebrasRequestError,
+    CerebrasResponseFormatError,
     GatewayGenerationResult,
     HttpxCerebrasTransport,
 )
@@ -84,6 +91,7 @@ class ProviderQualificationPlan(ContractModel):
     candidate_id: str = Field(min_length=1)
     model_route: ModelRoute
     sampling: SamplingConfig
+    reasoning_effort: Literal["low", "medium", "high"]
     system_prompt_version: str = Field(min_length=1)
     system_prompt_ref: RelativePath
     system_prompt_sha256: Sha256
@@ -113,17 +121,48 @@ class QualificationCaseResult(ContractModel):
     latency_ms: int | None = Field(default=None, ge=0)
     error_type: str | None = None
     error_message: str | None = None
+    error_http_status: int | None = Field(default=None, ge=100, le=599)
+    provider_request_id: str | None = None
+    provider_error_code: str | None = None
+    provider_error_message: str | None = None
+    provider_finish_reason: str | None = None
+    provider_message_fields: tuple[str, ...] | None = None
 
     @model_validator(mode="after")
     def require_consistent_outcome(self) -> QualificationCaseResult:
         if self.status == "success":
             if self.response_hash is None:
                 raise ValueError("Successful qualification results require a response hash")
-            if self.error_type is not None or self.error_message is not None:
+            if any(
+                value is not None
+                for value in (
+                    self.error_type,
+                    self.error_message,
+                    self.error_http_status,
+                    self.provider_request_id,
+                    self.provider_error_code,
+                    self.provider_error_message,
+                    self.provider_finish_reason,
+                    self.provider_message_fields,
+                )
+            ):
                 raise ValueError("Successful qualification results cannot contain provider errors")
         elif self.response_hash is not None:
             raise ValueError("Provider failures cannot contain a response hash")
         return self
+
+
+class ProviderFailureDetails(TypedDict):
+    """Safe, structured provider details retained for a failed qualification request."""
+
+    error_http_status: int
+    latency_ms: int | None
+    provider_request_id: str | None
+    provider_error_code: str | None
+    provider_error_message: str | None
+    backend_fingerprint: str | None
+    provider_finish_reason: str | None
+    provider_message_fields: tuple[str, ...] | None
 
 
 class ProviderQualificationReport(ContractModel):
@@ -204,6 +243,7 @@ def cerebras_gateway_from_environment(
     gateway = CerebrasGateway(
         config=CerebrasGatewayConfig(
             api_key=api_key,
+            reasoning_effort=plan.reasoning_effort,
             timeout_seconds=plan.transport.timeout_seconds,
             max_attempts=plan.transport.max_attempts,
             retry_delay_seconds=plan.transport.retry_delay_seconds,
@@ -234,6 +274,14 @@ async def run_provider_qualification(
         status=authored.status,
     )
     public = project_public_manifest(authored, projected_at_utc=generated_at_utc)
+    existing = _load_existing_qualification_report(
+        output_root=output_root,
+        plan=plan,
+        public=public,
+        run_id=run_id,
+    )
+    if existing is not None:
+        return existing
     _validate_development_cases(plan=plan, public=public)
     benchmark_root = manifest_path.resolve().parent
     system_prompt = _load_public_system_prompt(
@@ -256,15 +304,17 @@ async def run_provider_qualification(
         try:
             result = await gateway.generate(request)
         except CerebrasGatewayError as error:
-            results.append(
-                QualificationCaseResult(
-                    case_id=case_id,
-                    request_hash=request.request_hash,
-                    status="provider_failure",
-                    error_type=type(error).__name__,
-                    error_message=str(error),
-                )
-            )
+            details = _provider_failure_details(error)
+            failure: dict[str, object] = {
+                "case_id": case_id,
+                "request_hash": request.request_hash,
+                "status": "provider_failure",
+                "error_type": type(error).__name__,
+                "error_message": str(error),
+            }
+            if details is not None:
+                failure.update(details)
+            results.append(QualificationCaseResult.model_validate(failure))
             continue
         metadata = result.response.provider_metadata
         records.append(result.response)
@@ -311,6 +361,32 @@ async def run_provider_qualification(
     write_immutable_jsonl(output_root / "recorded_responses.jsonl", tuple(records))
     write_immutable_json(output_root / "qualification_report.json", report)
     return report
+
+
+def _provider_failure_details(error: CerebrasGatewayError) -> ProviderFailureDetails | None:
+    if isinstance(error, CerebrasRequestError):
+        return {
+            "error_http_status": error.status_code,
+            "latency_ms": None,
+            "provider_request_id": error.request_id,
+            "provider_error_code": error.provider_error_code,
+            "provider_error_message": error.provider_error_message,
+            "backend_fingerprint": None,
+            "provider_finish_reason": None,
+            "provider_message_fields": None,
+        }
+    if isinstance(error, CerebrasResponseFormatError):
+        return {
+            "error_http_status": error.status_code,
+            "latency_ms": error.latency_ms,
+            "provider_request_id": error.request_id,
+            "provider_error_code": None,
+            "provider_error_message": None,
+            "backend_fingerprint": error.backend_fingerprint,
+            "provider_finish_reason": error.finish_reason,
+            "provider_message_fields": error.message_fields,
+        }
+    return None
 
 
 def run_provider_qualification_from_environment(
@@ -367,6 +443,43 @@ def _validate_development_cases(
             ) from error
         if case.split is not BenchmarkSplit.DEVELOPMENT:
             raise ValueError(f"Qualification case is not in the development split: {case_id}")
+
+
+def _load_existing_qualification_report(
+    *,
+    output_root: Path,
+    plan: ProviderQualificationPlan,
+    public: PublicBenchmarkManifest,
+    run_id: str,
+) -> ProviderQualificationReport | None:
+    """Return a matching completed run, never silently mix attempts in one directory."""
+
+    root = output_root.resolve()
+    report_path = root / "qualification_report.json"
+    if report_path.exists():
+        try:
+            report = ProviderQualificationReport.model_validate(
+                json.loads(report_path.read_text(encoding="utf-8"))
+            )
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            raise ArtifactConflictError(
+                "Existing qualification report is unreadable or invalid"
+            ) from error
+        if (
+            report.run_id != run_id
+            or report.candidate_id != plan.candidate_id
+            or report.qualification_plan_hash != model_content_hash(plan)
+            or report.source_manifest_hash != public.source_manifest_hash
+        ):
+            raise ArtifactConflictError(
+                "Existing qualification report does not match this run identity"
+            )
+        return report
+    if root.exists() and any(root.iterdir()):
+        raise ArtifactConflictError(
+            "Qualification output directory contains an incomplete attempt; use a new run ID"
+        )
+    return None
 
 
 def _load_public_system_prompt(

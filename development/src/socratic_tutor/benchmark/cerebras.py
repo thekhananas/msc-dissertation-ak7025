@@ -6,7 +6,7 @@ import asyncio
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
 from time import perf_counter
-from typing import Protocol, cast
+from typing import Literal, Protocol, cast
 
 import httpx
 from pydantic import Field, SecretStr, model_validator
@@ -33,6 +33,56 @@ class CerebrasGatewayError(RuntimeError):
 class CerebrasRequestError(CerebrasGatewayError):
     """Cerebras rejected a request that should not be retried."""
 
+    def __init__(
+        self,
+        *,
+        status_code: int,
+        request_id: str | None,
+        provider_error_code: str | None,
+        provider_error_message: str | None,
+    ) -> None:
+        self.status_code = status_code
+        self.request_id = request_id
+        self.provider_error_code = provider_error_code
+        self.provider_error_message = provider_error_message
+        details = [f"status={status_code}"]
+        if request_id is not None:
+            details.append(f"request_id={request_id}")
+        if provider_error_code is not None:
+            details.append(f"provider_code={provider_error_code}")
+        if provider_error_message is not None:
+            details.append(f"provider_message={provider_error_message}")
+        super().__init__("Cerebras rejected the generation request: " + ", ".join(details))
+
+
+class CerebrasResponseFormatError(CerebrasGatewayError):
+    """Cerebras returned HTTP success without a usable visible completion."""
+
+    def __init__(
+        self,
+        *,
+        response: CerebrasTransportResponse,
+        latency_ms: int,
+        reason: str,
+    ) -> None:
+        self.status_code = response.status_code
+        self.request_id = response.request_id
+        self.latency_ms = latency_ms
+        self.resolved_model_id = _text(response.body.get("model"))
+        self.backend_fingerprint = _text(response.body.get("system_fingerprint"))
+        self.finish_reason, self.message_fields = _completion_shape(response.body)
+        self.reason = reason
+        details = [f"status={response.status_code}", f"reason={reason}"]
+        if response.request_id is not None:
+            details.append(f"request_id={response.request_id}")
+        if self.resolved_model_id is not None:
+            details.append(f"model={self.resolved_model_id}")
+        if self.finish_reason is not None:
+            details.append(f"finish_reason={self.finish_reason}")
+        if self.message_fields:
+            details.append(f"message_fields={','.join(self.message_fields)}")
+        super().__init__("Cerebras returned an unusable completion: " + ", ".join(details))
+
 
 class CerebrasUnavailableError(CerebrasGatewayError):
     """A retryable or transport failure exhausted the configured attempts."""
@@ -43,6 +93,7 @@ class CerebrasGatewayConfig(ContractModel):
 
     api_key: SecretStr
     api_base_url: str = "https://api.cerebras.ai/v1"
+    reasoning_effort: Literal["low", "medium", "high"] = "medium"
     timeout_seconds: float = Field(default=60.0, gt=0.0, le=120.0)
     max_attempts: int = Field(default=2, ge=1, le=3)
     retry_delay_seconds: float = Field(default=1.0, ge=0.0, le=10.0)
@@ -143,7 +194,7 @@ class CerebrasGateway:
 
         if request.model_route.provider != "cerebras":
             raise CerebrasGatewayError("Cerebras gateway requires a cerebras model route")
-        payload = _request_payload(request)
+        payload = _request_payload(request, reasoning_effort=self._config.reasoning_effort)
         headers = {
             "Authorization": f"Bearer {self._config.api_key.get_secret_value()}",
             "Content-Type": "application/json",
@@ -178,13 +229,25 @@ class CerebrasGateway:
                 continue
             if not 200 <= provider_response.status_code <= 299:
                 raise CerebrasRequestError(
-                    f"Cerebras rejected the generation request: {provider_response.status_code}"
+                    status_code=provider_response.status_code,
+                    request_id=provider_response.request_id,
+                    provider_error_code=_provider_error_code(provider_response.body),
+                    provider_error_message=_provider_error_message(provider_response.body),
                 )
+
+            try:
+                final_response = _completion_text(provider_response.body)
+            except CerebrasUnavailableError as error:
+                raise CerebrasResponseFormatError(
+                    response=provider_response,
+                    latency_ms=latency_ms,
+                    reason=str(error),
+                ) from error
 
             response = create_recorded_response(
                 request=request,
                 original_source=OriginalGenerationSource.CEREBRAS,
-                final_response=_completion_text(provider_response.body),
+                final_response=final_response,
                 provider_metadata=_provider_metadata(
                     request=request,
                     response=provider_response,
@@ -209,7 +272,9 @@ class CerebrasGateway:
         raise AssertionError("Cerebras retry loop must return or raise")
 
 
-def _request_payload(request: StudentGenerationRequest) -> dict[str, object]:
+def _request_payload(
+    request: StudentGenerationRequest, *, reasoning_effort: Literal["low", "medium", "high"]
+) -> dict[str, object]:
     """Translate an isolated benchmark request into Cerebras chat-completion shape."""
 
     return {
@@ -221,6 +286,7 @@ def _request_payload(request: StudentGenerationRequest) -> dict[str, object]:
         "temperature": request.sampling.temperature,
         "max_completion_tokens": request.sampling.max_output_tokens,
         "seed": request.sampling.seed,
+        "reasoning_effort": reasoning_effort,
     }
 
 
@@ -240,6 +306,34 @@ def _completion_text(body: Mapping[str, object]) -> str:
     if not isinstance(content, str) or not content.strip():
         raise CerebrasUnavailableError("Cerebras completion content must be non-empty text")
     return content
+
+
+def _completion_shape(body: Mapping[str, object]) -> tuple[str | None, tuple[str, ...]]:
+    choices = body.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return None, ()
+    choice = _mapping(cast(object, choices[0]))
+    message = _mapping(choice.get("message"))
+    return _text(choice.get("finish_reason")), tuple(sorted(message))
+
+
+def _provider_error_code(body: Mapping[str, object]) -> str | None:
+    error = _mapping(body.get("error"))
+    return _bounded_text(error.get("code")) or _bounded_text(error.get("type"))
+
+
+def _provider_error_message(body: Mapping[str, object]) -> str | None:
+    error = _mapping(body.get("error"))
+    return _bounded_text(error.get("message")) or _bounded_text(body.get("message"))
+
+
+def _bounded_text(value: object, *, limit: int = 500) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = " ".join(value.split())
+    if not normalized:
+        return None
+    return normalized[:limit]
 
 
 def _provider_metadata(
