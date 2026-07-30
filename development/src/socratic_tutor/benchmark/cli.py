@@ -15,6 +15,10 @@ from socratic_tutor.benchmark.analysis_spec import (
     load_analysis_specification,
 )
 from socratic_tutor.benchmark.artifacts import write_immutable_json
+from socratic_tutor.benchmark.behavior_audit import (
+    load_student_behavior_audit_plan,
+    run_student_behavior_audit_from_environment,
+)
 from socratic_tutor.benchmark.calibration import (
     load_uncalibrated_decision_plan,
     record_uncalibrated_decision,
@@ -156,6 +160,14 @@ def build_parser() -> argparse.ArgumentParser:
     qualification.add_argument("--output-root", type=Path, required=True)
     qualification.add_argument("--run-id", required=True)
 
+    behavior_audit = commands.add_parser(
+        "student-behavior-audit",
+        help="Generate development-only learner-state responses for manual review",
+    )
+    behavior_audit.add_argument("--plan", type=Path, required=True)
+    behavior_audit.add_argument("--output-root", type=Path, required=True)
+    behavior_audit.add_argument("--run-id", required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -269,6 +281,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             run_id=cast(str, args.run_id),
         )
         return report, report.gate_passed
+    if command == "student-behavior-audit":
+        report = run_student_behavior_audit_from_environment(
+            plan=load_student_behavior_audit_plan(cast(Path, args.plan)),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+        )
+        return report, report.generation_complete
     if command == "evaluate":
         return (
             evaluate_published_run(
