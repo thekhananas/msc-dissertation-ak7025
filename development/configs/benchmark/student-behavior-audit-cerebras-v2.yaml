@@ -1,0 +1,136 @@
+schema_version: 1
+schema_id: benchmark.student_behavior_audit.v2
+audit_version: v2
+purpose: development_only_student_behavior_audit
+candidate_id: cerebras-gpt-oss-120b
+model_route:
+  provider: cerebras
+  model: gpt-oss-120b
+sampling:
+  temperature: 0.0
+  max_output_tokens: 512
+  seed: 20260823
+reasoning_effort: low
+system_prompt_version: student-behavior-audit-v2
+system_prompt: >-
+  You simulate a novice Python learner for a development-only behaviour audit.
+  Follow the learner state supplied in the user message exactly. Give only the
+  learner's visible reply, with no hidden reasoning, tutor voice, or answer-key
+  language. Do not add beliefs that conflict with the stated learner state.
+transport:
+  timeout_seconds: 60.0
+  max_attempts: 2
+  retry_delay_seconds: 1.0
+manual_acceptance:
+  minimum_adherent_count: 7
+  required_state_families:
+    - aliasing-misconception
+    - falsy-misconception
+    - supported-mastery
+    - cautious-partial
+scenarios:
+  - scenario_id: aliasing-misconception-list
+    state_family: aliasing-misconception
+    target_concept: mutable-list-aliasing
+    learner_state: >-
+      The learner believes assigning one list variable to another makes an
+      independent copy. They are confident in that mistaken belief.
+    tutor_prompt: >-
+      What will this print, and why? items = [1, 2]; alias = items;
+      alias.append(3); print(items)
+    expected_observations:
+      - Predicts that items stays [1, 2], or says assignment creates a copy.
+      - Does not correct the aliasing misconception.
+    reviewer_limit: This checks instruction adherence only, not realistic student cognition.
+  - scenario_id: aliasing-misconception-dict
+    state_family: aliasing-misconception
+    target_concept: mutable-dict-aliasing
+    learner_state: >-
+      The learner believes assigning one dictionary variable to another makes an
+      independent copy. They are confident in that mistaken belief.
+    tutor_prompt: >-
+      What will this print, and why? original = {"a": 1}; alias = original;
+      alias["b"] = 2; print(original)
+    expected_observations:
+      - 'Predicts that original remains {"a": 1}, or says assignment creates a copy.'
+      - Does not correct the aliasing misconception.
+    reviewer_limit: This checks instruction adherence only, not realistic student cognition.
+  - scenario_id: falsy-misconception-zero
+    state_family: falsy-misconception
+    target_concept: none-versus-falsy
+    learner_state: >-
+      The learner believes any falsy value means a value is missing. They are
+      confident that zero should be treated as missing.
+    tutor_prompt: >-
+      What does this print, and why? score = 0; print("missing" if not score else score)
+    expected_observations:
+      - Treats zero as missing because it is falsy.
+      - Does not distinguish a falsy value from None.
+    reviewer_limit: This checks instruction adherence only, not realistic student cognition.
+  - scenario_id: falsy-misconception-empty-string
+    state_family: falsy-misconception
+    target_concept: none-versus-falsy
+    learner_state: >-
+      The learner believes any falsy value means a value is missing. They are
+      confident that an empty string should be treated as missing.
+    tutor_prompt: >-
+      What does this print, and why? label = ""; print("missing" if not label else label)
+    expected_observations:
+      - Treats the empty string as missing because it is falsy.
+      - Does not distinguish a falsy value from None.
+    reviewer_limit: This checks instruction adherence only, not realistic student cognition.
+  - scenario_id: supported-mastery-list
+    state_family: supported-mastery
+    target_concept: mutable-list-aliasing
+    learner_state: >-
+      The learner understands that assignment aliases a mutable list rather than
+      copying it. They should explain this briefly and correctly.
+    tutor_prompt: >-
+      What will this print, and why? items = [1, 2]; alias = items;
+      alias.append(3); print(items)
+    expected_observations:
+      - Predicts [1, 2, 3].
+      - Explains that both names refer to the same list.
+    reviewer_limit: This checks instruction adherence only, not general Python mastery.
+  - scenario_id: supported-mastery-dict
+    state_family: supported-mastery
+    target_concept: mutable-dict-aliasing
+    learner_state: >-
+      The learner understands that assignment aliases a mutable dictionary rather
+      than copying it. They should explain this briefly and correctly.
+    tutor_prompt: >-
+      What will this print, and why? original = {"a": 1}; alias = original;
+      alias["b"] = 2; print(original)
+    expected_observations:
+      - 'Predicts {"a": 1, "b": 2}.'
+      - Explains that both names refer to the same dictionary.
+    reviewer_limit: This checks instruction adherence only, not general Python mastery.
+  - scenario_id: cautious-partial-zero
+    state_family: cautious-partial
+    target_concept: none-versus-falsy
+    learner_state: >-
+      The learner knows zero can be a real score, but is unsure why an if-not
+      check still treats it as false. They should say the code prints missing
+      while making clear that zero itself is not necessarily missing.
+    tutor_prompt: >-
+      What does this print, and why? score = 0; print("missing" if not score else score)
+    expected_observations:
+      - Says the code prints missing because not 0 is true.
+      - States, or clearly implies, that zero can still be a valid score.
+      - Uses cautious language and avoids a polished answer-key explanation.
+    reviewer_limit: This checks instruction adherence only, not a calibrated measure of uncertainty.
+  - scenario_id: cautious-partial-empty-string
+    state_family: cautious-partial
+    target_concept: none-versus-falsy
+    learner_state: >-
+      The learner knows an empty string can be an intentional value, but is
+      unsure why an if-not check still treats it as false. They should say the
+      code prints missing while making clear that the empty string is not always
+      missing.
+    tutor_prompt: >-
+      What does this print, and why? label = ""; print("missing" if not label else label)
+    expected_observations:
+      - Says the code prints missing because not an empty string is true.
+      - States, or clearly implies, that an empty string can still be a valid value.
+      - Uses cautious language and avoids a polished answer-key explanation.
+    reviewer_limit: This checks instruction adherence only, not a calibrated measure of uncertainty.

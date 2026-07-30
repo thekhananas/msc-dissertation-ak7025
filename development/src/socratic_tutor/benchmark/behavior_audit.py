@@ -51,15 +51,24 @@ class BehaviorAuditScenario(ContractModel):
     tutor_prompt: str = Field(min_length=1)
     expected_observations: tuple[str, ...] = Field(min_length=1)
     reviewer_limit: str = Field(min_length=1)
+    state_family: str | None = None
+
+
+class BehaviorAuditAcceptanceCriteria(ContractModel):
+    """Pre-declared manual rule for a development-only audit revision."""
+
+    minimum_adherent_count: int = Field(ge=1)
+    required_state_families: tuple[str, ...] = Field(min_length=1)
 
 
 class StudentBehaviorAuditPlan(ContractModel):
     """A small, non-held-out prompt-following audit, never a benchmark run."""
 
     schema_version: Literal[1] = 1
-    schema_id: Literal["benchmark.student_behavior_audit.v1"] = (
-        "benchmark.student_behavior_audit.v1"
-    )
+    schema_id: Literal[
+        "benchmark.student_behavior_audit.v1", "benchmark.student_behavior_audit.v2"
+    ] = "benchmark.student_behavior_audit.v1"
+    audit_version: Literal["v1", "v2"] = "v1"
     purpose: Literal["development_only_student_behavior_audit"]
     candidate_id: str = Field(min_length=1)
     model_route: ModelRoute
@@ -69,6 +78,7 @@ class StudentBehaviorAuditPlan(ContractModel):
     system_prompt: str = Field(min_length=1)
     transport: BehaviorAuditTransportConfig
     scenarios: tuple[BehaviorAuditScenario, ...] = Field(min_length=4, max_length=12)
+    manual_acceptance: BehaviorAuditAcceptanceCriteria | None = None
 
     @model_validator(mode="after")
     def require_direct_cerebras_and_unique_scenarios(self) -> StudentBehaviorAuditPlan:
@@ -77,6 +87,21 @@ class StudentBehaviorAuditPlan(ContractModel):
         scenario_ids = [scenario.scenario_id for scenario in self.scenarios]
         if len(scenario_ids) != len(set(scenario_ids)):
             raise ValueError("Student behavior audit scenario IDs must be unique")
+        if self.audit_version == "v2":
+            if self.schema_id != "benchmark.student_behavior_audit.v2":
+                raise ValueError("Student behavior audit v2 requires the v2 schema ID")
+            if len(self.scenarios) != 8:
+                raise ValueError("Student behavior audit v2 requires exactly eight scenarios")
+            if self.manual_acceptance is None:
+                raise ValueError("Student behavior audit v2 requires manual acceptance criteria")
+            scenario_families = {scenario.state_family for scenario in self.scenarios}
+            required_families = set(self.manual_acceptance.required_state_families)
+            if None in scenario_families or not required_families.issubset(scenario_families):
+                raise ValueError(
+                    "Student behavior audit v2 scenarios must cover every required state family"
+                )
+            if self.manual_acceptance.minimum_adherent_count > len(self.scenarios):
+                raise ValueError("Behavior audit acceptance count cannot exceed scenario count")
         return self
 
 

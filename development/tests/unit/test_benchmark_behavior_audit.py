@@ -20,6 +20,7 @@ from socratic_tutor.benchmark.replay import (
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 PLAN = WORKSPACE_ROOT / "configs" / "benchmark" / "student-behavior-audit-cerebras.yaml"
+PLAN_V2 = WORKSPACE_ROOT / "configs" / "benchmark" / "student-behavior-audit-cerebras-v2.yaml"
 
 
 class FakeGateway:
@@ -80,3 +81,18 @@ def test_behavior_audit_plan_requires_four_scenarios() -> None:
         assert "at least 4 items" in str(error)
     else:
         raise AssertionError("Expected an audit plan with fewer than four scenarios to fail")
+
+
+def test_behavior_audit_v2_predeclares_manual_acceptance_rule() -> None:
+    plan = load_student_behavior_audit_plan(PLAN_V2)
+
+    assert plan.audit_version == "v2"
+    assert len(plan.scenarios) == 8
+    assert plan.manual_acceptance is not None
+    assert plan.manual_acceptance.minimum_adherent_count == 7
+    assert set(plan.manual_acceptance.required_state_families) == {
+        "aliasing-misconception",
+        "falsy-misconception",
+        "supported-mastery",
+        "cautious-partial",
+    }
