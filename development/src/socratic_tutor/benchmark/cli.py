@@ -36,6 +36,10 @@ from socratic_tutor.benchmark.evaluator.projection import (
 )
 from socratic_tutor.benchmark.evaluator.reporting import evaluate_published_run
 from socratic_tutor.benchmark.evidence_scoring import score_evidence_responses
+from socratic_tutor.benchmark.external_protocol import (
+    freeze_external_model_execution_protocol,
+    load_external_model_protocol_freeze_plan,
+)
 from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
     load_failure_taxonomy,
@@ -180,6 +184,16 @@ def build_parser() -> argparse.ArgumentParser:
     integrity.add_argument("--manifest", type=Path, required=True)
     integrity.add_argument("--output-root", type=Path, required=True)
 
+    protocol = commands.add_parser(
+        "external-protocol-freeze",
+        help="Freeze v2 external-model settings before held-out provider calls",
+    )
+    protocol.add_argument("--plan", type=Path, required=True)
+    protocol.add_argument("--manifest", type=Path, required=True)
+    protocol.add_argument("--analysis-specification", type=Path, required=True)
+    protocol.add_argument("--system-prompt", type=Path, required=True)
+    protocol.add_argument("--output", type=Path, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -307,6 +321,17 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_root=cast(Path, args.output_root),
         )
         return report, True
+    if command == "external-protocol-freeze":
+        return (
+            freeze_external_model_execution_protocol(
+                plan=load_external_model_protocol_freeze_plan(cast(Path, args.plan)),
+                manifest_path=cast(Path, args.manifest),
+                analysis_specification_path=cast(Path, args.analysis_specification),
+                system_prompt_path=cast(Path, args.system_prompt),
+                output_path=cast(Path, args.output),
+            ),
+            True,
+        )
     if command == "evaluate":
         return (
             evaluate_published_run(

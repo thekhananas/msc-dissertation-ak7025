@@ -17,6 +17,8 @@ from socratic_tutor.benchmark.evaluator.projection import project_public_manifes
 from socratic_tutor.benchmark.external_protocol import (
     ExternalModelExecutionProtocol,
     create_external_model_execution_protocol,
+    freeze_external_model_execution_protocol,
+    load_external_model_protocol_freeze_plan,
     validate_external_model_execution_protocol,
 )
 from socratic_tutor.benchmark.public.models import PublicBenchmarkManifest
@@ -24,6 +26,15 @@ from socratic_tutor.benchmark.public.models import PublicBenchmarkManifest
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_PATH = WORKSPACE_ROOT / "data" / "benchmarks" / "v1" / "manifest.yaml"
 SPEC_PATH = WORKSPACE_ROOT / "configs" / "benchmark" / "v1-analysis-spec.yaml"
+FREEZE_PLAN_PATH = WORKSPACE_ROOT / "configs" / "benchmark" / "v2-external-protocol-cerebras.yaml"
+PROMPT_PATH = (
+    WORKSPACE_ROOT
+    / "data"
+    / "benchmark-execution"
+    / "v2"
+    / "prompts"
+    / "external-evaluation-system-v1.md"
+)
 PROMPT_HASH = "a" * 64
 
 
@@ -108,3 +119,20 @@ def test_protocol_rejects_a_different_analysis_specification() -> None:
             public_manifest=public_manifest,
             analysis_specification=changed_specification,
         )
+
+
+def test_protocol_freeze_binds_the_external_prompt_and_full_request_budget(
+    tmp_path: Path,
+) -> None:
+    protocol = freeze_external_model_execution_protocol(
+        plan=load_external_model_protocol_freeze_plan(FREEZE_PLAN_PATH),
+        manifest_path=MANIFEST_PATH,
+        analysis_specification_path=SPEC_PATH,
+        system_prompt_path=PROMPT_PATH,
+        output_path=tmp_path / "external_model_protocol.json",
+    )
+
+    assert protocol.provider_id == "cerebras"
+    assert protocol.request_budget == 72
+    assert protocol.repeats_per_case == 1
+    assert (tmp_path / "external_model_protocol.json").exists()
