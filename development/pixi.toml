@@ -19,6 +19,7 @@ pytest-cov = ">=6.2,<7"
 hypothesis = ">=6.135,<7"
 ruff = ">=0.12,<1"
 pyright = ">=1.1.403,<2"
+modal = ">=1.5, <2"
 
 [tasks.install-web]
 cmd = "pnpm install --frozen-lockfile"
