@@ -178,6 +178,18 @@ def load_external_model_protocol_freeze_plan(path: Path) -> ExternalModelProtoco
     return ExternalModelProtocolFreezePlan.model_validate(raw)
 
 
+def load_external_model_execution_protocol(path: Path) -> ExternalModelExecutionProtocol:
+    """Load one immutable external-model protocol written by the freeze command."""
+
+    import json
+
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(f"Could not read external-model protocol: {path}") from error
+    return ExternalModelExecutionProtocol.model_validate(raw)
+
+
 def freeze_external_model_execution_protocol(
     *,
     plan: ExternalModelProtocolFreezePlan,

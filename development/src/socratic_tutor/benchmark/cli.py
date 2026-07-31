@@ -38,7 +38,12 @@ from socratic_tutor.benchmark.evaluator.reporting import evaluate_published_run
 from socratic_tutor.benchmark.evidence_scoring import score_evidence_responses
 from socratic_tutor.benchmark.external_protocol import (
     freeze_external_model_execution_protocol,
+    load_external_model_execution_protocol,
     load_external_model_protocol_freeze_plan,
+)
+from socratic_tutor.benchmark.external_rehearsal import (
+    load_external_route_rehearsal_plan,
+    run_external_route_rehearsal_from_environment,
 )
 from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
@@ -194,6 +199,18 @@ def build_parser() -> argparse.ArgumentParser:
     protocol.add_argument("--system-prompt", type=Path, required=True)
     protocol.add_argument("--output", type=Path, required=True)
 
+    rehearsal = commands.add_parser(
+        "external-route-rehearse",
+        help="Call every isolated channel on two development cases only",
+    )
+    rehearsal.add_argument("--protocol", type=Path, required=True)
+    rehearsal.add_argument("--plan", type=Path, required=True)
+    rehearsal.add_argument("--manifest", type=Path, required=True)
+    rehearsal.add_argument("--fixture-decision-plan", type=Path, required=True)
+    rehearsal.add_argument("--system-prompt", type=Path, required=True)
+    rehearsal.add_argument("--output-root", type=Path, required=True)
+    rehearsal.add_argument("--run-id", required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -332,6 +349,17 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             ),
             True,
         )
+    if command == "external-route-rehearse":
+        report = run_external_route_rehearsal_from_environment(
+            protocol=load_external_model_execution_protocol(cast(Path, args.protocol)),
+            plan=load_external_route_rehearsal_plan(cast(Path, args.plan)),
+            manifest_path=cast(Path, args.manifest),
+            fixture_decision_plan_path=cast(Path, args.fixture_decision_plan),
+            system_prompt_path=cast(Path, args.system_prompt),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+        )
+        return report, report.gate_passed
     if command == "evaluate":
         return (
             evaluate_published_run(

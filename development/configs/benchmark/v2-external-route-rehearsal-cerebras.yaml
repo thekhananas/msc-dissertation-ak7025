@@ -1,0 +1,9 @@
+schema_version: 1
+schema_id: benchmark.external_route_rehearsal_plan.v1
+purpose: development_only_external_route_rehearsal
+development_manifest: data/benchmarks/dev-v0/manifest.yaml
+fixture_decision_plan: configs/benchmark/dev-v0-decision.yaml
+permitted_case_ids:
+  - dev-aliasing-001
+  - dev-none-falsy-001
+require_backend_fingerprint: true
