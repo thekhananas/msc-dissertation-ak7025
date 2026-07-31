@@ -1,0 +1,9 @@
+schema_id: benchmark.review_file.v1
+case_id: dev-aliasing-001
+status: pending
+author: Anas Khan
+reviewer: independent-reviewer-tbd
+review_scope:
+  - evidence_and_assessment_measure_the_same_concept
+  - assessment_does_not_repeat_the_evidence_solution
+  - authored_tests_match_the_prompts

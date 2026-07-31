@@ -1,0 +1,12 @@
+schema_id: benchmark.authored_tests.v1
+function: add_marker
+checks:
+  - name: mutates_caller_list
+    input: [alpha]
+    expected_input_after: [alpha, checked]
+  - name: returns_original_identity
+    input: [beta]
+    expected_return_is_input: true
+scoring:
+  demonstrated: all_checks_pass
+  misconception: returns_distinct_list_or_leaves_input_unchanged

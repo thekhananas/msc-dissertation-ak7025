@@ -1,0 +1,5 @@
+schema_id: benchmark.split_inventory.v1
+splits:
+  development:
+    - dev-list-identity
+    - dev-missing-values

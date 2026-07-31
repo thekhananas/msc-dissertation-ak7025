@@ -1,0 +1,5 @@
+schema_id: benchmark.corruption_control.v1
+transformation: invert_pass_fail_summary
+input_fields: [passed, failed]
+reject_undeclared_fields: true
+seed: 20260725
