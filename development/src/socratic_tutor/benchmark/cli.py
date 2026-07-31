@@ -51,6 +51,10 @@ from socratic_tutor.benchmark.qualification import (
     run_provider_qualification_from_environment,
 )
 from socratic_tutor.benchmark.readiness import build_benchmark_readiness_report
+from socratic_tutor.benchmark.reference_integrity import (
+    load_reference_integrity_plan,
+    run_reference_integrity_replay,
+)
 from socratic_tutor.benchmark.research_checks import (
     CaseLinkedShortcutAuditPlan,
     SensitivityPlan,
@@ -167,6 +171,14 @@ def build_parser() -> argparse.ArgumentParser:
     behavior_audit.add_argument("--plan", type=Path, required=True)
     behavior_audit.add_argument("--output-root", type=Path, required=True)
     behavior_audit.add_argument("--run-id", required=True)
+
+    integrity = commands.add_parser(
+        "reference-integrity",
+        help="Run the network-free, non-empirical v1 integrity replay",
+    )
+    integrity.add_argument("--plan", type=Path, required=True)
+    integrity.add_argument("--manifest", type=Path, required=True)
+    integrity.add_argument("--output-root", type=Path, required=True)
 
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
@@ -288,6 +300,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             run_id=cast(str, args.run_id),
         )
         return report, report.generation_complete
+    if command == "reference-integrity":
+        report = run_reference_integrity_replay(
+            plan=load_reference_integrity_plan(cast(Path, args.plan)),
+            manifest_path=cast(Path, args.manifest),
+            output_root=cast(Path, args.output_root),
+        )
+        return report, True
     if command == "evaluate":
         return (
             evaluate_published_run(

@@ -101,7 +101,7 @@ class OfflineCriterionPlan(ContractModel):
     schema_id: Literal["benchmark.offline_criterion_plan.v1"] = (
         "benchmark.offline_criterion_plan.v1"
     )
-    mode: Literal["development_offline"] = "development_offline"
+    mode: Literal["development_offline", "reference_heldout"] = "development_offline"
     run_id: str = Field(min_length=1)
     model_route: ModelRoute
     sampling: SamplingConfig
@@ -426,10 +426,23 @@ def _validate_criterion_scope(
     plan: OfflineCriterionPlan,
     run_plan: DecisionRunPlan,
 ) -> None:
-    if any(case.split is not BenchmarkSplit.DEVELOPMENT for case in public.cases):
+    splits = {case.split for case in public.cases}
+    if plan.mode == "development_offline" and splits != {BenchmarkSplit.DEVELOPMENT}:
         raise OfflineCriterionError(
             "Offline criterion accepts development cases only; held-out generation is disabled"
         )
+    if plan.mode == "reference_heldout":
+        if splits != {BenchmarkSplit.HELD_OUT}:
+            raise OfflineCriterionError(
+                "Reference criterion requires an all-held-out benchmark projection"
+            )
+        if plan.model_route != ModelRoute(
+            provider="recorded_fixture",
+            model="authored-deterministic",
+        ):
+            raise OfflineCriterionError(
+                "Reference criterion requires the recorded_fixture/authored-deterministic route"
+            )
     expected_cases = tuple(case.case_id for case in public.cases)
     if tuple(case.case_id for case in plan.cases) != expected_cases:
         raise OfflineCriterionError("Offline criterion plan must cover every case in order")

@@ -1,0 +1,11 @@
+schema_version: 1
+schema_id: benchmark.reference_integrity_plan.v1
+benchmark_version: v1
+source_manifest_hash: cd68ac06118ed60bb7ca70face733622052bf9723bbb34240a93ff56fb3836cc
+run_id: v1-reference-integrity-20260823-001
+code_revision: reference-integrity-v1
+dirty_worktree: true
+environment_lock_hash: 4c204c26bbffa9a93b59c9c636fa43b16e008f54ea0b3c8afc8bb0aa384edf3a
+root_seed: 20260823
+created_at_utc: 2026-08-23T00:30:00Z
+fixture_version: reference-integrity-v1

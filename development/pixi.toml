@@ -89,6 +89,9 @@ cmd = "python scripts/benchmark_cli.py analysis-spec-validate --input configs/be
 [tasks.benchmark-v1-calibration-decision]
 cmd = "python scripts/benchmark_cli.py calibration-decision --input configs/benchmark/v1-uncalibrated-decision.yaml --heldout-manifest data/benchmarks/v1/manifest.yaml --benchmark-root data/benchmarks --analysis-specification configs/benchmark/v1-analysis-spec.yaml --output artifacts/benchmark-checks/v1-calibration-decision.json"
 
+[tasks.benchmark-v1-reference-integrity]
+cmd = "python scripts/benchmark_cli.py reference-integrity --plan configs/benchmark/v1-reference-integrity.yaml --manifest data/benchmarks/v1/manifest.yaml --output-root artifacts/benchmark-integrity/v1-reference-integrity-20260823-001"
+
 [tasks.benchmark-smoke]
 cmd = "python scripts/benchmark_cli.py smoke --manifest data/benchmarks/dev-v0/manifest.yaml --decision-plan configs/benchmark/dev-v0-replay-decision.yaml --criterion-plan configs/benchmark/dev-v0-replay-criterion.yaml --output-root artifacts/benchmark-smoke/dev-v0-replay-20260822-003"
 
