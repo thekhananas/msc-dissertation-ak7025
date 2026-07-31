@@ -1,0 +1,14 @@
+schema_version: 1
+schema_id: benchmark.sandbox_rehearsal_plan.v1
+purpose: development_only_recorded_sandbox_rehearsal
+development_manifest: data/benchmarks/dev-v0/manifest.yaml
+permitted_case_ids:
+  - dev-aliasing-001
+  - dev-none-falsy-001
+required_channels:
+  - public
+  - evidence
+  - criterion
+execution_channels:
+  - evidence
+  - criterion

@@ -9,6 +9,7 @@ from socratic_tutor.sandbox.modal import (
 from socratic_tutor.sandbox.python_tests import (
     AuthoredFunctionTestBundle,
     IsolatedTestOutcome,
+    SandboxExecutor,
     SandboxTestResult,
     build_isolated_python_test_request,
     execute_authored_python_tests,
@@ -23,6 +24,7 @@ __all__ = [
     "ModalSandboxExecutor",
     "SandboxExecutionRequest",
     "SandboxExecutionResult",
+    "SandboxExecutor",
     "SandboxTestResult",
     "build_isolated_python_test_request",
     "execute_authored_python_tests",

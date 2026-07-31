@@ -20,6 +20,24 @@ BUNDLE = (
     / "criterion"
     / "h-c1m1-01-tests.yaml"
 )
+DEV_BUNDLES = (
+    WORKSPACE_ROOT / "data" / "benchmarks" / "dev-v0" / "evidence" / "aliasing-tests.yaml",
+    WORKSPACE_ROOT / "data" / "benchmarks" / "dev-v0" / "evidence" / "none-falsy-tests.yaml",
+    WORKSPACE_ROOT
+    / "data"
+    / "benchmarks"
+    / "dev-v0"
+    / "evaluator"
+    / "criterion"
+    / "aliasing-tests.yaml",
+    WORKSPACE_ROOT
+    / "data"
+    / "benchmarks"
+    / "dev-v0"
+    / "evaluator"
+    / "criterion"
+    / "none-falsy-tests.yaml",
+)
 
 
 class CapturingExecutor:
@@ -75,3 +93,25 @@ def test_rejects_prose_only_submission_without_calling_executor() -> None:
     assert result.outcome is not None
     assert result.outcome.status == "invalid_submission"
     assert executor.command is None
+
+
+def test_loads_every_reviewed_development_test_shape() -> None:
+    bundles = tuple(load_authored_function_test_bundle(path) for path in DEV_BUNDLES)
+
+    assert tuple(bundle.function for bundle in bundles) == (
+        "add_marker",
+        "display_score",
+        "snapshot_then_append",
+        "choose_label",
+    )
+    assert bundles[1].checks[0].harness_check() == {
+        "kind": "input",
+        "input": None,
+        "expected": "missing",
+    }
+    assert bundles[3].checks[0].harness_check() == {
+        "kind": "label",
+        "label": None,
+        "default": "fallback",
+        "expected": "fallback",
+    }

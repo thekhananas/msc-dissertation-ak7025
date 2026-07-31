@@ -72,6 +72,10 @@ from socratic_tutor.benchmark.research_checks import (
     run_sensitivity_analysis,
     run_shortcut_audit,
 )
+from socratic_tutor.benchmark.sandbox_rehearsal import (
+    load_sandbox_rehearsal_plan,
+    run_recorded_sandbox_rehearsal_with_modal,
+)
 from socratic_tutor.contracts import ContractModel
 
 
@@ -210,6 +214,16 @@ def build_parser() -> argparse.ArgumentParser:
     rehearsal.add_argument("--system-prompt", type=Path, required=True)
     rehearsal.add_argument("--output-root", type=Path, required=True)
     rehearsal.add_argument("--run-id", required=True)
+
+    sandbox_rehearsal = commands.add_parser(
+        "sandbox-rehearse",
+        help="Replay development responses and execute only their code-bearing channels remotely",
+    )
+    sandbox_rehearsal.add_argument("--plan", type=Path, required=True)
+    sandbox_rehearsal.add_argument("--manifest", type=Path, required=True)
+    sandbox_rehearsal.add_argument("--recorded-responses", type=Path, required=True)
+    sandbox_rehearsal.add_argument("--output-root", type=Path, required=True)
+    sandbox_rehearsal.add_argument("--run-id", required=True)
 
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
@@ -356,6 +370,15 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             manifest_path=cast(Path, args.manifest),
             fixture_decision_plan_path=cast(Path, args.fixture_decision_plan),
             system_prompt_path=cast(Path, args.system_prompt),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+        )
+        return report, report.gate_passed
+    if command == "sandbox-rehearse":
+        report = run_recorded_sandbox_rehearsal_with_modal(
+            plan=load_sandbox_rehearsal_plan(cast(Path, args.plan)),
+            manifest_path=cast(Path, args.manifest),
+            recorded_responses_path=cast(Path, args.recorded_responses),
             output_root=cast(Path, args.output_root),
             run_id=cast(str, args.run_id),
         )

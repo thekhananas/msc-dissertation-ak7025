@@ -33,11 +33,68 @@ class AuthoredFunctionTestBundle(ContractModel):
 
 
 class AuthoredFunctionCheck(ContractModel):
-    """One zero-argument or keyword-argument expected-output check."""
+    """One reviewed check from the development or frozen benchmark bundles."""
 
     name: str | None = None
-    args: dict[str, Any] = Field(default_factory=dict)
-    expected: Any
+    args: dict[str, Any] | None = None
+    input: Any | None = None
+    expected: Any | None = None
+    expected_input_after: Any | None = None
+    expected_return_is_input: bool | None = None
+    input_items: list[Any] | None = None
+    value: Any | None = None
+    expected_snapshot: list[Any] | None = None
+    expected_original_after: list[Any] | None = None
+    snapshot_must_be_distinct: bool | None = None
+    label: Any | None = None
+    default: Any | None = None
+
+    @model_validator(mode="after")
+    def require_supported_shape(self) -> AuthoredFunctionCheck:
+        fields = self.model_fields_set
+        if {"args", "expected"}.issubset(fields):
+            return self
+        if "input" in fields and (
+            "expected" in fields
+            or "expected_input_after" in fields
+            or self.expected_return_is_input is True
+        ):
+            return self
+        if {"input_items", "value", "expected_snapshot", "expected_original_after"}.issubset(
+            fields
+        ):
+            return self
+        if {"label", "default", "expected"}.issubset(fields):
+            return self
+        raise ValueError("Authored check does not match a supported reviewed test shape")
+
+    def harness_check(self) -> dict[str, Any]:
+        """Preserve the authored check shape, including deliberate null inputs."""
+
+        fields = self.model_fields_set
+        if {"args", "expected"}.issubset(fields):
+            return {"kind": "args", "args": self.args, "expected": self.expected}
+        if "input" in fields:
+            result = {"kind": "input", "input": self.input}
+            for field in ("expected", "expected_input_after", "expected_return_is_input"):
+                if field in fields:
+                    result[field] = getattr(self, field)
+            return result
+        if "input_items" in fields:
+            return {
+                "kind": "snapshot",
+                "input_items": self.input_items,
+                "value": self.value,
+                "expected_snapshot": self.expected_snapshot,
+                "expected_original_after": self.expected_original_after,
+                "snapshot_must_be_distinct": self.snapshot_must_be_distinct,
+            }
+        return {
+            "kind": "label",
+            "label": self.label,
+            "default": self.default,
+            "expected": self.expected,
+        }
 
 
 class IsolatedTestOutcome(ContractModel):
@@ -98,7 +155,11 @@ def build_isolated_python_test_request(
     """Build a `python -I` command for a network-blocked external sandbox."""
 
     encoded_submission = _encode(submission.code)
-    encoded_bundle = _encode(json.dumps(bundle.model_dump(mode="json"), sort_keys=True))
+    harness_bundle = {
+        "function": bundle.function,
+        "checks": [check.harness_check() for check in bundle.checks],
+    }
+    encoded_bundle = _encode(json.dumps(harness_bundle, sort_keys=True))
     return SandboxExecutionRequest(
         command=(
             "python",
@@ -195,8 +256,33 @@ try:
             passed = 0
             failed = 0
             for check in bundle["checks"]:
-                actual = candidate(**check.get("args", {}))
-                if actual == check["expected"]:
+                if check["kind"] == "args":
+                    successful = candidate(**check["args"]) == check["expected"]
+                elif check["kind"] == "snapshot":
+                    original = list(check["input_items"])
+                    snapshot, returned_original = candidate(original, check["value"])
+                    successful = (
+                        snapshot == check["expected_snapshot"]
+                        and original == check["expected_original_after"]
+                        and returned_original is original
+                    )
+                    if check.get("snapshot_must_be_distinct"):
+                        successful = successful and snapshot is not original
+                elif check["kind"] == "input":
+                    original = check["input"]
+                    actual = candidate(original)
+                    successful = True
+                    if "expected" in check:
+                        successful = successful and actual == check["expected"]
+                    if "expected_input_after" in check:
+                        successful = successful and original == check["expected_input_after"]
+                    if check.get("expected_return_is_input"):
+                        successful = successful and actual is original
+                elif check["kind"] == "label":
+                    successful = candidate(check["label"], check["default"]) == check["expected"]
+                else:
+                    raise ValueError("Unsupported authored test check")
+                if successful:
                     passed += 1
                 else:
                     failed += 1
