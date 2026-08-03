@@ -55,6 +55,15 @@ from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
     run_offline_decision_phase,
 )
+from socratic_tutor.benchmark.public_rating import (
+    build_public_answer_rating_packet,
+    finalize_public_answer_ratings,
+    freeze_public_rating_boundary,
+    load_public_answer_rating_guide,
+    load_public_answer_rating_packet,
+    load_public_rating_guide_plan,
+    load_public_rating_protocol_amendment,
+)
 from socratic_tutor.benchmark.qualification import (
     load_provider_qualification_plan,
     run_provider_qualification_from_environment,
@@ -225,6 +234,36 @@ def build_parser() -> argparse.ArgumentParser:
     sandbox_rehearsal.add_argument("--output-root", type=Path, required=True)
     sandbox_rehearsal.add_argument("--run-id", required=True)
 
+    rating_freeze = commands.add_parser(
+        "public-rating-freeze",
+        help="Freeze the public-answer rating guide and bind it to the external protocol",
+    )
+    rating_freeze.add_argument("--plan", type=Path, required=True)
+    rating_freeze.add_argument("--protocol", type=Path, required=True)
+    rating_freeze.add_argument("--guide-output", type=Path, required=True)
+    rating_freeze.add_argument("--amendment-output", type=Path, required=True)
+
+    rating_packet = commands.add_parser(
+        "public-rating-packet",
+        help="Create a blinded packet from public responses only",
+    )
+    rating_packet.add_argument("--protocol", type=Path, required=True)
+    rating_packet.add_argument("--amendment", type=Path, required=True)
+    rating_packet.add_argument("--recorded-responses", type=Path, required=True)
+    rating_packet.add_argument("--output", type=Path, required=True)
+
+    rating_finalize = commands.add_parser(
+        "public-rating-finalize",
+        help="Measure agreement and resolve two independent public-answer rating sets",
+    )
+    rating_finalize.add_argument("--guide", type=Path, required=True)
+    rating_finalize.add_argument("--amendment", type=Path, required=True)
+    rating_finalize.add_argument("--packet", type=Path, required=True)
+    rating_finalize.add_argument("--ratings-a", type=Path, required=True)
+    rating_finalize.add_argument("--ratings-b", type=Path, required=True)
+    rating_finalize.add_argument("--adjudications", type=Path)
+    rating_finalize.add_argument("--output", type=Path, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -383,6 +422,33 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             run_id=cast(str, args.run_id),
         )
         return report, report.gate_passed
+    if command == "public-rating-freeze":
+        result = freeze_public_rating_boundary(
+            plan=load_public_rating_guide_plan(cast(Path, args.plan)),
+            protocol=load_external_model_execution_protocol(cast(Path, args.protocol)),
+            guide_output_path=cast(Path, args.guide_output),
+            amendment_output_path=cast(Path, args.amendment_output),
+        )
+        return result, True
+    if command == "public-rating-packet":
+        packet = build_public_answer_rating_packet(
+            protocol=load_external_model_execution_protocol(cast(Path, args.protocol)),
+            amendment=load_public_rating_protocol_amendment(cast(Path, args.amendment)),
+            recorded_responses_path=cast(Path, args.recorded_responses),
+            output_path=cast(Path, args.output),
+        )
+        return packet, True
+    if command == "public-rating-finalize":
+        report = finalize_public_answer_ratings(
+            guide=load_public_answer_rating_guide(cast(Path, args.guide)),
+            amendment=load_public_rating_protocol_amendment(cast(Path, args.amendment)),
+            packet=load_public_answer_rating_packet(cast(Path, args.packet)),
+            ratings_a_path=cast(Path, args.ratings_a),
+            ratings_b_path=cast(Path, args.ratings_b),
+            adjudications_path=cast(Path | None, args.adjudications),
+            output_path=cast(Path, args.output),
+        )
+        return report, True
     if command == "evaluate":
         return (
             evaluate_published_run(

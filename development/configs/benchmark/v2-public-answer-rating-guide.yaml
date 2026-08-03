@@ -1,0 +1,45 @@
+schema_version: 1
+schema_id: benchmark.public_answer_rating_guide_plan.v1
+guide_version: public-answer-rating-v1
+base_protocol_hash: 8b174832d0eb2856da2a00fc3ae32b1036fffdd522efca3a2d63b9a34463810f
+required_rater_count: 2
+category_precedence:
+  - empty
+  - conflicting
+  - uncertain
+  - correct
+  - misconception
+  - incorrect
+category_rules:
+  - category: empty
+    fixed_confidence: 1.0
+    rule: The response contains no answer that can be assessed.
+  - category: conflicting
+    fixed_confidence: 0.6
+    rule: The response commits to two incompatible answers or explanations.
+  - category: uncertain
+    fixed_confidence: 0.5
+    rule: The response does not commit to an answer and presents only doubt or a guess.
+  - category: correct
+    fixed_confidence: 0.95
+    rule: The committed answer and its explanation are correct from the visible prompt alone.
+  - category: misconception
+    fixed_confidence: 0.9
+    rule: The response is wrong and supports its answer with a specific false rule or belief.
+  - category: incorrect
+    fixed_confidence: 0.95
+    rule: The response commits to a wrong answer without enough explanation to identify a specific false belief.
+allowed_packet_fields:
+  - case_id
+  - public_prompt
+  - visible_response
+  - response_hash
+forbidden_context:
+  - evidence_probe
+  - evidence_result
+  - criterion_probe
+  - criterion_result
+  - authored_evidence_pattern
+  - condition_prediction
+agreement_method: raw_agreement_and_cohen_kappa
+adjudication_rule: resolve_disagreements_before_decision_seal
