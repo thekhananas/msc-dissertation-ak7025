@@ -36,6 +36,13 @@ from socratic_tutor.benchmark.evaluator.projection import (
 )
 from socratic_tutor.benchmark.evaluator.reporting import evaluate_published_run
 from socratic_tutor.benchmark.evidence_scoring import score_evidence_responses
+from socratic_tutor.benchmark.evidence_specificity import (
+    create_external_run_preflight,
+    freeze_evidence_specificity_amendment,
+    load_evidence_specificity_amendment,
+    load_evidence_specificity_amendment_plan,
+    load_uncalibrated_decision_report,
+)
 from socratic_tutor.benchmark.external_protocol import (
     freeze_external_model_execution_protocol,
     load_external_model_execution_protocol,
@@ -264,6 +271,27 @@ def build_parser() -> argparse.ArgumentParser:
     rating_finalize.add_argument("--adjudications", type=Path)
     rating_finalize.add_argument("--output", type=Path, required=True)
 
+    specificity_freeze = commands.add_parser(
+        "evidence-specificity-freeze",
+        help="Freeze the secondary evidence-specificity equations and inherited inference rules",
+    )
+    specificity_freeze.add_argument("--plan", type=Path, required=True)
+    specificity_freeze.add_argument("--protocol", type=Path, required=True)
+    specificity_freeze.add_argument("--analysis-specification", type=Path, required=True)
+    specificity_freeze.add_argument("--calibration-report", type=Path, required=True)
+    specificity_freeze.add_argument("--output", type=Path, required=True)
+
+    external_preflight = commands.add_parser(
+        "external-run-preflight",
+        help="Require both frozen amendments before a held-out external run",
+    )
+    external_preflight.add_argument("--protocol", type=Path, required=True)
+    external_preflight.add_argument("--analysis-specification", type=Path, required=True)
+    external_preflight.add_argument("--calibration-report", type=Path, required=True)
+    external_preflight.add_argument("--public-rating-amendment", type=Path, required=True)
+    external_preflight.add_argument("--specificity-amendment", type=Path, required=True)
+    external_preflight.add_argument("--output", type=Path, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -449,6 +477,37 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return report, True
+    if command == "evidence-specificity-freeze":
+        amendment = freeze_evidence_specificity_amendment(
+            plan=load_evidence_specificity_amendment_plan(cast(Path, args.plan)),
+            protocol=load_external_model_execution_protocol(cast(Path, args.protocol)),
+            analysis_specification=load_analysis_specification(
+                cast(Path, args.analysis_specification)
+            ),
+            calibration_report=load_uncalibrated_decision_report(
+                cast(Path, args.calibration_report)
+            ),
+            output_path=cast(Path, args.output),
+        )
+        return amendment, True
+    if command == "external-run-preflight":
+        preflight = create_external_run_preflight(
+            protocol=load_external_model_execution_protocol(cast(Path, args.protocol)),
+            analysis_specification=load_analysis_specification(
+                cast(Path, args.analysis_specification)
+            ),
+            calibration_report=load_uncalibrated_decision_report(
+                cast(Path, args.calibration_report)
+            ),
+            public_rating_amendment=load_public_rating_protocol_amendment(
+                cast(Path, args.public_rating_amendment)
+            ),
+            evidence_specificity_amendment=load_evidence_specificity_amendment(
+                cast(Path, args.specificity_amendment)
+            ),
+            output_path=cast(Path, args.output),
+        )
+        return preflight, True
     if command == "evaluate":
         return (
             evaluate_published_run(
