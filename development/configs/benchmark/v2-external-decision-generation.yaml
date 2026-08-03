@@ -1,0 +1,10 @@
+schema_version: 1
+schema_id: benchmark.external_decision_generation_plan.v1
+purpose: heldout_external_decision_generation
+preflight_hash: 29c4c306b8cc29fa405250b0f68e9549266e8e716f9a778822f6b0dcc50b239d
+required_channels:
+  - public
+  - evidence
+expected_case_count: 24
+expected_request_count: 48
+require_backend_fingerprint: true

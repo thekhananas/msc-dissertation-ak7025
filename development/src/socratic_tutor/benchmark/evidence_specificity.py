@@ -183,6 +183,12 @@ def load_uncalibrated_decision_report(path: Path) -> UncalibratedDecisionReport:
     return _load_json_model(path, UncalibratedDecisionReport)
 
 
+def load_external_run_preflight(path: Path) -> ExternalRunPreflight:
+    """Load and validate the frozen gate required before held-out generation."""
+
+    return _load_json_model(path, ExternalRunPreflight)
+
+
 def freeze_evidence_specificity_amendment(
     *,
     plan: EvidenceSpecificityAmendmentPlan,

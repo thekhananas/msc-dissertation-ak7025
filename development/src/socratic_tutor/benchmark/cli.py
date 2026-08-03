@@ -41,7 +41,12 @@ from socratic_tutor.benchmark.evidence_specificity import (
     freeze_evidence_specificity_amendment,
     load_evidence_specificity_amendment,
     load_evidence_specificity_amendment_plan,
+    load_external_run_preflight,
     load_uncalibrated_decision_report,
+)
+from socratic_tutor.benchmark.external_decision import (
+    load_external_decision_generation_plan,
+    run_external_decision_generation_from_environment,
 )
 from socratic_tutor.benchmark.external_protocol import (
     freeze_external_model_execution_protocol,
@@ -292,6 +297,19 @@ def build_parser() -> argparse.ArgumentParser:
     external_preflight.add_argument("--specificity-amendment", type=Path, required=True)
     external_preflight.add_argument("--output", type=Path, required=True)
 
+    external_decision = commands.add_parser(
+        "external-decision-generate",
+        help="Generate resumable held-out public and evidence responses before criterion access",
+    )
+    external_decision.add_argument("--plan", type=Path, required=True)
+    external_decision.add_argument("--protocol", type=Path, required=True)
+    external_decision.add_argument("--preflight", type=Path, required=True)
+    external_decision.add_argument("--manifest", type=Path, required=True)
+    external_decision.add_argument("--analysis-specification", type=Path, required=True)
+    external_decision.add_argument("--system-prompt", type=Path, required=True)
+    external_decision.add_argument("--output-root", type=Path, required=True)
+    external_decision.add_argument("--run-id", required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -508,6 +526,18 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return preflight, True
+    if command == "external-decision-generate":
+        report = run_external_decision_generation_from_environment(
+            protocol=load_external_model_execution_protocol(cast(Path, args.protocol)),
+            preflight=load_external_run_preflight(cast(Path, args.preflight)),
+            plan=load_external_decision_generation_plan(cast(Path, args.plan)),
+            manifest_path=cast(Path, args.manifest),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            system_prompt_path=cast(Path, args.system_prompt),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+        )
+        return report, report.gate_passed
     if command == "evaluate":
         return (
             evaluate_published_run(
