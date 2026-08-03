@@ -1,5 +1,6 @@
 """Tests for the blinded public-answer rating boundary."""
 
+import csv
 import json
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -26,8 +27,10 @@ from socratic_tutor.benchmark.public_rating import (
     build_public_answer_rating_packet,
     create_public_answer_adjudication,
     create_public_answer_rating,
+    export_public_rating_workbook,
     finalize_public_answer_ratings,
     freeze_public_rating_boundary,
+    record_public_answer_ratings,
 )
 from socratic_tutor.benchmark.replay import (
     OriginalGenerationSource,
@@ -186,6 +189,61 @@ def test_packet_projects_public_records_from_a_mixed_source_without_leaking_crit
 
     assert len(packet.items) == 1
     assert "criterion" not in (tmp_path / "packet.json").read_text(encoding="utf-8").casefold()
+
+
+def test_workbook_records_one_complete_human_rating_set(tmp_path: Path) -> None:
+    guide, _, packet = _packet(tmp_path)
+    workbook = export_public_rating_workbook(
+        guide=guide,
+        packet=packet,
+        output_root=tmp_path / "workbook",
+    )
+    sheet_path = tmp_path / "workbook" / "rating_sheet.csv"
+    with sheet_path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        assert reader.fieldnames is not None
+        fieldnames = tuple(reader.fieldnames)
+        rows = list(reader)
+    for row in rows:
+        row["category"] = "correct"
+        row["rationale"] = "The visible answer matches the visible prompt."
+    completed_path = tmp_path / "completed.csv"
+    with completed_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    result = record_public_answer_ratings(
+        guide=guide,
+        packet=packet,
+        completed_sheet_path=completed_path,
+        rater_id="independent-rater-a",
+        output_path=tmp_path / "ratings-a.jsonl",
+    )
+
+    assert workbook.item_count == result.rating_count == 2
+    assert result.rater_id == "independent-rater-a"
+    recorded = [
+        json.loads(line)
+        for line in (tmp_path / "ratings-a.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert {row["category"] for row in recorded} == {"correct"}
+    assert {row["case_id"] for row in recorded} == {"case-001", "case-002"}
+
+    rows[0]["visible_response"] = "Changed after review."
+    tampered_path = tmp_path / "tampered.csv"
+    with tampered_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+    with pytest.raises(ValueError, match="changed blinded content"):
+        record_public_answer_ratings(
+            guide=guide,
+            packet=packet,
+            completed_sheet_path=tampered_path,
+            rater_id="independent-rater-a",
+            output_path=tmp_path / "tampered.jsonl",
+        )
 
 
 def test_two_raters_require_adjudication_and_report_agreement(tmp_path: Path) -> None:

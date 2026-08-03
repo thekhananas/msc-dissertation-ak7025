@@ -69,12 +69,14 @@ from socratic_tutor.benchmark.public.offline import (
 )
 from socratic_tutor.benchmark.public_rating import (
     build_public_answer_rating_packet,
+    export_public_rating_workbook,
     finalize_public_answer_ratings,
     freeze_public_rating_boundary,
     load_public_answer_rating_guide,
     load_public_answer_rating_packet,
     load_public_rating_guide_plan,
     load_public_rating_protocol_amendment,
+    record_public_answer_ratings,
 )
 from socratic_tutor.benchmark.qualification import (
     load_provider_qualification_plan,
@@ -263,6 +265,24 @@ def build_parser() -> argparse.ArgumentParser:
     rating_packet.add_argument("--amendment", type=Path, required=True)
     rating_packet.add_argument("--recorded-responses", type=Path, required=True)
     rating_packet.add_argument("--output", type=Path, required=True)
+
+    rating_workbook = commands.add_parser(
+        "public-rating-workbook",
+        help="Export a blinded guide and CSV for two independent public-answer raters",
+    )
+    rating_workbook.add_argument("--guide", type=Path, required=True)
+    rating_workbook.add_argument("--packet", type=Path, required=True)
+    rating_workbook.add_argument("--output-root", type=Path, required=True)
+
+    rating_record = commands.add_parser(
+        "public-rating-record",
+        help="Validate one completed rating CSV and create immutable rating JSONL",
+    )
+    rating_record.add_argument("--guide", type=Path, required=True)
+    rating_record.add_argument("--packet", type=Path, required=True)
+    rating_record.add_argument("--completed-sheet", type=Path, required=True)
+    rating_record.add_argument("--rater-id", required=True)
+    rating_record.add_argument("--output", type=Path, required=True)
 
     rating_finalize = commands.add_parser(
         "public-rating-finalize",
@@ -484,6 +504,22 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return packet, True
+    if command == "public-rating-workbook":
+        result = export_public_rating_workbook(
+            guide=load_public_answer_rating_guide(cast(Path, args.guide)),
+            packet=load_public_answer_rating_packet(cast(Path, args.packet)),
+            output_root=cast(Path, args.output_root),
+        )
+        return result, True
+    if command == "public-rating-record":
+        result = record_public_answer_ratings(
+            guide=load_public_answer_rating_guide(cast(Path, args.guide)),
+            packet=load_public_answer_rating_packet(cast(Path, args.packet)),
+            completed_sheet_path=cast(Path, args.completed_sheet),
+            rater_id=cast(str, args.rater_id),
+            output_path=cast(Path, args.output),
+        )
+        return result, True
     if command == "public-rating-finalize":
         report = finalize_public_answer_ratings(
             guide=load_public_answer_rating_guide(cast(Path, args.guide)),

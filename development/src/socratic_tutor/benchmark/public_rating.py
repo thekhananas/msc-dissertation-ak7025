@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 from collections import Counter
 from pathlib import Path
@@ -10,11 +12,15 @@ from typing import Literal, cast
 import yaml
 from pydantic import Field, model_validator
 
-from socratic_tutor.benchmark.artifacts import write_immutable_json
+from socratic_tutor.benchmark.artifacts import (
+    write_immutable_bytes,
+    write_immutable_json,
+    write_immutable_jsonl,
+)
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.external_protocol import ExternalModelExecutionProtocol
 from socratic_tutor.benchmark.generation import GenerationChannel, PublicTaskPayload
-from socratic_tutor.benchmark.hashing import canonical_sha256, model_content_hash
+from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.benchmark.replay import RecordedGenerationResponse
 from socratic_tutor.contracts import ContractModel, EvidenceCategory
 
@@ -27,6 +33,14 @@ _FORBIDDEN_CONTEXT = (
     "criterion_result",
     "authored_evidence_pattern",
     "condition_prediction",
+)
+_RATING_SHEET_FIELDS = (
+    "case_id",
+    "response_hash",
+    "public_prompt",
+    "visible_response",
+    "category",
+    "rationale",
 )
 
 
@@ -282,6 +296,34 @@ class PublicAnswerRatingReport(ContractModel):
         return self
 
 
+class PublicRatingWorkbookResult(ContractModel):
+    """Identity and row count for one shareable blinded rating workbook."""
+
+    schema_version: Literal[1] = 1
+    schema_id: Literal["benchmark.public_rating_workbook_result.v1"] = (
+        "benchmark.public_rating_workbook_result.v1"
+    )
+    packet_hash: Sha256
+    rating_guide_hash: Sha256
+    item_count: int = Field(ge=1)
+    instructions_sha256: Sha256
+    rating_sheet_sha256: Sha256
+
+
+class PublicRatingSubmissionResult(ContractModel):
+    """Identity of one complete independently authored rating set."""
+
+    schema_version: Literal[1] = 1
+    schema_id: Literal["benchmark.public_rating_submission_result.v1"] = (
+        "benchmark.public_rating_submission_result.v1"
+    )
+    packet_hash: Sha256
+    rating_guide_hash: Sha256
+    rater_id: str = Field(min_length=1)
+    rating_count: int = Field(ge=1)
+    rating_set_hash: Sha256
+
+
 def load_public_rating_guide_plan(path: Path) -> PublicAnswerRatingGuidePlan:
     """Load the reviewed rating-guide plan."""
 
@@ -395,6 +437,96 @@ def build_public_answer_rating_packet(
     )
     write_immutable_json(output_path, packet)
     return packet
+
+
+def export_public_rating_workbook(
+    *,
+    guide: PublicAnswerRatingGuide,
+    packet: PublicAnswerRatingPacket,
+    output_root: Path,
+) -> PublicRatingWorkbookResult:
+    """Create a human-readable guide and spreadsheet without hidden benchmark context."""
+
+    if packet.rating_guide_hash != guide.guide_hash:
+        raise ValueError("Public-rating packet belongs to a different guide")
+    instructions = _rating_instructions(guide=guide, packet=packet)
+    sheet = _rating_sheet(packet)
+    root = output_root.resolve()
+    write_immutable_bytes(root / "instructions.md", instructions)
+    write_immutable_bytes(root / "rating_sheet.csv", sheet)
+    return PublicRatingWorkbookResult(
+        packet_hash=packet.packet_hash,
+        rating_guide_hash=guide.guide_hash,
+        item_count=len(packet.items),
+        instructions_sha256=file_sha256(instructions),
+        rating_sheet_sha256=file_sha256(sheet),
+    )
+
+
+def record_public_answer_ratings(
+    *,
+    guide: PublicAnswerRatingGuide,
+    packet: PublicAnswerRatingPacket,
+    completed_sheet_path: Path,
+    rater_id: str,
+    output_path: Path,
+) -> PublicRatingSubmissionResult:
+    """Validate one completed CSV and convert it to content-addressed rating JSONL."""
+
+    if packet.rating_guide_hash != guide.guide_hash:
+        raise ValueError("Public-rating packet belongs to a different guide")
+    if not rater_id.strip():
+        raise ValueError("Public-rating submission requires a non-empty rater ID")
+    rows = _load_completed_rating_sheet(completed_sheet_path)
+    items = {item.case_id: item for item in packet.items}
+    if len(rows) != len(items):
+        raise ValueError("Completed rating sheet must contain every packet case exactly once")
+    ratings: list[PublicAnswerRating] = []
+    seen: set[str] = set()
+    for row in rows:
+        case_id = row["case_id"]
+        if case_id in seen:
+            raise ValueError(f"Completed rating sheet contains a duplicate case: {case_id}")
+        seen.add(case_id)
+        item = items.get(case_id)
+        if item is None:
+            raise ValueError(f"Completed rating sheet contains an unknown case: {case_id}")
+        if (
+            row["response_hash"] != item.response_hash
+            or row["public_prompt"] != item.public_prompt
+            or row["visible_response"] != item.visible_response
+        ):
+            raise ValueError(f"Completed rating sheet changed blinded content for {case_id}")
+        try:
+            category = EvidenceCategory(row["category"].strip())
+        except ValueError as error:
+            raise ValueError(
+                f"Completed rating sheet has an invalid category for {case_id}"
+            ) from error
+        rationale = row["rationale"].strip()
+        if not rationale:
+            raise ValueError(f"Completed rating sheet requires a rationale for {case_id}")
+        ratings.append(
+            create_public_answer_rating(
+                packet=packet,
+                guide=guide,
+                case_id=case_id,
+                rater_id=rater_id.strip(),
+                category=category,
+                rationale=rationale,
+            )
+        )
+    if seen != set(items):
+        raise ValueError("Completed rating sheet does not cover every packet case")
+    ordered = tuple(sorted(ratings, key=lambda rating: rating.case_id))
+    write_immutable_jsonl(output_path, ordered)
+    return PublicRatingSubmissionResult(
+        packet_hash=packet.packet_hash,
+        rating_guide_hash=guide.guide_hash,
+        rater_id=rater_id.strip(),
+        rating_count=len(ordered),
+        rating_set_hash=canonical_sha256([rating.model_dump(mode="json") for rating in ordered]),
+    )
 
 
 def finalize_public_answer_ratings(
@@ -536,6 +668,75 @@ def create_public_answer_adjudication(
     return PublicAnswerAdjudication.model_validate(
         {**content, "adjudication_hash": canonical_sha256(content)}
     )
+
+
+def _rating_instructions(
+    *, guide: PublicAnswerRatingGuide, packet: PublicAnswerRatingPacket
+) -> bytes:
+    rules = "\n".join(f"- `{rule.category.value}`: {rule.rule}" for rule in guide.category_rules)
+    precedence = " > ".join(category.value for category in guide.category_precedence)
+    content = f"""# Public Answer Rating
+
+Rate all {len(packet.items)} answers independently. Use only the prompt and visible response
+in the supplied CSV. Do not discuss ratings with the other rater until both completed files
+have been returned.
+
+## Categories
+
+{rules}
+
+If more than one category seems possible, use this precedence order:
+
+`{precedence}`
+
+## What To Enter
+
+For every row, fill in `category` and a short `rationale`. Do not change the other columns.
+The rationale should point to the part of the visible answer that determined the category.
+
+Do not look for, request, or use evidence probes, executable results, final test questions,
+expected labels, or another rater's decisions.
+
+Packet hash: `{packet.packet_hash}`
+
+Guide hash: `{guide.guide_hash}`
+"""
+    return content.encode("utf-8")
+
+
+def _rating_sheet(packet: PublicAnswerRatingPacket) -> bytes:
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=_RATING_SHEET_FIELDS, lineterminator="\n")
+    writer.writeheader()
+    for item in packet.items:
+        writer.writerow(
+            {
+                "case_id": item.case_id,
+                "response_hash": item.response_hash,
+                "public_prompt": item.public_prompt,
+                "visible_response": item.visible_response,
+                "category": "",
+                "rationale": "",
+            }
+        )
+    return output.getvalue().encode("utf-8")
+
+
+def _load_completed_rating_sheet(path: Path) -> tuple[dict[str, str], ...]:
+    try:
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            if tuple(reader.fieldnames or ()) != _RATING_SHEET_FIELDS:
+                raise ValueError("Completed rating sheet columns do not match the template")
+            raw_rows = tuple(reader)
+    except (OSError, UnicodeError, csv.Error) as error:
+        raise ValueError(f"Could not read completed public-rating sheet: {path}") from error
+    rows: list[dict[str, str]] = []
+    for raw in raw_rows:
+        if None in raw or any(value is None for value in raw.values()):
+            raise ValueError("Completed rating sheet contains malformed columns")
+        rows.append({key: cast(str, value) for key, value in raw.items()})
+    return tuple(rows)
 
 
 def _validate_protocol_amendment(
