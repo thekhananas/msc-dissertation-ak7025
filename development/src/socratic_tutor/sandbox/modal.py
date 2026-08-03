@@ -54,7 +54,10 @@ class ModalProcess(Protocol):
     @property
     def object_id(self) -> str: ...
 
-    def wait(self) -> int: ...
+    @property
+    def returncode(self) -> int | None: ...
+
+    def wait(self) -> None: ...
 
 
 class ModalOutputStream(Protocol):
@@ -111,7 +114,8 @@ class ModalSandboxExecutor:
 
         try:
             process = self._client.create(request, self._config)
-            exit_code = process.wait()
+            process.wait()
+            exit_code = process.returncode
             stdout = _bounded(process.stdout.read(), request.max_output_characters)
             stderr = _bounded(process.stderr.read(), request.max_output_characters)
         except Exception as error:
@@ -119,6 +123,13 @@ class ModalSandboxExecutor:
                 status="failed",
                 error_type=type(error).__name__,
                 error_message=str(error),
+            )
+        if exit_code is None:
+            return SandboxExecutionResult(
+                status="failed",
+                sandbox_id=process.object_id,
+                error_type="ModalExitCodeUnavailable",
+                error_message="Modal completed without an observable process exit code",
             )
         return SandboxExecutionResult(
             status="completed" if exit_code == 0 else "failed",

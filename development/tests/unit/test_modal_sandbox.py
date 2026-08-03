@@ -30,8 +30,12 @@ class FakeProcess:
     def stderr(self) -> FakeStream:
         return self._stderr
 
-    def wait(self) -> int:
+    @property
+    def returncode(self) -> int | None:
         return self._exit_code
+
+    def wait(self) -> None:
+        return None
 
 
 class FakeClient:
@@ -88,3 +92,21 @@ def test_modal_executor_reports_remote_failure_without_local_fallback() -> None:
     assert result.status == "failed"
     assert result.error_type == "RuntimeError"
     assert "token is unavailable" in (result.error_message or "")
+
+
+def test_modal_executor_rejects_missing_exit_code_after_remote_wait() -> None:
+    class MissingExitCodeProcess(FakeProcess):
+        @property
+        def returncode(self) -> None:
+            return None
+
+    result = ModalSandboxExecutor(client=FakeClient(MissingExitCodeProcess(0))).execute(
+        SandboxExecutionRequest(
+            command=("python", "-I", "-c", "print('checked')"),
+            timeout_seconds=15,
+            max_output_characters=256,
+        )
+    )
+
+    assert result.status == "failed"
+    assert result.error_type == "ModalExitCodeUnavailable"
