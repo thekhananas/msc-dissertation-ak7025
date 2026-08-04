@@ -385,7 +385,7 @@ def run_offline_criterion_phase(
         published_at_utc=max(record.created_at_utc for record in repeats) + timedelta(seconds=1),
     )
     aggregate_time = max(record.created_at_utc for record in repeats) + timedelta(seconds=2)
-    aggregates = _aggregate_cases(
+    aggregates = aggregate_case_metrics(
         public_manifest=public_manifest,
         run_id=plan.run_id,
         model_route_id=f"{plan.model_route.provider}/{plan.model_route.model}",
@@ -461,7 +461,7 @@ def _validate_criterion_scope(
         raise OfflineCriterionError("Criterion tracker version differs from decision provenance")
 
 
-def _aggregate_cases(
+def aggregate_case_metrics(
     *,
     public_manifest: PublicBenchmarkManifest,
     run_id: str,

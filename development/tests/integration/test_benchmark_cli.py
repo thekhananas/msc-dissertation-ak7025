@@ -459,6 +459,45 @@ def test_external_replay_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_external_scoring_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    seal = tmp_path / "seal"
+
+    assert (
+        main(
+            [
+                "external-score",
+                "--replay-report",
+                str(missing),
+                "--analysis-specification",
+                str(missing),
+                "--calibration-report",
+                str(missing),
+                "--public-manifest",
+                str(missing),
+                "--benchmark-root",
+                str(tmp_path / "benchmark"),
+                "--seal-root",
+                str(seal),
+                "--pixi-lock",
+                str(missing),
+                "--code-revision",
+                "external-score-cli-test",
+                "--created-at-utc",
+                "2026-09-01T13:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-score"
+    assert error["status"] == "error"
+    assert not seal.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],

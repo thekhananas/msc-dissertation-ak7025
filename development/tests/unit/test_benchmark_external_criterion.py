@@ -330,7 +330,7 @@ def test_network_free_replay_rebuilds_identical_preanalysis_datasets(
     )
 
 
-def _sealed_fixture(tmp_path: Path):
+def _sealed_fixture(tmp_path: Path, *, calibration_decision_hash: str | None = None):
     authored = load_and_verify_manifest(MANIFEST)
     public = project_public_manifest(authored, projected_at_utc=DECISION_AT)
     evaluator = project_evaluator_manifest(authored, public, projected_at_utc=CRITERION_AT)
@@ -349,6 +349,7 @@ def _sealed_fixture(tmp_path: Path):
         code_revision="criterion-unit-decision",
         dirty_worktree=False,
         environment_lock_hash="1" * 64,
+        calibration_decision_hash=calibration_decision_hash,
         root_seed=20260823,
         created_at_utc=DECISION_AT,
         cases=tuple(

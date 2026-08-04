@@ -30,6 +30,7 @@ from socratic_tutor.benchmark.evaluator import (
     classification_error,
     create_calibration_decision,
     create_constant_baseline_result,
+    create_fixed_constant_baseline_result,
     create_normalized_criterion_execution,
     create_probe_only_baseline_result,
     fit_constant_prevalence,
@@ -492,4 +493,32 @@ def test_baselines_and_metric_helpers_are_frozen_and_hand_checkable(tmp_path: Pa
                 **calibration.model_dump(mode="python"),
                 "primary_metric": PrimaryMetric.PAIRED_CLASSIFICATION_ERROR_DIFFERENCE,
             }
+        )
+
+
+def test_fixed_constant_baseline_is_preregistered_not_fitted(tmp_path: Path) -> None:
+    criterion, _, _ = _criterion_fixture(tmp_path)
+    calibration = _calibration(CalibrationStatus.UNCALIBRATED_SCORE)
+
+    baseline = create_fixed_constant_baseline_result(
+        criterion.key,
+        score=0.5,
+        baseline_version="constant-0.5-no-calibration-v1",
+        calibration=calibration,
+        created_at_utc=criterion.revealed_at_utc + timedelta(seconds=1),
+    )
+
+    assert baseline.baseline is ScoringBaseline.CONSTANT_PREVALENCE
+    assert baseline.fit_role is BaselineFitRole.PREREGISTERED
+    assert baseline.fit_split_hash == calibration.calibration_data_hash
+    assert baseline.score == 0.5
+    assert baseline.binary_decision is False
+
+    with pytest.raises(ScoringError, match="between zero and one"):
+        create_fixed_constant_baseline_result(
+            criterion.key,
+            score=1.1,
+            baseline_version="invalid",
+            calibration=calibration,
+            created_at_utc=criterion.revealed_at_utc + timedelta(seconds=1),
         )

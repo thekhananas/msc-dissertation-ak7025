@@ -68,6 +68,7 @@ from socratic_tutor.benchmark.external_rehearsal import (
     run_external_route_rehearsal_from_environment,
 )
 from socratic_tutor.benchmark.external_replay import run_external_preanalysis_replay
+from socratic_tutor.benchmark.external_scoring import run_external_scoring
 from socratic_tutor.benchmark.external_seal import run_external_decision_seal_with_modal
 from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
@@ -473,6 +474,20 @@ def build_parser() -> argparse.ArgumentParser:
     external_replay.add_argument("--code-revision", required=True)
     external_replay.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    external_score = commands.add_parser(
+        "external-score",
+        help="Score one audited and replayed external run without external calls",
+    )
+    external_score.add_argument("--replay-report", type=Path, required=True)
+    external_score.add_argument("--analysis-specification", type=Path, required=True)
+    external_score.add_argument("--calibration-report", type=Path, required=True)
+    external_score.add_argument("--public-manifest", type=Path, required=True)
+    external_score.add_argument("--benchmark-root", type=Path, required=True)
+    external_score.add_argument("--seal-root", type=Path, required=True)
+    external_score.add_argument("--pixi-lock", type=Path, required=True)
+    external_score.add_argument("--code-revision", required=True)
+    external_score.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -830,6 +845,19 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, report.gate_passed
+    if command == "external-score":
+        summary = run_external_scoring(
+            replay_report_path=cast(Path, args.replay_report),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            calibration_report_path=cast(Path, args.calibration_report),
+            public_manifest_path=cast(Path, args.public_manifest),
+            benchmark_root=cast(Path, args.benchmark_root),
+            seal_root=cast(Path, args.seal_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            scoring_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return summary, summary.gate_passed
     if command == "evaluate":
         return (
             evaluate_published_run(

@@ -125,6 +125,7 @@ class BaselineFitRole(StrEnum):
 
     DEVELOPMENT = "development"
     CALIBRATION = "calibration"
+    PREREGISTERED = "preregistered"
 
 
 class ConstantPrevalenceFit(ContractModel):
@@ -259,6 +260,41 @@ def create_constant_baseline_result(
         baseline_version=fit.baseline_version,
         input_hash=fit.fit_hash,
         score=fit.score,
+        calibration=calibration,
+        created_at_utc=created_at_utc,
+    )
+
+
+def create_fixed_constant_baseline_result(
+    key: BenchmarkSampleKey,
+    *,
+    score: float,
+    baseline_version: str,
+    calibration: CalibrationDecision,
+    created_at_utc: datetime,
+) -> BaselineResult:
+    """Apply an explicitly preregistered constant when no fit data exist."""
+
+    if not 0.0 <= score <= 1.0:
+        raise ScoringError("Fixed constant score must be between zero and one")
+    input_hash = canonical_sha256(
+        {
+            "schema_id": "benchmark.fixed_constant_input.v1",
+            "strategy": "preregistered_constant_without_fit_data",
+            "score": score,
+            "baseline_version": baseline_version,
+            "calibration_data_hash": calibration.calibration_data_hash,
+            "calibration_decision_hash": calibration.decision_hash,
+        }
+    )
+    return _create_baseline_result(
+        key=key,
+        baseline=ScoringBaseline.CONSTANT_PREVALENCE,
+        fit_role=BaselineFitRole.PREREGISTERED,
+        fit_split_hash=calibration.calibration_data_hash,
+        baseline_version=baseline_version,
+        input_hash=input_hash,
+        score=score,
         calibration=calibration,
         created_at_utc=created_at_utc,
     )
