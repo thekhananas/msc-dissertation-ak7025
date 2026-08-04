@@ -4,18 +4,27 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 from socratic_tutor.benchmark.cerebras import (
     CerebrasUnavailableError,
     GatewayGenerationResult,
 )
+from socratic_tutor.benchmark.evaluator.criterion import CriterionRecord
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.benchmark.evaluator.projection import (
     project_evaluator_manifest,
     project_public_manifest,
 )
+from socratic_tutor.benchmark.external_audit import ExternalDecisionAccountingReport
 from socratic_tutor.benchmark.external_criterion import (
     ExternalCriterionPlan,
+    ExternalCriterionRequestArtifact,
     run_external_criterion,
+)
+from socratic_tutor.benchmark.external_criterion_audit import (
+    ExternalCriterionAuditError,
+    audit_external_criterion_rows,
 )
 from socratic_tutor.benchmark.generation import (
     ModelRoute,
@@ -23,6 +32,8 @@ from socratic_tutor.benchmark.generation import (
     StudentGenerationRequest,
 )
 from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
+from socratic_tutor.benchmark.public.commitments import FilesystemConditionCommitStore
+from socratic_tutor.benchmark.public.global_seal import FilesystemGlobalDecisionSealStore
 from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionCase,
     OfflineDecisionPlan,
@@ -31,6 +42,7 @@ from socratic_tutor.benchmark.public.offline import (
 from socratic_tutor.benchmark.replay import (
     OriginalGenerationSource,
     ProviderResponseMetadata,
+    RecordedGenerationResponse,
     create_recorded_response,
 )
 from socratic_tutor.contracts import Evidence, EvidenceCategory
@@ -188,6 +200,76 @@ def test_preserves_provider_failure_as_missing_instead_of_incorrect(tmp_path: Pa
     assert report.completed_execution_count == 23
     assert report.criterion_record_count == 24
     assert len(executor.requests) == 23
+
+
+def test_postcriterion_audit_accepts_exact_rows_and_rejects_route_drift(
+    tmp_path: Path,
+) -> None:
+    public, evaluator, plan = _sealed_fixture(tmp_path)
+    asyncio.run(
+        run_external_criterion(
+            plan=plan,
+            public_manifest=public,
+            evaluator_manifest=evaluator,
+            benchmark_root=BENCHMARK_ROOT,
+            seal_root=tmp_path,
+            system_prompt=PROMPT.read_text(encoding="utf-8"),
+            gateway=FakeGateway(),
+            executor=FakeExecutor(),
+            clock=IncrementingClock(),
+            sleeper=_no_sleep,
+        )
+    )
+    attempts = tuple(
+        ExternalCriterionRequestArtifact.model_validate_json(path.read_bytes())
+        for path in sorted((tmp_path / "criterion" / "attempts").glob("*.json"))
+    )
+    records = tuple(
+        CriterionRecord.model_validate_json(path.read_bytes())
+        for path in sorted((tmp_path / "criterion" / "records").glob("*.json"))
+    )
+    responses = tuple(
+        RecordedGenerationResponse.model_validate_json(line)
+        for line in (tmp_path / "criterion" / "recorded_responses.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+    condition_store = FilesystemConditionCommitStore(tmp_path / "decision")
+    seal = FilesystemGlobalDecisionSealStore(tmp_path / "decision", condition_store).load()
+    assert seal is not None
+    accounting = ExternalDecisionAccountingReport.model_construct(
+        report_hash=plan.accounting_report_hash
+    )
+
+    audit_external_criterion_rows(
+        plan=plan,
+        accounting=accounting,
+        evaluator=evaluator,
+        benchmark_root=BENCHMARK_ROOT,
+        complete_statuses=seal.sample_statuses,
+        attempts=attempts,
+        records=records,
+        responses=responses,
+    )
+
+    first = attempts[0]
+    assert first.response is not None
+    changed_metadata = first.response.provider_metadata.model_copy(
+        update={"resolved_model_id": "another-model"}
+    )
+    changed_response = first.response.model_copy(update={"provider_metadata": changed_metadata})
+    changed_attempt = first.model_copy(update={"response": changed_response})
+    with pytest.raises(ExternalCriterionAuditError, match="provider identity"):
+        audit_external_criterion_rows(
+            plan=plan,
+            accounting=accounting,
+            evaluator=evaluator,
+            benchmark_root=BENCHMARK_ROOT,
+            complete_statuses=seal.sample_statuses,
+            attempts=(changed_attempt, *attempts[1:]),
+            records=records,
+            responses=responses,
+        )
 
 
 def _sealed_fixture(tmp_path: Path):

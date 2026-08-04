@@ -53,6 +53,7 @@ from socratic_tutor.benchmark.external_audit import audit_external_decision_seal
 from socratic_tutor.benchmark.external_criterion import (
     run_external_criterion_from_environment,
 )
+from socratic_tutor.benchmark.external_criterion_audit import audit_external_criterion_run
 from socratic_tutor.benchmark.external_decision import (
     load_external_decision_generation_plan,
     run_external_decision_generation_from_environment,
@@ -445,6 +446,20 @@ def build_parser() -> argparse.ArgumentParser:
     external_criterion.add_argument("--code-revision", required=True)
     external_criterion.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    criterion_audit = commands.add_parser(
+        "external-criterion-audit",
+        help="Verify route, label, missingness, and reveal integrity without scoring",
+    )
+    criterion_audit.add_argument("--protocol", type=Path, required=True)
+    criterion_audit.add_argument("--accounting-report", type=Path, required=True)
+    criterion_audit.add_argument("--manifest", type=Path, required=True)
+    criterion_audit.add_argument("--system-prompt", type=Path, required=True)
+    criterion_audit.add_argument("--seal-root", type=Path, required=True)
+    criterion_audit.add_argument("--pixi-lock", type=Path, required=True)
+    criterion_audit.add_argument("--output", type=Path, required=True)
+    criterion_audit.add_argument("--audit-code-revision", required=True)
+    criterion_audit.add_argument("--audited-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -776,6 +791,19 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             pixi_lock_path=cast(Path, args.pixi_lock),
             code_revision=cast(str, args.code_revision),
             created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, report.gate_passed
+    if command == "external-criterion-audit":
+        report = audit_external_criterion_run(
+            protocol_path=cast(Path, args.protocol),
+            accounting_report_path=cast(Path, args.accounting_report),
+            manifest_path=cast(Path, args.manifest),
+            system_prompt_path=cast(Path, args.system_prompt),
+            seal_root=cast(Path, args.seal_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_path=cast(Path, args.output),
+            audit_code_revision=cast(str, args.audit_code_revision),
+            audited_at_utc=cast(datetime, args.audited_at_utc),
         )
         return report, report.gate_passed
     if command == "evaluate":

@@ -385,6 +385,45 @@ def test_external_criterion_run_fails_closed_before_provider_for_missing_audit(
     assert not (tmp_path / "seal").exists()
 
 
+def test_external_criterion_audit_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "never-created.json"
+
+    assert (
+        main(
+            [
+                "external-criterion-audit",
+                "--protocol",
+                str(missing),
+                "--accounting-report",
+                str(missing),
+                "--manifest",
+                str(missing),
+                "--system-prompt",
+                str(missing),
+                "--seal-root",
+                str(tmp_path / "seal"),
+                "--pixi-lock",
+                str(missing),
+                "--output",
+                str(output),
+                "--audit-code-revision",
+                "criterion-audit-cli-test",
+                "--audited-at-utc",
+                "2026-09-01T11:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-criterion-audit"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],
