@@ -105,6 +105,9 @@ cmd = "python scripts/benchmark_cli.py sensitivity --input configs/benchmark/dev
 [tasks.benchmark-v1-sensitivity]
 cmd = "python scripts/benchmark_cli.py sensitivity --input configs/benchmark/v1-sensitivity.yaml --output artifacts/benchmark-checks/v1-sensitivity.json"
 
+[tasks.benchmark-v2-binary-sensitivity]
+cmd = "python scripts/benchmark_cli.py binary-sensitivity --input configs/benchmark/v2-binary-sensitivity.yaml --output artifacts/benchmark-checks/v2-binary-sensitivity-20260901-002.json"
+
 [tasks.benchmark-design-validate]
 cmd = "python scripts/validate_benchmark_design.py data/benchmark-design/v1/case-allocation.yaml"
 
@@ -122,4 +125,4 @@ cmd = "pnpm --dir apps/web build"
 
 [tasks.check]
 cmd = "python -c \"print('All workspace checks passed')\""
-depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "benchmark-validate", "benchmark-v1-validate", "benchmark-v1-readiness", "benchmark-v1-failure-taxonomy", "benchmark-v1-analysis-spec", "benchmark-v1-calibration-decision", "benchmark-v1-sensitivity", "benchmark-design-validate", "docs-check", "build-web"]
+depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "benchmark-validate", "benchmark-v1-validate", "benchmark-v1-readiness", "benchmark-v1-failure-taxonomy", "benchmark-v1-analysis-spec", "benchmark-v1-calibration-decision", "benchmark-v1-sensitivity", "benchmark-v2-binary-sensitivity", "benchmark-design-validate", "docs-check", "build-web"]

@@ -19,6 +19,10 @@ from socratic_tutor.benchmark.behavior_audit import (
     load_student_behavior_audit_plan,
     run_student_behavior_audit_from_environment,
 )
+from socratic_tutor.benchmark.binary_sensitivity import (
+    load_binary_sensitivity_plan,
+    run_binary_sensitivity,
+)
 from socratic_tutor.benchmark.calibration import (
     load_uncalibrated_decision_plan,
     record_uncalibrated_decision,
@@ -178,6 +182,13 @@ def build_parser() -> argparse.ArgumentParser:
     sensitivity = commands.add_parser("sensitivity", help="Run seeded design sensitivity")
     sensitivity.add_argument("--input", type=Path, required=True)
     sensitivity.add_argument("--output", type=Path, required=True)
+
+    binary_sensitivity = commands.add_parser(
+        "binary-sensitivity",
+        help="Run the corrected sensitivity study for 24 paired binary cases",
+    )
+    binary_sensitivity.add_argument("--input", type=Path, required=True)
+    binary_sensitivity.add_argument("--output", type=Path, required=True)
 
     calibration = commands.add_parser(
         "calibration-decision",
@@ -428,6 +439,12 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return summary, summary.gate_passed
+    if command == "binary-sensitivity":
+        report = run_binary_sensitivity(
+            load_binary_sensitivity_plan(cast(Path, args.input)),
+            output_path=cast(Path, args.output),
+        )
+        return report, True
     if command == "calibration-decision":
         report = record_uncalibrated_decision(
             plan=load_uncalibrated_decision_plan(cast(Path, args.input)),

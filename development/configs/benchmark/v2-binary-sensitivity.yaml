@@ -1,0 +1,45 @@
+# Planning assumptions only. These probabilities are not observed benchmark results.
+schema_version: 1
+schema_id: benchmark.binary_sensitivity_plan.v1
+case_count: 24
+model_runs_per_case: 1
+policy_threshold: 0.60
+simulation_count: 10000
+case_missing_probability: 0.05
+minimum_interpretable_effect: 0.10
+alpha: 0.05
+seed: 20260901
+methodology_clarification_hash: eb2b689cca905241240813d8defe970cb9987602500567eee508ea059a8f139b
+analysis_specification_hash: 5f9ad55a885eecf132e7b182a0b121b92216316096c061e646b59acc1b020b5b
+external_protocol_hash: 8b174832d0eb2856da2a00fc3ae32b1036fffdd522efca3a2d63b9a34463810f
+historical_plan_hash: e065909427d8e0b1747e0169bf639d11312b42ec268e6dba939f92d2bb786d1e
+historical_summary_hash: 10e5f2178260c19872398c3bd522b908a67a926e626be860085da89943ea6e02
+scenarios:
+  - scenario_id: null-balanced
+    rationale: Equal discordant probabilities represent no average advantage while retaining paired dependence.
+    both_correct_probability: 0.45
+    dialogue_only_correct_probability: 0.10
+    valid_only_correct_probability: 0.10
+    both_incorrect_probability: 0.35
+    expected_effect: 0.0
+  - scenario_id: two-net-cases
+    rationale: The expected advantage equals two net corrected cases in a complete 24-case corpus and remains below the frozen threshold.
+    both_correct_probability: 0.45
+    dialogue_only_correct_probability: 0.08
+    valid_only_correct_probability: 0.16333333333333333
+    both_incorrect_probability: 0.30666666666666664
+    expected_effect: 0.08333333333333333
+  - scenario_id: three-net-cases
+    rationale: The expected advantage equals three net corrected cases and is the smallest full-corpus step above the frozen threshold.
+    both_correct_probability: 0.45
+    dialogue_only_correct_probability: 0.075
+    valid_only_correct_probability: 0.20
+    both_incorrect_probability: 0.275
+    expected_effect: 0.125
+  - scenario_id: six-net-cases
+    rationale: A larger six-net-case advantage shows whether the small corpus can reliably detect a clearly material effect.
+    both_correct_probability: 0.45
+    dialogue_only_correct_probability: 0.025
+    valid_only_correct_probability: 0.275
+    both_incorrect_probability: 0.25
+    expected_effect: 0.25
