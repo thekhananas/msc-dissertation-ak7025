@@ -87,6 +87,13 @@ from socratic_tutor.benchmark.public_rating import (
     load_public_rating_protocol_amendment,
     record_public_answer_ratings,
 )
+from socratic_tutor.benchmark.public_rating_procedure import (
+    freeze_public_rating_procedure,
+    load_public_rating_procedure_plan,
+)
+from socratic_tutor.benchmark.public_rating_procedure import (
+    load_public_answer_rating_report as load_procedure_rating_report,
+)
 from socratic_tutor.benchmark.qualification import (
     load_provider_qualification_plan,
     run_provider_qualification_from_environment,
@@ -311,6 +318,14 @@ def build_parser() -> argparse.ArgumentParser:
     rating_finalize.add_argument("--ratings-b", type=Path, required=True)
     rating_finalize.add_argument("--adjudications", type=Path)
     rating_finalize.add_argument("--output", type=Path, required=True)
+
+    rating_procedure = commands.add_parser(
+        "public-rating-procedure-freeze",
+        help="Freeze rater roles, independence, access, tools, order, and adjudication plan",
+    )
+    rating_procedure.add_argument("--plan", type=Path, required=True)
+    rating_procedure.add_argument("--rating-report", type=Path, required=True)
+    rating_procedure.add_argument("--output", type=Path, required=True)
 
     specificity_freeze = commands.add_parser(
         "evidence-specificity-freeze",
@@ -564,6 +579,13 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return report, True
+    if command == "public-rating-procedure-freeze":
+        record = freeze_public_rating_procedure(
+            plan=load_public_rating_procedure_plan(cast(Path, args.plan)),
+            rating_report=load_procedure_rating_report(cast(Path, args.rating_report)),
+            output_path=cast(Path, args.output),
+        )
+        return record, True
     if command == "evidence-specificity-freeze":
         amendment = freeze_evidence_specificity_amendment(
             plan=load_evidence_specificity_amendment_plan(cast(Path, args.plan)),

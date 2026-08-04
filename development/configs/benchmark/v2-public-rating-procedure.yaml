@@ -1,0 +1,37 @@
+schema_version: 1
+schema_id: benchmark.public_rating_procedure_plan.v1
+procedure_version: public-rating-procedure-v1
+recorded_on: 2026-09-01
+recorded_by: dissertation_author
+public_rating_report_hash: 0d845b6a4d193031e87fae503d4a5ad5ec44a7ec00d926590daa6575c21e0800
+methodology_clarification_hash: eb2b689cca905241240813d8defe970cb9987602500567eee508ea059a8f139b
+raters:
+  - rater_id: rater-a
+    stable_pseudonym: OT
+    relevant_experience: MSc Computing student
+    completion_order: 1
+    completed_independently: true
+    saw_other_rater_decisions: false
+    saw_evidence_probes: false
+    saw_executable_results: false
+    saw_criterion_material: false
+    additional_tools_used: []
+  - rater_id: rater-b
+    stable_pseudonym: AD
+    relevant_experience: Senior software engineer
+    completion_order: 2
+    completed_independently: true
+    saw_other_rater_decisions: false
+    saw_evidence_probes: false
+    saw_executable_results: false
+    saw_criterion_material: false
+    additional_tools_used: []
+supplied_materials:
+  - blinded_rating_csv
+  - public_category_guide
+public_category_guide_present: true
+case_specific_scoring_key_present: false
+planned_adjudicator: dissertation_author
+adjudication_rule: resolve_only_genuine_disagreements_before_decision_seal
+actual_adjudication_required: false
+ratings_rerun_or_reinterpreted: false
