@@ -1,7 +1,7 @@
 schema_version: 1
 schema_id: benchmark.inferential_hierarchy_plan.v1
 hierarchy_version: inferential-hierarchy-v1
-frozen_on: 2026-09-01
+frozen_on: 2026-08-24
 decision_owner: dissertation_author
 analysis_specification_hash: 5f9ad55a885eecf132e7b182a0b121b92216316096c061e646b59acc1b020b5b
 methodology_clarification_hash: eb2b689cca905241240813d8defe970cb9987602500567eee508ea059a8f139b
