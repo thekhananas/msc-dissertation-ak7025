@@ -67,6 +67,7 @@ from socratic_tutor.benchmark.external_rehearsal import (
     load_external_route_rehearsal_plan,
     run_external_route_rehearsal_from_environment,
 )
+from socratic_tutor.benchmark.external_replay import run_external_preanalysis_replay
 from socratic_tutor.benchmark.external_seal import run_external_decision_seal_with_modal
 from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
@@ -460,6 +461,18 @@ def build_parser() -> argparse.ArgumentParser:
     criterion_audit.add_argument("--audit-code-revision", required=True)
     criterion_audit.add_argument("--audited-at-utc", type=_utc_datetime, required=True)
 
+    external_replay = commands.add_parser(
+        "external-replay",
+        help="Replay all external responses and pre-analysis datasets without network access",
+    )
+    external_replay.add_argument("--integrity-report", type=Path, required=True)
+    external_replay.add_argument("--decision-responses", type=Path, required=True)
+    external_replay.add_argument("--seal-root", type=Path, required=True)
+    external_replay.add_argument("--pixi-lock", type=Path, required=True)
+    external_replay.add_argument("--output-root", type=Path, required=True)
+    external_replay.add_argument("--code-revision", required=True)
+    external_replay.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -804,6 +817,17 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
             audit_code_revision=cast(str, args.audit_code_revision),
             audited_at_utc=cast(datetime, args.audited_at_utc),
+        )
+        return report, report.gate_passed
+    if command == "external-replay":
+        report = run_external_preanalysis_replay(
+            integrity_report_path=cast(Path, args.integrity_report),
+            decision_responses_path=cast(Path, args.decision_responses),
+            seal_root=cast(Path, args.seal_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            replay_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, report.gate_passed
     if command == "evaluate":

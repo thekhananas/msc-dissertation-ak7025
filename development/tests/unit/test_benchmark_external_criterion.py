@@ -26,7 +26,12 @@ from socratic_tutor.benchmark.external_criterion_audit import (
     ExternalCriterionAuditError,
     audit_external_criterion_rows,
 )
+from socratic_tutor.benchmark.external_replay import (
+    replay_published_datasets,
+    replay_recorded_collection,
+)
 from socratic_tutor.benchmark.generation import (
+    GenerationChannel,
     ModelRoute,
     SamplingConfig,
     StudentGenerationRequest,
@@ -270,6 +275,59 @@ def test_postcriterion_audit_accepts_exact_rows_and_rejects_route_drift(
             records=records,
             responses=responses,
         )
+
+
+def test_network_free_replay_rebuilds_identical_preanalysis_datasets(
+    tmp_path: Path,
+) -> None:
+    public, evaluator, plan = _sealed_fixture(tmp_path)
+    asyncio.run(
+        run_external_criterion(
+            plan=plan,
+            public_manifest=public,
+            evaluator_manifest=evaluator,
+            benchmark_root=BENCHMARK_ROOT,
+            seal_root=tmp_path,
+            system_prompt=PROMPT.read_text(encoding="utf-8"),
+            gateway=FakeGateway(),
+            executor=FakeExecutor(),
+            clock=IncrementingClock(),
+            sleeper=_no_sleep,
+        )
+    )
+    responses = tuple(
+        RecordedGenerationResponse.model_validate_json(line)
+        for line in (tmp_path / "criterion" / "recorded_responses.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+
+    replayed = asyncio.run(
+        replay_recorded_collection(
+            responses,
+            allowed_channels=frozenset({GenerationChannel.CRITERION}),
+        )
+    )
+    comparison = replay_published_datasets(
+        seal_root=tmp_path,
+        output_dataset_root=tmp_path / "replay" / "datasets",
+    )
+
+    assert replayed == 24
+    assert (
+        comparison["condition_source_publication_hash"]
+        == comparison["condition_replay_publication_hash"]
+    )
+    assert (
+        comparison["condition_source_parquet_hash"] == comparison["condition_replay_parquet_hash"]
+    )
+    assert (
+        comparison["criterion_source_publication_hash"]
+        == comparison["criterion_replay_publication_hash"]
+    )
+    assert (
+        comparison["criterion_source_parquet_hash"] == comparison["criterion_replay_parquet_hash"]
+    )
 
 
 def _sealed_fixture(tmp_path: Path):
