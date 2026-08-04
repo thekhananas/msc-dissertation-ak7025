@@ -28,6 +28,7 @@ from socratic_tutor.benchmark.calibration import (
     record_uncalibrated_decision,
 )
 from socratic_tutor.benchmark.common import Sha256
+from socratic_tutor.benchmark.design import load_design
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.benchmark.evaluator.models import ManifestStatus
 from socratic_tutor.benchmark.evaluator.offline import (
@@ -67,6 +68,13 @@ from socratic_tutor.benchmark.failure_taxonomy import (
 )
 from socratic_tutor.benchmark.freeze import prepare_benchmark_freeze
 from socratic_tutor.benchmark.hashing import model_content_hash
+from socratic_tutor.benchmark.inferential_hierarchy import (
+    freeze_inferential_hierarchy,
+    load_binary_sensitivity_report,
+    load_inferential_hierarchy_plan,
+    load_methodology_clarification,
+    load_public_rating_procedure_record,
+)
 from socratic_tutor.benchmark.methodology_clarification import (
     freeze_methodology_clarification,
     load_methodology_clarification_plan,
@@ -359,6 +367,19 @@ def build_parser() -> argparse.ArgumentParser:
     methodology.add_argument("--public-rating-report", type=Path, required=True)
     methodology.add_argument("--output", type=Path, required=True)
 
+    hierarchy = commands.add_parser(
+        "inferential-hierarchy-freeze",
+        help="Freeze the primary analysis order and secondary dependence checks",
+    )
+    hierarchy.add_argument("--plan", type=Path, required=True)
+    hierarchy.add_argument("--analysis-specification", type=Path, required=True)
+    hierarchy.add_argument("--methodology-clarification", type=Path, required=True)
+    hierarchy.add_argument("--binary-sensitivity-report", type=Path, required=True)
+    hierarchy.add_argument("--public-rating-procedure", type=Path, required=True)
+    hierarchy.add_argument("--specificity-amendment", type=Path, required=True)
+    hierarchy.add_argument("--benchmark-design", type=Path, required=True)
+    hierarchy.add_argument("--output", type=Path, required=True)
+
     external_decision = commands.add_parser(
         "external-decision-generate",
         help="Generate resumable held-out public and evidence responses before criterion access",
@@ -633,6 +654,22 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             output_path=cast(Path, args.output),
         )
         return clarification, True
+    if command == "inferential-hierarchy-freeze":
+        hierarchy = freeze_inferential_hierarchy(
+            plan=load_inferential_hierarchy_plan(cast(Path, args.plan)),
+            analysis_specification=load_analysis_specification(
+                cast(Path, args.analysis_specification)
+            ),
+            methodology=load_methodology_clarification(cast(Path, args.methodology_clarification)),
+            sensitivity=load_binary_sensitivity_report(cast(Path, args.binary_sensitivity_report)),
+            rating_procedure=load_public_rating_procedure_record(
+                cast(Path, args.public_rating_procedure)
+            ),
+            specificity=load_evidence_specificity_amendment(cast(Path, args.specificity_amendment)),
+            design=load_design(cast(Path, args.benchmark_design)),
+            output_path=cast(Path, args.output),
+        )
+        return hierarchy, True
     if command == "external-decision-generate":
         report = run_external_decision_generation_from_environment(
             protocol=load_external_model_execution_protocol(cast(Path, args.protocol)),
