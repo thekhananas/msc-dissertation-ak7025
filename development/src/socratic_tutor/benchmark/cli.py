@@ -49,6 +49,7 @@ from socratic_tutor.benchmark.evidence_specificity import (
     load_external_run_preflight,
     load_uncalibrated_decision_report,
 )
+from socratic_tutor.benchmark.external_audit import audit_external_decision_seal
 from socratic_tutor.benchmark.external_decision import (
     load_external_decision_generation_plan,
     run_external_decision_generation_from_environment,
@@ -413,6 +414,21 @@ def build_parser() -> argparse.ArgumentParser:
     external_seal.add_argument("--dirty-worktree", action="store_true")
     external_seal.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    external_audit = commands.add_parser(
+        "external-decision-audit",
+        help="Reconcile a held-out decision seal before criterion access",
+    )
+    external_audit.add_argument("--protocol", type=Path, required=True)
+    external_audit.add_argument("--generation-report", type=Path, required=True)
+    external_audit.add_argument("--recorded-responses", type=Path, required=True)
+    external_audit.add_argument("--public-rating-report", type=Path, required=True)
+    external_audit.add_argument("--manifest", type=Path, required=True)
+    external_audit.add_argument("--seal-root", type=Path, required=True)
+    external_audit.add_argument("--pixi-lock", type=Path, required=True)
+    external_audit.add_argument("--output", type=Path, required=True)
+    external_audit.add_argument("--audit-code-revision", required=True)
+    external_audit.add_argument("--audited-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -718,6 +734,20 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             code_revision=cast(str, args.code_revision),
             dirty_worktree=cast(bool, args.dirty_worktree),
             created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, report.gate_passed
+    if command == "external-decision-audit":
+        report = audit_external_decision_seal(
+            protocol_path=cast(Path, args.protocol),
+            generation_report_path=cast(Path, args.generation_report),
+            recorded_responses_path=cast(Path, args.recorded_responses),
+            public_rating_report_path=cast(Path, args.public_rating_report),
+            manifest_path=cast(Path, args.manifest),
+            seal_root=cast(Path, args.seal_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_path=cast(Path, args.output),
+            audit_code_revision=cast(str, args.audit_code_revision),
+            audited_at_utc=cast(datetime, args.audited_at_utc),
         )
         return report, report.gate_passed
     if command == "evaluate":
