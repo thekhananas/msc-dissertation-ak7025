@@ -143,3 +143,17 @@ def test_loads_every_frozen_evidence_bundle_before_heldout_execution() -> None:
     assert {check.harness_check()["kind"] for bundle in bundles for check in bundle.checks} == {
         "no_args"
     }
+
+
+def test_loads_every_frozen_criterion_bundle_before_heldout_execution() -> None:
+    benchmark_root = WORKSPACE_ROOT / "data" / "benchmarks" / "v1"
+    manifest = load_and_verify_manifest(benchmark_root / "manifest.yaml")
+    bundles = tuple(
+        load_authored_function_test_bundle(benchmark_root / case.criterion.test_bundle_ref)
+        for case in manifest.cases
+    )
+
+    assert len(bundles) == 24
+    assert {check.harness_check()["kind"] for bundle in bundles for check in bundle.checks} == {
+        "args"
+    }
