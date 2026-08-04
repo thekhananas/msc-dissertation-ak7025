@@ -62,6 +62,7 @@ from socratic_tutor.benchmark.external_rehearsal import (
     load_external_route_rehearsal_plan,
     run_external_route_rehearsal_from_environment,
 )
+from socratic_tutor.benchmark.external_seal import run_external_decision_seal_with_modal
 from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
     load_failure_taxonomy,
@@ -393,6 +394,25 @@ def build_parser() -> argparse.ArgumentParser:
     external_decision.add_argument("--output-root", type=Path, required=True)
     external_decision.add_argument("--run-id", required=True)
 
+    external_seal = commands.add_parser(
+        "external-decision-seal",
+        help="Execute recorded evidence and seal held-out decisions before criterion access",
+    )
+    external_seal.add_argument("--protocol", type=Path, required=True)
+    external_seal.add_argument("--preflight", type=Path, required=True)
+    external_seal.add_argument("--generation-report", type=Path, required=True)
+    external_seal.add_argument("--recorded-responses", type=Path, required=True)
+    external_seal.add_argument("--public-rating-report", type=Path, required=True)
+    external_seal.add_argument("--methodology-clarification", type=Path, required=True)
+    external_seal.add_argument("--inferential-hierarchy", type=Path, required=True)
+    external_seal.add_argument("--manifest", type=Path, required=True)
+    external_seal.add_argument("--analysis-specification", type=Path, required=True)
+    external_seal.add_argument("--pixi-lock", type=Path, required=True)
+    external_seal.add_argument("--output-root", type=Path, required=True)
+    external_seal.add_argument("--code-revision", required=True)
+    external_seal.add_argument("--dirty-worktree", action="store_true")
+    external_seal.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -680,6 +700,24 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             system_prompt_path=cast(Path, args.system_prompt),
             output_root=cast(Path, args.output_root),
             run_id=cast(str, args.run_id),
+        )
+        return report, report.gate_passed
+    if command == "external-decision-seal":
+        report = run_external_decision_seal_with_modal(
+            protocol_path=cast(Path, args.protocol),
+            preflight_path=cast(Path, args.preflight),
+            generation_report_path=cast(Path, args.generation_report),
+            recorded_responses_path=cast(Path, args.recorded_responses),
+            public_rating_report_path=cast(Path, args.public_rating_report),
+            methodology_clarification_path=cast(Path, args.methodology_clarification),
+            inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
+            manifest_path=cast(Path, args.manifest),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            code_revision=cast(str, args.code_revision),
+            dirty_worktree=cast(bool, args.dirty_worktree),
+            created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, report.gate_passed
     if command == "evaluate":

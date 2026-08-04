@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.sandbox import (
     SandboxExecutionRequest,
     SandboxExecutionResult,
@@ -37,6 +38,9 @@ DEV_BUNDLES = (
     / "evaluator"
     / "criterion"
     / "none-falsy-tests.yaml",
+)
+ZERO_ARGUMENT_BUNDLE = (
+    WORKSPACE_ROOT / "data" / "benchmarks" / "v1" / "evidence" / "h-c1m1-01-tests.yaml"
 )
 
 
@@ -114,4 +118,28 @@ def test_loads_every_reviewed_development_test_shape() -> None:
         "label": None,
         "default": "fallback",
         "expected": "fallback",
+    }
+
+
+def test_loads_frozen_zero_argument_evidence_shape() -> None:
+    bundle = load_authored_function_test_bundle(ZERO_ARGUMENT_BUNDLE)
+
+    assert bundle.function == "predicted_delivery_quote"
+    assert bundle.checks[0].harness_check() == {"kind": "no_args", "expected": 24}
+
+
+def test_loads_every_frozen_evidence_bundle_before_heldout_execution() -> None:
+    manifest = load_and_verify_manifest(
+        WORKSPACE_ROOT / "data" / "benchmarks" / "v1" / "manifest.yaml"
+    )
+    bundles = tuple(
+        load_authored_function_test_bundle(
+            WORKSPACE_ROOT / "data" / "benchmarks" / "v1" / case.public.evidence_test_ref
+        )
+        for case in manifest.cases
+    )
+
+    assert len(bundles) == 24
+    assert {check.harness_check()["kind"] for bundle in bundles for check in bundle.checks} == {
+        "no_args"
     }

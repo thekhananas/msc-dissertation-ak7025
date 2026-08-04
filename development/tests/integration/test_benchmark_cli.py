@@ -302,6 +302,53 @@ def test_offline_generation_rejects_held_out_projection(
     assert "held-out generation is disabled" in failure["message"]
 
 
+def test_external_decision_seal_fails_closed_before_modal_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "never-created"
+
+    assert (
+        main(
+            [
+                "external-decision-seal",
+                "--protocol",
+                str(missing),
+                "--preflight",
+                str(missing),
+                "--generation-report",
+                str(missing),
+                "--recorded-responses",
+                str(missing),
+                "--public-rating-report",
+                str(missing),
+                "--methodology-clarification",
+                str(missing),
+                "--inferential-hierarchy",
+                str(missing),
+                "--manifest",
+                str(missing),
+                "--analysis-specification",
+                str(missing),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "external-seal-cli-test",
+                "--created-at-utc",
+                "2026-09-01T12:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-decision-seal"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],

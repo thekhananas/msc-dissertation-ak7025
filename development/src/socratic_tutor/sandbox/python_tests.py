@@ -52,6 +52,8 @@ class AuthoredFunctionCheck(ContractModel):
     @model_validator(mode="after")
     def require_supported_shape(self) -> AuthoredFunctionCheck:
         fields = self.model_fields_set
+        if fields == {"expected"}:
+            return self
         if {"args", "expected"}.issubset(fields):
             return self
         if "input" in fields and (
@@ -72,6 +74,8 @@ class AuthoredFunctionCheck(ContractModel):
         """Preserve the authored check shape, including deliberate null inputs."""
 
         fields = self.model_fields_set
+        if fields == {"expected"}:
+            return {"kind": "no_args", "expected": self.expected}
         if {"args", "expected"}.issubset(fields):
             return {"kind": "args", "args": self.args, "expected": self.expected}
         if "input" in fields:
@@ -256,7 +260,9 @@ try:
             passed = 0
             failed = 0
             for check in bundle["checks"]:
-                if check["kind"] == "args":
+                if check["kind"] == "no_args":
+                    successful = candidate() == check["expected"]
+                elif check["kind"] == "args":
                     successful = candidate(**check["args"]) == check["expected"]
                 elif check["kind"] == "snapshot":
                     original = list(check["input_items"])
