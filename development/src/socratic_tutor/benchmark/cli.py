@@ -73,6 +73,7 @@ from socratic_tutor.benchmark.external_rehearsal import (
 from socratic_tutor.benchmark.external_replay import run_external_preanalysis_replay
 from socratic_tutor.benchmark.external_scoring import run_external_scoring
 from socratic_tutor.benchmark.external_seal import run_external_decision_seal_with_modal
+from socratic_tutor.benchmark.failure_review import prepare_failure_review
 from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
     load_failure_taxonomy,
@@ -588,6 +589,22 @@ def build_parser() -> argparse.ArgumentParser:
     external_diagnostics.add_argument("--code-revision", required=True)
     external_diagnostics.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    failure_review = commands.add_parser(
+        "failure-review-prepare",
+        help="Prepare observable primary failures and matched successes for review",
+    )
+    failure_review.add_argument("--taxonomy", type=Path, required=True)
+    failure_review.add_argument("--analysis-specification", type=Path, required=True)
+    failure_review.add_argument("--manifest", type=Path, required=True)
+    failure_review.add_argument("--primary-report", type=Path, required=True)
+    failure_review.add_argument("--dataset-root", type=Path, required=True)
+    failure_review.add_argument("--generation-responses", type=Path, required=True)
+    failure_review.add_argument("--criterion-responses", type=Path, required=True)
+    failure_review.add_argument("--pixi-lock", type=Path, required=True)
+    failure_review.add_argument("--output-root", type=Path, required=True)
+    failure_review.add_argument("--code-revision", required=True)
+    failure_review.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -1038,6 +1055,21 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             primary_report_path=cast(Path, args.primary_report),
             decision_seal_report_path=cast(Path, args.decision_seal_report),
             dataset_root=cast(Path, args.dataset_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "failure-review-prepare":
+        report = prepare_failure_review(
+            taxonomy_path=cast(Path, args.taxonomy),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            manifest_path=cast(Path, args.manifest),
+            primary_report_path=cast(Path, args.primary_report),
+            dataset_root=cast(Path, args.dataset_root),
+            generation_responses_path=cast(Path, args.generation_responses),
+            criterion_responses_path=cast(Path, args.criterion_responses),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),
