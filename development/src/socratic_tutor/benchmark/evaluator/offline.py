@@ -498,7 +498,7 @@ def aggregate_case_metrics(
                     planned_repeat_count=planned_repeat_count,
                     mean_left_loss=fmean(left_losses) if left_losses else None,
                     mean_right_loss=fmean(right_losses) if right_losses else None,
-                    missingness_rule="exclude missing criterion and report denominator",
+                    missingness_rule="exclude_missing_criterion_and_report_denominator",
                     aggregation_version=aggregation_version,
                     source_repeat_hashes=tuple(source_hashes),
                     created_at_utc=created_at_utc,

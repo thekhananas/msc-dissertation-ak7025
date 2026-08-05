@@ -106,7 +106,7 @@ def _aggregate(
         planned_repeat_count=1,
         mean_left_loss=dialogue_loss,
         mean_right_loss=comparison_loss,
-        missingness_rule="exclude_missing_criterion_and_report_denominator",
+        missingness_rule="exclude missing criterion and report denominator",
         aggregation_version="case-mean-v1",
         source_repeat_hashes=source_hashes,
         created_at_utc=datetime(2026, 8, 24, 12, 0, tzinfo=UTC),

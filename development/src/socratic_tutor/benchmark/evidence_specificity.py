@@ -359,7 +359,7 @@ def _group_required_aggregates(
             continue
         if aggregate.aggregation_version != amendment.aggregation_version:
             raise ValueError("Case aggregate uses another aggregation version")
-        if aggregate.missingness_rule != amendment.missingness_rule:
+        if _normalized_missingness_rule(aggregate.missingness_rule) != amendment.missingness_rule:
             raise ValueError("Case aggregate uses another missingness rule")
         identity = (
             aggregate.benchmark_version,
@@ -388,6 +388,12 @@ def _specificity_inference(
         minimum_interpretable_effect=amendment.primary_minimum_interpretable_effect,
         random_seed=amendment.random_seed,
     )
+
+
+def _normalized_missingness_rule(value: str) -> str:
+    """Normalize the legacy spaced spelling used by the sealed v1 aggregate rows."""
+
+    return "_".join(value.split())
 
 
 def _create_case_effect(

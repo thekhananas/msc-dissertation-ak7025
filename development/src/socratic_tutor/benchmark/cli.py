@@ -132,6 +132,7 @@ from socratic_tutor.benchmark.sandbox_rehearsal import (
     load_sandbox_rehearsal_plan,
     run_recorded_sandbox_rehearsal_with_modal,
 )
+from socratic_tutor.benchmark.secondary_analysis import run_secondary_analysis
 from socratic_tutor.contracts import ContractModel
 
 
@@ -501,6 +502,22 @@ def build_parser() -> argparse.ArgumentParser:
     primary_analysis.add_argument("--output-root", type=Path, required=True)
     primary_analysis.add_argument("--code-revision", required=True)
     primary_analysis.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
+    secondary_analysis = commands.add_parser(
+        "external-secondary-analyze",
+        help="Compute frozen baseline, control, and evidence-specificity comparisons",
+    )
+    secondary_analysis.add_argument("--scoring-summary", type=Path, required=True)
+    secondary_analysis.add_argument("--primary-plan", type=Path, required=True)
+    secondary_analysis.add_argument("--primary-report", type=Path, required=True)
+    secondary_analysis.add_argument("--analysis-specification", type=Path, required=True)
+    secondary_analysis.add_argument("--inferential-hierarchy", type=Path, required=True)
+    secondary_analysis.add_argument("--specificity-amendment", type=Path, required=True)
+    secondary_analysis.add_argument("--dataset-root", type=Path, required=True)
+    secondary_analysis.add_argument("--pixi-lock", type=Path, required=True)
+    secondary_analysis.add_argument("--output-root", type=Path, required=True)
+    secondary_analysis.add_argument("--code-revision", required=True)
+    secondary_analysis.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
@@ -877,6 +894,21 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             scoring_summary_path=cast(Path, args.scoring_summary),
             analysis_specification_path=cast(Path, args.analysis_specification),
             inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
+            dataset_root=cast(Path, args.dataset_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "external-secondary-analyze":
+        report = run_secondary_analysis(
+            scoring_summary_path=cast(Path, args.scoring_summary),
+            primary_analysis_plan_path=cast(Path, args.primary_plan),
+            primary_analysis_report_path=cast(Path, args.primary_report),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
+            evidence_specificity_amendment_path=cast(Path, args.specificity_amendment),
             dataset_root=cast(Path, args.dataset_root),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),

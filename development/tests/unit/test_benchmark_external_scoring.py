@@ -19,6 +19,7 @@ from socratic_tutor.benchmark.evaluator.scoring import (
     CalibrationStatus,
     create_calibration_decision,
 )
+from socratic_tutor.benchmark.evidence_specificity import EvidenceSpecificityAmendment
 from socratic_tutor.benchmark.external_criterion import run_external_criterion
 from socratic_tutor.benchmark.external_replay import (
     ExternalReplayPlan,
@@ -31,6 +32,7 @@ from socratic_tutor.benchmark.inferential_hierarchy import InferentialHierarchy
 from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
 from socratic_tutor.benchmark.public.commitments import FilesystemConditionCommitStore
 from socratic_tutor.benchmark.public.global_seal import FilesystemGlobalDecisionSealStore
+from socratic_tutor.benchmark.secondary_analysis import run_secondary_analysis
 from tests.unit.test_benchmark_external_criterion import (
     BENCHMARK_ROOT,
     CRITERION_AT,
@@ -133,7 +135,12 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
         == summary
     )
 
-    hierarchy = _inferential_hierarchy(analysis_specification_hash(specification))
+    amendment = _specificity_amendment(analysis_specification_hash(specification))
+    amendment_path = tmp_path / "evidence_specificity_amendment.json"
+    write_immutable_json(amendment_path, amendment)
+    hierarchy = _inferential_hierarchy(
+        analysis_specification_hash(specification), amendment.amendment_hash
+    )
     hierarchy_path = tmp_path / "inferential_hierarchy.json"
     write_immutable_json(hierarchy_path, hierarchy)
     primary = run_primary_analysis(
@@ -174,6 +181,37 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
         )
         == primary
     )
+
+    secondary = run_secondary_analysis(
+        scoring_summary_path=tmp_path / "analysis" / "scoring-v1" / "external_scoring_summary.json",
+        primary_analysis_plan_path=tmp_path
+        / "analysis"
+        / "primary-v1"
+        / "primary_analysis_plan.json",
+        primary_analysis_report_path=tmp_path
+        / "analysis"
+        / "primary-v1"
+        / "primary_analysis_report.json",
+        analysis_specification_path=ANALYSIS_SPECIFICATION,
+        inferential_hierarchy_path=hierarchy_path,
+        evidence_specificity_amendment_path=amendment_path,
+        dataset_root=tmp_path / "datasets",
+        pixi_lock_path=PIXI_LOCK,
+        output_root=tmp_path / "analysis" / "secondary-v1",
+        analysis_code_revision="secondary-analysis-unit",
+        created_at_utc=datetime(2026, 9, 1, 15, 0, tzinfo=UTC),
+    )
+
+    assert len(secondary.comparison_summaries) == 5
+    assert all(item.total_case_count == 24 for item in secondary.comparison_summaries)
+    assert all(item.eligible_case_count == 23 for item in secondary.comparison_summaries)
+    assert all(item.missing_case_ids == (failed_case,) for item in secondary.comparison_summaries)
+    assert secondary.evidence_specificity.total_case_count == 24
+    assert secondary.evidence_specificity.eligible_case_count == 23
+    assert secondary.evidence_specificity.missing_case_count == 1
+    assert secondary.secondary_can_rescue_primary is False
+    assert secondary.network_calls_made == 0
+    assert secondary.sandbox_calls_made == 0
 
 
 def _calibration_report(
@@ -270,7 +308,9 @@ def _replay_evidence(
     return plan, report
 
 
-def _inferential_hierarchy(specification_hash: str) -> InferentialHierarchy:
+def _inferential_hierarchy(
+    specification_hash: str, specificity_amendment_hash: str
+) -> InferentialHierarchy:
     content = {
         "schema_version": 1,
         "schema_id": "benchmark.inferential_hierarchy.v1",
@@ -281,7 +321,7 @@ def _inferential_hierarchy(specification_hash: str) -> InferentialHierarchy:
         "methodology_clarification_hash": "1" * 64,
         "binary_sensitivity_report_hash": "2" * 64,
         "public_rating_procedure_hash": "3" * 64,
-        "evidence_specificity_amendment_hash": "4" * 64,
+        "evidence_specificity_amendment_hash": specificity_amendment_hash,
         "benchmark_design_hash": "5" * 64,
         "source_manifest_hash": "6" * 64,
         "external_protocol_hash": "7" * 64,
@@ -324,4 +364,38 @@ def _inferential_hierarchy(specification_hash: str) -> InferentialHierarchy:
     )
     return InferentialHierarchy.model_validate(
         {**content, "hierarchy_hash": model_content_hash(draft, exclude={"hierarchy_hash"})}
+    )
+
+
+def _specificity_amendment(specification_hash: str) -> EvidenceSpecificityAmendment:
+    content = {
+        "schema_version": 1,
+        "schema_id": "benchmark.evidence_specificity_amendment.v1",
+        "amendment_version": "evidence-specificity-v1",
+        "base_analysis_specification_hash": specification_hash,
+        "base_external_protocol_hash": "7" * 64,
+        "calibration_decision_hash": "8" * 64,
+        "selected_loss": "classification_error",
+        "primary_case_effect": "dialogue_loss_minus_valid_probe_loss",
+        "valid_vs_unrelated_effect": "unrelated_probe_loss_minus_valid_probe_loss",
+        "valid_vs_corrupted_effect": "corrupted_probe_loss_minus_valid_probe_loss",
+        "combined_specificity_effect": ("mean_unrelated_and_corrupted_loss_minus_valid_probe_loss"),
+        "aggregation_unit": "case",
+        "aggregation_version": "case-mean-v1",
+        "missingness_rule": "exclude_missing_criterion_and_report_denominator",
+        "bootstrap_method": "paired_case_percentile",
+        "bootstrap_resamples": 10_000,
+        "permutation_method": "within_case_sign_swap",
+        "permutation_resamples": 10_000,
+        "random_seed": 20260813,
+        "primary_minimum_interpretable_effect": 0.1,
+        "secondary_role": "interpretation_only_cannot_rescue_primary",
+        "positive_mean_interpretation": "valid_evidence_is_more_specific_than_controls",
+        "nonpositive_mean_interpretation": "primary_effect_is_not_evidence_specific",
+    }
+    draft = EvidenceSpecificityAmendment.model_construct(
+        _fields_set=set(content), **content, amendment_hash="0" * 64
+    )
+    return EvidenceSpecificityAmendment.model_validate(
+        {**content, "amendment_hash": model_content_hash(draft, exclude={"amendment_hash"})}
     )
