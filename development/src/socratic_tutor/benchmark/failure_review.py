@@ -60,6 +60,8 @@ _SHEET_FIELDS = (
     "rationale",
     "evidence_references",
 )
+_BOOLEAN_SHEET_FIELDS = frozenset({"criterion_outcome", "dialogue_decision", "probe_decision"})
+_FLOAT_SHEET_FIELDS = frozenset({"dialogue_score", "probe_score"})
 type SelectionRole = Literal["primary_failure", "matched_success"]
 
 
@@ -441,7 +443,9 @@ def record_failure_review(
         if expected is None:
             raise FailureReviewError(f"Completed sheet contains unknown case: {case_id}")
         for field in _SHEET_FIELDS:
-            if field not in {"category", "rationale"} and row[field] != expected[field]:
+            if field not in {"category", "rationale"} and not _protected_value_matches(
+                field, row[field], expected[field]
+            ):
                 raise FailureReviewError(f"Completed sheet changed {field} for {case_id}")
         category_text = row["category"].strip()
         rationale = row["rationale"].strip()
@@ -536,6 +540,18 @@ def _validate_review_labels(taxonomy: FailureTaxonomy) -> None:
     }
     if taxonomy_labels != implemented_labels:
         raise FailureReviewError("Failure-review labels differ from the frozen taxonomy")
+
+
+def _protected_value_matches(field: str, observed: str, expected: str) -> bool:
+    if field in _BOOLEAN_SHEET_FIELDS:
+        normalized = observed.strip().casefold()
+        return normalized in {"true", "false"} and normalized == expected.casefold()
+    if field in _FLOAT_SHEET_FIELDS:
+        try:
+            return abs(float(observed) - float(expected)) <= 1e-12
+        except ValueError:
+            return False
+    return observed == expected
 
 
 def _review_item(

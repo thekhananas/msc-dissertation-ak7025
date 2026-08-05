@@ -68,8 +68,15 @@ def test_records_complete_review_without_allowing_evidence_edits(tmp_path: Path)
         fieldnames = tuple(rows[0])
     rows[0]["category"] = "tracker_update_or_calibration_error"
     rows[0]["rationale"] = "The probe score falls below the frozen threshold."
+    rows[0]["criterion_outcome"] = "TRUE"
+    rows[0]["probe_score"] = "0.5"
+    rows[0]["dialogue_decision"] = "TRUE"
+    rows[0]["probe_decision"] = "FALSE"
     rows[1]["category"] = "no_failure_observed"
     rows[1]["rationale"] = "The prediction agrees with the completed criterion tests."
+    rows[1]["criterion_outcome"] = "TRUE"
+    rows[1]["dialogue_decision"] = "TRUE"
+    rows[1]["probe_decision"] = "TRUE"
     with sheet_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
