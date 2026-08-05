@@ -1,0 +1,32 @@
+schema_version: 1
+schema_id: benchmark.probe_correction_specification.v1
+benchmark_version: v1
+status: post_reveal_error_correction
+source_primary_report_hash: 563179accda29cd79774ba08bd4771d9ec66b8145b5b7b0e7ae81a42e0a40a5b
+source_failure_review_report_hash: 37a3d53d57b44c85ccc8dac36e6a5165a64b7e53e6a153e1f582ab7bfb583dcc
+corrections:
+  - case_id: h-c1m1-03
+    observed_probe_decision: false
+    corrected_probe_decision: true
+    correction_basis: correct_tuple_rejected_as_yaml_list
+    failure_review_record_hash: 544d7878ab1c9106acda41b316ec835946127136facaf77c010a4e4cb2a63edc
+    evidence_response_hash: 26434d738cec71b5d26494340d99d537bb5cd3a8fe435c4fde572307b8432ece
+    evidence_execution_artifact_hash: 9c1ee6989296925e3131c2bd31eaa3f603aec925f13e06c990245b0c49c6e49d
+    evidence_test_sha256: e00966b7ff79c283d118b9783e55fa66d8378d0ef599a76bec6cdc82cbd589ab
+  - case_id: h-c1m2-01
+    observed_probe_decision: false
+    corrected_probe_decision: true
+    correction_basis: correct_tuple_rejected_as_yaml_list
+    failure_review_record_hash: b3aedc9034fb9b6cac7499359e1b84a7efa43b9e741dccff2e5cf7ee2b5d2102
+    evidence_response_hash: 1277ae841418d8aa762b55cb425f1bcadf49d3fcb5c0e863fa980d6b892afa3d
+    evidence_execution_artifact_hash: 3d9f25244a99b3c7bc7aa83d071cdbec2ea789ac6428269a7164c17a1658e355
+    evidence_test_sha256: cabcdcf6e51b639a28fa89d10d713b414c54908caebdbf2161144ef681be8525
+  - case_id: h-c1m2-02
+    observed_probe_decision: false
+    corrected_probe_decision: true
+    correction_basis: correct_tuple_rejected_as_yaml_list
+    failure_review_record_hash: cea1c978d9b79ca4281b0c3a5c0d818baf885534709090ce335b90abcbba8c61
+    evidence_response_hash: 7301faeb7ba66e23c7eb132d8e24ba9e5f8de0c7f6a2e0b723f7d32b1a52e390
+    evidence_execution_artifact_hash: 61e580e11ece885a15667fed2fb328a9178f511063956060068d4ffd32a31dd9
+    evidence_test_sha256: c897d6a4cb8786e937feadaf7b33de7f40eefc77a6c21605f5a72e5f0c50e0da
+interpretation_role: post_hoc_sensitivity_cannot_replace_sealed_primary

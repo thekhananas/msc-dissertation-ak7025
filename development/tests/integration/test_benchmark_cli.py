@@ -838,6 +838,43 @@ def test_failure_review_record_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_probe_correction_sensitivity_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "probe-correction"
+
+    assert (
+        main(
+            [
+                "probe-correction-sensitivity",
+                "--specification",
+                str(missing),
+                "--primary-report",
+                str(missing),
+                "--failure-review-report",
+                str(missing),
+                "--evidence-execution-root",
+                str(tmp_path / "evidence"),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "probe-correction-cli-test",
+                "--created-at-utc",
+                "2026-09-01T19:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "probe-correction-sensitivity"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],

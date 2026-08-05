@@ -94,6 +94,9 @@ from socratic_tutor.benchmark.methodology_clarification import (
 )
 from socratic_tutor.benchmark.missingness_sensitivity import run_missingness_sensitivity
 from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
+from socratic_tutor.benchmark.probe_correction_sensitivity import (
+    run_probe_correction_sensitivity,
+)
 from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
     run_offline_decision_phase,
@@ -562,6 +565,19 @@ def build_parser() -> argparse.ArgumentParser:
     missingness_sensitivity.add_argument("--output-root", type=Path, required=True)
     missingness_sensitivity.add_argument("--code-revision", required=True)
     missingness_sensitivity.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
+    probe_correction = commands.add_parser(
+        "probe-correction-sensitivity",
+        help="Recompute paired results under reviewed post-hoc probe corrections",
+    )
+    probe_correction.add_argument("--specification", type=Path, required=True)
+    probe_correction.add_argument("--primary-report", type=Path, required=True)
+    probe_correction.add_argument("--failure-review-report", type=Path, required=True)
+    probe_correction.add_argument("--evidence-execution-root", type=Path, required=True)
+    probe_correction.add_argument("--pixi-lock", type=Path, required=True)
+    probe_correction.add_argument("--output-root", type=Path, required=True)
+    probe_correction.add_argument("--code-revision", required=True)
+    probe_correction.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
     rating_reliability = commands.add_parser(
         "public-rating-reliability",
@@ -1042,6 +1058,18 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             primary_analysis_plan_path=cast(Path, args.primary_plan),
             primary_report_path=cast(Path, args.primary_report),
             dataset_root=cast(Path, args.dataset_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "probe-correction-sensitivity":
+        report = run_probe_correction_sensitivity(
+            specification_path=cast(Path, args.specification),
+            primary_report_path=cast(Path, args.primary_report),
+            failure_review_report_path=cast(Path, args.failure_review_report),
+            evidence_execution_root=cast(Path, args.evidence_execution_root),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),
