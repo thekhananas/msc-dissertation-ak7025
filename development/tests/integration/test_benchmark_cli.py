@@ -688,6 +688,43 @@ def test_external_missingness_bound_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_public_rating_reliability_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "reliability"
+
+    assert (
+        main(
+            [
+                "public-rating-reliability",
+                "--rating-report",
+                str(missing),
+                "--procedure-record",
+                str(missing),
+                "--ratings-a",
+                str(missing),
+                "--ratings-b",
+                str(missing),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "rating-reliability-cli-test",
+                "--created-at-utc",
+                "2026-09-01T17:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "public-rating-reliability"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],

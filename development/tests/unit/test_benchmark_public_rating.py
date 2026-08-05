@@ -2,7 +2,7 @@
 
 import csv
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
@@ -10,7 +10,7 @@ from typing import Any, cast
 import pytest
 import yaml
 
-from socratic_tutor.benchmark.artifacts import write_immutable_jsonl
+from socratic_tutor.benchmark.artifacts import write_immutable_json, write_immutable_jsonl
 from socratic_tutor.benchmark.external_protocol import ExternalModelExecutionProtocol
 from socratic_tutor.benchmark.generation import (
     CriterionTaskPayload,
@@ -24,6 +24,7 @@ from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
 from socratic_tutor.benchmark.public_rating import (
     PublicAnswerRating,
     PublicAnswerRatingGuidePlan,
+    PublicAnswerRatingReport,
     build_public_answer_rating_packet,
     create_public_answer_adjudication,
     create_public_answer_rating,
@@ -32,6 +33,11 @@ from socratic_tutor.benchmark.public_rating import (
     freeze_public_rating_boundary,
     record_public_answer_ratings,
 )
+from socratic_tutor.benchmark.public_rating_procedure import (
+    PublicRaterProcedure,
+    PublicRatingProcedureRecord,
+)
+from socratic_tutor.benchmark.rating_reliability import run_rating_reliability
 from socratic_tutor.benchmark.replay import (
     OriginalGenerationSource,
     create_recorded_response,
@@ -40,6 +46,7 @@ from socratic_tutor.contracts import EvidenceCategory
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 GUIDE_PLAN = WORKSPACE_ROOT / "configs" / "benchmark" / "v2-public-answer-rating-guide.yaml"
+PIXI_LOCK = WORKSPACE_ROOT / "pixi.lock"
 
 
 def _protocol() -> ExternalModelExecutionProtocol:
@@ -360,3 +367,136 @@ def test_kappa_is_explicitly_undefined_for_identical_single_category_marginals(
     assert report.raw_agreement == 1.0
     assert report.cohen_kappa is None
     assert report.kappa_status == "undefined_degenerate_marginals"
+
+
+def test_reliability_report_reconstructs_all_categories_and_confusion_cells(
+    tmp_path: Path,
+) -> None:
+    protocol, guide, amendment = _freeze(tmp_path)
+    responses = tuple(_record(protocol, f"case-{index:03d}") for index in range(1, 25))
+    write_immutable_jsonl(tmp_path / "responses.jsonl", responses)
+    packet = build_public_answer_rating_packet(
+        protocol=protocol,
+        amendment=amendment,
+        recorded_responses_path=tmp_path / "responses.jsonl",
+        output_path=tmp_path / "packet.json",
+    )
+    rating_sets: list[tuple[PublicAnswerRating, ...]] = []
+    for rater_id in ("rater-a", "rater-b"):
+        rating_sets.append(
+            tuple(
+                create_public_answer_rating(
+                    packet=packet,
+                    guide=guide,
+                    case_id=item.case_id,
+                    rater_id=rater_id,
+                    category=(
+                        EvidenceCategory.CONFLICTING
+                        if item.case_id == "case-024"
+                        else EvidenceCategory.CORRECT
+                    ),
+                    rationale="The category follows the visible answer.",
+                )
+                for item in packet.items
+            )
+        )
+    ratings_a_path = tmp_path / "ratings-a.jsonl"
+    ratings_b_path = tmp_path / "ratings-b.jsonl"
+    write_immutable_jsonl(ratings_a_path, rating_sets[0])
+    write_immutable_jsonl(ratings_b_path, rating_sets[1])
+    rating_report = finalize_public_answer_ratings(
+        guide=guide,
+        amendment=amendment,
+        packet=packet,
+        ratings_a_path=ratings_a_path,
+        ratings_b_path=ratings_b_path,
+        adjudications_path=None,
+        output_path=tmp_path / "rating-report.json",
+    )
+    procedure = _procedure_record(rating_report)
+    write_immutable_json(tmp_path / "procedure.json", procedure)
+
+    reliability = run_rating_reliability(
+        rating_report_path=tmp_path / "rating-report.json",
+        procedure_record_path=tmp_path / "procedure.json",
+        ratings_a_path=ratings_a_path,
+        ratings_b_path=ratings_b_path,
+        pixi_lock_path=PIXI_LOCK,
+        output_root=tmp_path / "reliability",
+        analysis_code_revision="rating-reliability-unit",
+        created_at_utc=datetime(2026, 9, 1, 17, 0, tzinfo=UTC),
+    )
+
+    counts = {record.category: record for record in reliability.category_counts}
+    assert reliability.item_count == 24
+    assert reliability.raw_agreement == 1.0
+    assert reliability.cohen_kappa == 1.0
+    assert reliability.kappa_status == "defined"
+    assert counts[EvidenceCategory.CORRECT].rater_a_count == 23
+    assert counts[EvidenceCategory.CONFLICTING].rater_b_count == 1
+    assert len(reliability.confusion_matrix) == 36
+    assert sum(cell.count for cell in reliability.confusion_matrix) == 24
+    assert reliability.disagreements == ()
+    assert reliability.adjudication_count == 0
+    assert (
+        run_rating_reliability(
+            rating_report_path=tmp_path / "rating-report.json",
+            procedure_record_path=tmp_path / "procedure.json",
+            ratings_a_path=ratings_a_path,
+            ratings_b_path=ratings_b_path,
+            pixi_lock_path=PIXI_LOCK,
+            output_root=tmp_path / "reliability",
+            analysis_code_revision="rating-reliability-unit",
+            created_at_utc=datetime(2026, 9, 1, 17, 0, tzinfo=UTC),
+        )
+        == reliability
+    )
+
+
+def _procedure_record(report: PublicAnswerRatingReport) -> PublicRatingProcedureRecord:
+    raters = (
+        PublicRaterProcedure(
+            rater_id="rater-a",
+            stable_pseudonym="A",
+            relevant_experience="Reviewer A",
+            completion_order=1,
+        ),
+        PublicRaterProcedure(
+            rater_id="rater-b",
+            stable_pseudonym="B",
+            relevant_experience="Reviewer B",
+            completion_order=2,
+        ),
+    )
+    content: dict[str, Any] = {
+        "schema_version": 1,
+        "schema_id": "benchmark.public_rating_procedure_record.v1",
+        "procedure_version": "public-rating-procedure-v1",
+        "recorded_on": date(2026, 9, 1),
+        "recorded_by": "dissertation_author",
+        "public_rating_report_hash": report.report_hash,
+        "methodology_clarification_hash": "1" * 64,
+        "packet_hash": report.packet_hash,
+        "rating_guide_hash": report.rating_guide_hash,
+        "protocol_amendment_hash": report.protocol_amendment_hash,
+        "item_count": 24,
+        "rater_ids": report.rater_ids,
+        "raters": raters,
+        "supplied_materials": ("blinded_rating_csv", "public_category_guide"),
+        "public_category_guide_present": True,
+        "case_specific_scoring_key_present": False,
+        "planned_adjudicator": "dissertation_author",
+        "adjudication_rule": "resolve_only_genuine_disagreements_before_decision_seal",
+        "actual_disagreement_count": 0,
+        "actual_adjudication_required": False,
+        "ratings_rerun_or_reinterpreted": False,
+        "criterion_material_remained_restricted": True,
+        "required_before_criterion_access": True,
+        "sufficient_to_unlock_criterion_access": False,
+    }
+    draft = PublicRatingProcedureRecord.model_construct(
+        _fields_set=set(content), **content, record_hash="0" * 64
+    )
+    return PublicRatingProcedureRecord.model_validate(
+        {**content, "record_hash": model_content_hash(draft, exclude={"record_hash"})}
+    )

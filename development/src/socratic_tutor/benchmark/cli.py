@@ -118,6 +118,7 @@ from socratic_tutor.benchmark.qualification import (
     load_provider_qualification_plan,
     run_provider_qualification_from_environment,
 )
+from socratic_tutor.benchmark.rating_reliability import run_rating_reliability
 from socratic_tutor.benchmark.readiness import build_benchmark_readiness_report
 from socratic_tutor.benchmark.reference_integrity import (
     load_reference_integrity_plan,
@@ -560,6 +561,19 @@ def build_parser() -> argparse.ArgumentParser:
     missingness_sensitivity.add_argument("--code-revision", required=True)
     missingness_sensitivity.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    rating_reliability = commands.add_parser(
+        "public-rating-reliability",
+        help="Reconstruct category marginals and the complete two-rater confusion matrix",
+    )
+    rating_reliability.add_argument("--rating-report", type=Path, required=True)
+    rating_reliability.add_argument("--procedure-record", type=Path, required=True)
+    rating_reliability.add_argument("--ratings-a", type=Path, required=True)
+    rating_reliability.add_argument("--ratings-b", type=Path, required=True)
+    rating_reliability.add_argument("--pixi-lock", type=Path, required=True)
+    rating_reliability.add_argument("--output-root", type=Path, required=True)
+    rating_reliability.add_argument("--code-revision", required=True)
+    rating_reliability.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -986,6 +1000,18 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             primary_analysis_plan_path=cast(Path, args.primary_plan),
             primary_report_path=cast(Path, args.primary_report),
             dataset_root=cast(Path, args.dataset_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "public-rating-reliability":
+        report = run_rating_reliability(
+            rating_report_path=cast(Path, args.rating_report),
+            procedure_record_path=cast(Path, args.procedure_record),
+            ratings_a_path=cast(Path, args.ratings_a),
+            ratings_b_path=cast(Path, args.ratings_b),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),
