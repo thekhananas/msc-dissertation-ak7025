@@ -28,6 +28,7 @@ from socratic_tutor.benchmark.calibration import (
     record_uncalibrated_decision,
 )
 from socratic_tutor.benchmark.common import Sha256
+from socratic_tutor.benchmark.dependence_figure import render_dependence_figure
 from socratic_tutor.benchmark.dependence_sensitivity import run_dependence_sensitivity
 from socratic_tutor.benchmark.design import load_design
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
@@ -536,6 +537,16 @@ def build_parser() -> argparse.ArgumentParser:
     dependence_sensitivity.add_argument("--code-revision", required=True)
     dependence_sensitivity.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    dependence_figure = commands.add_parser(
+        "external-dependence-figure",
+        help="Render a deterministic report figure from dependence sensitivity results",
+    )
+    dependence_figure.add_argument("--report", type=Path, required=True)
+    dependence_figure.add_argument("--pdf-output", type=Path, required=True)
+    dependence_figure.add_argument("--svg-output", type=Path, required=True)
+    dependence_figure.add_argument("--manifest", type=Path, required=True)
+    dependence_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -948,6 +959,15 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, True
+    if command == "external-dependence-figure":
+        manifest = render_dependence_figure(
+            report_path=cast(Path, args.report),
+            pdf_output_path=cast(Path, args.pdf_output),
+            svg_output_path=cast(Path, args.svg_output),
+            manifest_path=cast(Path, args.manifest),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
     if command == "evaluate":
         return (
             evaluate_published_run(

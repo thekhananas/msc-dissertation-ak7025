@@ -621,6 +621,38 @@ def test_external_dependence_sensitivity_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_external_dependence_figure_fails_closed_for_missing_source(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    pdf_output = tmp_path / "dependence.pdf"
+    svg_output = tmp_path / "dependence.svg"
+    manifest = tmp_path / "figure_manifest.json"
+
+    assert (
+        main(
+            [
+                "external-dependence-figure",
+                "--report",
+                str(tmp_path / "missing.json"),
+                "--pdf-output",
+                str(pdf_output),
+                "--svg-output",
+                str(svg_output),
+                "--manifest",
+                str(manifest),
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-dependence-figure"
+    assert error["status"] == "error"
+    assert not pdf_output.exists()
+    assert not svg_output.exists()
+    assert not manifest.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],

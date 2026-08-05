@@ -14,6 +14,7 @@ from socratic_tutor.benchmark.calibration import (
     CalibrationManifestInventory,
     UncalibratedDecisionReport,
 )
+from socratic_tutor.benchmark.dependence_figure import render_dependence_figure
 from socratic_tutor.benchmark.dependence_sensitivity import run_dependence_sensitivity
 from socratic_tutor.benchmark.design import load_design
 from socratic_tutor.benchmark.evaluator.scoring import (
@@ -248,6 +249,43 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
     assert sensitivity.grid_values_selected_after_reveal is True
     assert sensitivity.secondary_can_rescue_primary is False
     assert sensitivity.repeat_variability_estimable is False
+
+    figure = render_dependence_figure(
+        report_path=tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity_report.json",
+        pdf_output_path=tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity.pdf",
+        svg_output_path=tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity.svg",
+        manifest_path=tmp_path / "analysis" / "dependence-v1" / "figure_manifest.json",
+        generated_at_utc=datetime(2026, 9, 1, 16, 1, tzinfo=UTC),
+    )
+    svg = (tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity.svg").read_text()
+    assert figure.source_report_hash == sensitivity.report_hash
+    assert figure.figure_formats == ("pdf", "svg")
+    assert figure.panel_count == 3
+    assert (
+        (tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity.pdf")
+        .read_bytes()
+        .startswith(b"%PDF")
+    )
+    assert (
+        "Each condition predicts whether the evaluation model completes a separate coding task"
+        in svg
+    )
+    assert "Probe-informed prediction combines the public answer" in svg
+    assert "Public-answer comparison by concept" in svg
+    assert "Across decision thresholds" in svg
+    assert "Across executable-evidence weights" in svg
+    assert "23 of 24 benchmark cases were analysed" in svg
+    assert "no population claim" not in svg
+
+    repeated = render_dependence_figure(
+        report_path=tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity_report.json",
+        pdf_output_path=tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity.pdf",
+        svg_output_path=tmp_path / "analysis" / "dependence-v1" / "dependence_sensitivity.svg",
+        manifest_path=tmp_path / "analysis" / "dependence-v1" / "figure_manifest.json",
+    )
+    assert repeated.pdf_sha256 == figure.pdf_sha256
+    assert repeated.svg_sha256 == figure.svg_sha256
+    assert repeated.manifest_hash == figure.manifest_hash
 
 
 def _calibration_report(
