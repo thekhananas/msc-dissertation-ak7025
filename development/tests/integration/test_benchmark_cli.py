@@ -498,6 +498,43 @@ def test_external_scoring_fails_closed_for_missing_sources(
     assert not seal.exists()
 
 
+def test_external_primary_analysis_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "primary"
+
+    assert (
+        main(
+            [
+                "external-primary-analyze",
+                "--scoring-summary",
+                str(missing),
+                "--analysis-specification",
+                str(missing),
+                "--inferential-hierarchy",
+                str(missing),
+                "--dataset-root",
+                str(tmp_path / "datasets"),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "primary-analysis-cli-test",
+                "--created-at-utc",
+                "2026-09-01T14:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-primary-analyze"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],

@@ -2,7 +2,7 @@
 """End-to-end deterministic scoring tests for a sealed external run."""
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from socratic_tutor.benchmark.analysis_spec import (
@@ -27,6 +27,8 @@ from socratic_tutor.benchmark.external_replay import (
 )
 from socratic_tutor.benchmark.external_scoring import run_external_scoring
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
+from socratic_tutor.benchmark.inferential_hierarchy import InferentialHierarchy
+from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
 from socratic_tutor.benchmark.public.commitments import FilesystemConditionCommitStore
 from socratic_tutor.benchmark.public.global_seal import FilesystemGlobalDecisionSealStore
 from tests.unit.test_benchmark_external_criterion import (
@@ -131,6 +133,48 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
         == summary
     )
 
+    hierarchy = _inferential_hierarchy(analysis_specification_hash(specification))
+    hierarchy_path = tmp_path / "inferential_hierarchy.json"
+    write_immutable_json(hierarchy_path, hierarchy)
+    primary = run_primary_analysis(
+        scoring_summary_path=tmp_path / "analysis" / "scoring-v1" / "external_scoring_summary.json",
+        analysis_specification_path=ANALYSIS_SPECIFICATION,
+        inferential_hierarchy_path=hierarchy_path,
+        dataset_root=tmp_path / "datasets",
+        pixi_lock_path=PIXI_LOCK,
+        output_root=tmp_path / "analysis" / "primary-v1",
+        analysis_code_revision="primary-analysis-unit",
+        created_at_utc=datetime(2026, 9, 1, 14, 0, tzinfo=UTC),
+    )
+
+    assert primary.total_case_count == 24
+    assert primary.eligible_case_count == 23
+    assert primary.missing_case_count == 1
+    assert primary.missing_cases[0].case_id == failed_case
+    assert primary.valid_evidence_improvement_count == 23
+    assert primary.valid_evidence_regression_count == 0
+    assert primary.net_improvement_count == 23
+    assert primary.paired_effect_from_counts == 1.0
+    assert primary.inference.mean_case_effect == 1.0
+    assert primary.mcnemar.right_only_correct_count == 23
+    assert primary.significance_is_not_success_gate is True
+    assert (
+        run_primary_analysis(
+            scoring_summary_path=tmp_path
+            / "analysis"
+            / "scoring-v1"
+            / "external_scoring_summary.json",
+            analysis_specification_path=ANALYSIS_SPECIFICATION,
+            inferential_hierarchy_path=hierarchy_path,
+            dataset_root=tmp_path / "datasets",
+            pixi_lock_path=PIXI_LOCK,
+            output_root=tmp_path / "analysis" / "primary-v1",
+            analysis_code_revision="primary-analysis-unit",
+            created_at_utc=datetime(2026, 9, 1, 14, 0, tzinfo=UTC),
+        )
+        == primary
+    )
+
 
 def _calibration_report(
     *,
@@ -224,3 +268,60 @@ def _replay_evidence(
         }
     )
     return plan, report
+
+
+def _inferential_hierarchy(specification_hash: str) -> InferentialHierarchy:
+    content = {
+        "schema_version": 1,
+        "schema_id": "benchmark.inferential_hierarchy.v1",
+        "hierarchy_version": "inferential-hierarchy-v1",
+        "frozen_on": date(2026, 8, 30),
+        "decision_owner": "dissertation_author",
+        "analysis_specification_hash": specification_hash,
+        "methodology_clarification_hash": "1" * 64,
+        "binary_sensitivity_report_hash": "2" * 64,
+        "public_rating_procedure_hash": "3" * 64,
+        "evidence_specificity_amendment_hash": "4" * 64,
+        "benchmark_design_hash": "5" * 64,
+        "source_manifest_hash": "6" * 64,
+        "external_protocol_hash": "7" * 64,
+        "primary_estimand": "mean_paired_classification_error_difference_by_case",
+        "primary_effect_direction": "positive_means_valid_evidence_predicts_better",
+        "primary_test": "exact_two_sided_mcnemar",
+        "primary_test_alpha": 0.05,
+        "primary_uncertainty": "paired_case_percentile_bootstrap_interval",
+        "bootstrap_resamples": 10_000,
+        "minimum_interpretable_effect": 0.1,
+        "primary_result_rule": (
+            "report_mean_interval_threshold_and_exact_test_without_a_significance_success_gate"
+        ),
+        "secondary_analyses": (
+            "within_case_sign_swap",
+            "median_case_effect",
+            "wilcoxon_signed_rank",
+            "policy_threshold_sensitivity",
+            "tracker_update_size_sensitivity",
+            "misconception_group_summary",
+            "concept_group_summary",
+            "leave_one_concept_out",
+        ),
+        "secondary_can_rescue_primary": False,
+        "specificity_role": "secondary_interpretation_only",
+        "case_count": 24,
+        "concept_count": 4,
+        "misconception_count": 8,
+        "cases_per_misconception": 3,
+        "dependence_statement": ("cases_are_nested_within_eight_misconceptions_and_four_concepts"),
+        "case_interval_scope": "conditional_on_this_fixed_authored_corpus",
+        "subgroup_role": "descriptive_fragility_checks_not_confirmatory_tests",
+        "repeat_variability": "not_estimable_with_one_model_run_per_case",
+        "multiple_testing_rule": "no_secondary_p_value_supports_a_confirmatory_claim",
+        "required_before_criterion_access": True,
+        "all_precriterion_clarifications_complete": True,
+    }
+    draft = InferentialHierarchy.model_construct(
+        _fields_set=set(content), **content, hierarchy_hash="0" * 64
+    )
+    return InferentialHierarchy.model_validate(
+        {**content, "hierarchy_hash": model_content_hash(draft, exclude={"hierarchy_hash"})}
+    )

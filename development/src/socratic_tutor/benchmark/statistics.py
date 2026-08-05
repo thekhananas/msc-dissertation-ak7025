@@ -56,7 +56,7 @@ class PairedCaseInference(ContractModel):
 
 
 class McNemarResult(ContractModel):
-    """Exact two-sided McNemar result for a paired binary exploratory comparison."""
+    """Exact two-sided McNemar result for one paired binary comparison."""
 
     schema_version: Literal[1] = 1
     schema_id: Literal["benchmark.mcnemar_result.v1"] = "benchmark.mcnemar_result.v1"

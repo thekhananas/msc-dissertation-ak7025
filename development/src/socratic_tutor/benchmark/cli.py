@@ -88,6 +88,7 @@ from socratic_tutor.benchmark.methodology_clarification import (
     load_methodology_clarification_plan,
     load_public_answer_rating_report,
 )
+from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
 from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
     run_offline_decision_phase,
@@ -488,6 +489,19 @@ def build_parser() -> argparse.ArgumentParser:
     external_score.add_argument("--code-revision", required=True)
     external_score.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    primary_analysis = commands.add_parser(
+        "external-primary-analyze",
+        help="Compute the frozen primary paired result from scored external datasets",
+    )
+    primary_analysis.add_argument("--scoring-summary", type=Path, required=True)
+    primary_analysis.add_argument("--analysis-specification", type=Path, required=True)
+    primary_analysis.add_argument("--inferential-hierarchy", type=Path, required=True)
+    primary_analysis.add_argument("--dataset-root", type=Path, required=True)
+    primary_analysis.add_argument("--pixi-lock", type=Path, required=True)
+    primary_analysis.add_argument("--output-root", type=Path, required=True)
+    primary_analysis.add_argument("--code-revision", required=True)
+    primary_analysis.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -858,6 +872,18 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return summary, summary.gate_passed
+    if command == "external-primary-analyze":
+        report = run_primary_analysis(
+            scoring_summary_path=cast(Path, args.scoring_summary),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
+            dataset_root=cast(Path, args.dataset_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
     if command == "evaluate":
         return (
             evaluate_published_run(
