@@ -32,6 +32,7 @@ from socratic_tutor.benchmark.external_replay import (
 from socratic_tutor.benchmark.external_scoring import run_external_scoring
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.benchmark.inferential_hierarchy import InferentialHierarchy
+from socratic_tutor.benchmark.missingness_sensitivity import run_missingness_sensitivity
 from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
 from socratic_tutor.benchmark.public.commitments import FilesystemConditionCommitStore
 from socratic_tutor.benchmark.public.global_seal import FilesystemGlobalDecisionSealStore
@@ -286,6 +287,52 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
     assert repeated.pdf_sha256 == figure.pdf_sha256
     assert repeated.svg_sha256 == figure.svg_sha256
     assert repeated.manifest_hash == figure.manifest_hash
+
+    missingness = run_missingness_sensitivity(
+        primary_analysis_plan_path=tmp_path
+        / "analysis"
+        / "primary-v1"
+        / "primary_analysis_plan.json",
+        primary_report_path=tmp_path / "analysis" / "primary-v1" / "primary_analysis_report.json",
+        dataset_root=tmp_path / "datasets",
+        pixi_lock_path=PIXI_LOCK,
+        output_root=tmp_path / "analysis" / "missingness-v1",
+        analysis_code_revision="missingness-sensitivity-unit",
+        created_at_utc=datetime(2026, 9, 1, 16, 2, tzinfo=UTC),
+    )
+    missing_bound = missingness.missing_case_bounds[0]
+    assert missingness.complete_case_count == 23
+    assert missingness.missing_case_count == 1
+    assert missing_bound.case_id == failed_case
+    assert missing_bound.effect_if_criterion_false == -1
+    assert missing_bound.effect_if_criterion_true == 1
+    assert missing_bound.lower_bound_assignment == "criterion_false"
+    assert missing_bound.upper_bound_assignment == "criterion_true"
+    assert missingness.complete_case_effect == 1.0
+    assert missingness.lower_bound_full_corpus_effect == 22 / 24
+    assert missingness.upper_bound_full_corpus_effect == 1.0
+    assert abs(missingness.bound_width - (2 / 24)) < 1e-12
+    assert missingness.complete_case_remains_primary is True
+    assert missingness.network_calls_made == 0
+    assert missingness.sandbox_calls_made == 0
+    assert (
+        run_missingness_sensitivity(
+            primary_analysis_plan_path=tmp_path
+            / "analysis"
+            / "primary-v1"
+            / "primary_analysis_plan.json",
+            primary_report_path=tmp_path
+            / "analysis"
+            / "primary-v1"
+            / "primary_analysis_report.json",
+            dataset_root=tmp_path / "datasets",
+            pixi_lock_path=PIXI_LOCK,
+            output_root=tmp_path / "analysis" / "missingness-v1",
+            analysis_code_revision="missingness-sensitivity-unit",
+            created_at_utc=datetime(2026, 9, 1, 16, 2, tzinfo=UTC),
+        )
+        == missingness
+    )
 
 
 def _calibration_report(

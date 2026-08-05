@@ -90,6 +90,7 @@ from socratic_tutor.benchmark.methodology_clarification import (
     load_methodology_clarification_plan,
     load_public_answer_rating_report,
 )
+from socratic_tutor.benchmark.missingness_sensitivity import run_missingness_sensitivity
 from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
 from socratic_tutor.benchmark.public.offline import (
     OfflineDecisionPlan,
@@ -547,6 +548,18 @@ def build_parser() -> argparse.ArgumentParser:
     dependence_figure.add_argument("--manifest", type=Path, required=True)
     dependence_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
+    missingness_sensitivity = commands.add_parser(
+        "external-missingness-bound",
+        help="Bound the primary effect over every missing binary criterion outcome",
+    )
+    missingness_sensitivity.add_argument("--primary-plan", type=Path, required=True)
+    missingness_sensitivity.add_argument("--primary-report", type=Path, required=True)
+    missingness_sensitivity.add_argument("--dataset-root", type=Path, required=True)
+    missingness_sensitivity.add_argument("--pixi-lock", type=Path, required=True)
+    missingness_sensitivity.add_argument("--output-root", type=Path, required=True)
+    missingness_sensitivity.add_argument("--code-revision", required=True)
+    missingness_sensitivity.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -968,6 +981,17 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             generated_at_utc=cast(datetime | None, args.generated_at_utc),
         )
         return manifest, True
+    if command == "external-missingness-bound":
+        report = run_missingness_sensitivity(
+            primary_analysis_plan_path=cast(Path, args.primary_plan),
+            primary_report_path=cast(Path, args.primary_report),
+            dataset_root=cast(Path, args.dataset_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
     if command == "evaluate":
         return (
             evaluate_published_run(

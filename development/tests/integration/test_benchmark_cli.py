@@ -653,6 +653,41 @@ def test_external_dependence_figure_fails_closed_for_missing_source(
     assert not manifest.exists()
 
 
+def test_external_missingness_bound_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "missingness"
+
+    assert (
+        main(
+            [
+                "external-missingness-bound",
+                "--primary-plan",
+                str(missing),
+                "--primary-report",
+                str(missing),
+                "--dataset-root",
+                str(tmp_path / "datasets"),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "missingness-cli-test",
+                "--created-at-utc",
+                "2026-09-01T16:02:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-missingness-bound"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],
