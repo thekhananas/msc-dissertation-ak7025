@@ -14,6 +14,8 @@ from socratic_tutor.benchmark.calibration import (
     CalibrationManifestInventory,
     UncalibratedDecisionReport,
 )
+from socratic_tutor.benchmark.dependence_sensitivity import run_dependence_sensitivity
+from socratic_tutor.benchmark.design import load_design
 from socratic_tutor.benchmark.evaluator.scoring import (
     CalibrationDecision,
     CalibrationStatus,
@@ -46,6 +48,8 @@ from tests.unit.test_benchmark_external_criterion import (
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 ANALYSIS_SPECIFICATION = WORKSPACE_ROOT / "configs" / "benchmark" / "v1-analysis-spec.yaml"
+DEPENDENCE_GRID = WORKSPACE_ROOT / "configs" / "benchmark" / "v1-dependence-sensitivity.yaml"
+DESIGN = WORKSPACE_ROOT / "data" / "benchmark-design" / "v1" / "case-allocation.yaml"
 PIXI_LOCK = WORKSPACE_ROOT / "pixi.lock"
 SCORED_AT = datetime(2026, 9, 1, 13, 0, tzinfo=UTC)
 
@@ -138,8 +142,11 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
     amendment = _specificity_amendment(analysis_specification_hash(specification))
     amendment_path = tmp_path / "evidence_specificity_amendment.json"
     write_immutable_json(amendment_path, amendment)
+    design = load_design(DESIGN)
     hierarchy = _inferential_hierarchy(
-        analysis_specification_hash(specification), amendment.amendment_hash
+        analysis_specification_hash(specification),
+        amendment.amendment_hash,
+        model_content_hash(design),
     )
     hierarchy_path = tmp_path / "inferential_hierarchy.json"
     write_immutable_json(hierarchy_path, hierarchy)
@@ -212,6 +219,35 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
     assert secondary.secondary_can_rescue_primary is False
     assert secondary.network_calls_made == 0
     assert secondary.sandbox_calls_made == 0
+
+    sensitivity = run_dependence_sensitivity(
+        grid_path=DEPENDENCE_GRID,
+        primary_analysis_plan_path=tmp_path
+        / "analysis"
+        / "primary-v1"
+        / "primary_analysis_plan.json",
+        primary_report_path=tmp_path / "analysis" / "primary-v1" / "primary_analysis_report.json",
+        secondary_report_path=tmp_path
+        / "analysis"
+        / "secondary-v1"
+        / "secondary_analysis_report.json",
+        inferential_hierarchy_path=hierarchy_path,
+        benchmark_design_path=DESIGN,
+        dataset_root=tmp_path / "datasets",
+        pixi_lock_path=PIXI_LOCK,
+        output_root=tmp_path / "analysis" / "dependence-v1",
+        analysis_code_revision="dependence-sensitivity-unit",
+        created_at_utc=datetime(2026, 9, 1, 16, 0, tzinfo=UTC),
+    )
+
+    assert len(sensitivity.concept_effects) == 4
+    assert len(sensitivity.misconception_effects) == 8
+    assert len(sensitivity.leave_one_concept_out) == 4
+    assert len(sensitivity.threshold_sensitivity) == 5
+    assert len(sensitivity.update_size_sensitivity) == 5
+    assert sensitivity.grid_values_selected_after_reveal is True
+    assert sensitivity.secondary_can_rescue_primary is False
+    assert sensitivity.repeat_variability_estimable is False
 
 
 def _calibration_report(
@@ -309,7 +345,9 @@ def _replay_evidence(
 
 
 def _inferential_hierarchy(
-    specification_hash: str, specificity_amendment_hash: str
+    specification_hash: str,
+    specificity_amendment_hash: str,
+    benchmark_design_hash: str,
 ) -> InferentialHierarchy:
     content = {
         "schema_version": 1,
@@ -322,7 +360,7 @@ def _inferential_hierarchy(
         "binary_sensitivity_report_hash": "2" * 64,
         "public_rating_procedure_hash": "3" * 64,
         "evidence_specificity_amendment_hash": specificity_amendment_hash,
-        "benchmark_design_hash": "5" * 64,
+        "benchmark_design_hash": benchmark_design_hash,
         "source_manifest_hash": "6" * 64,
         "external_protocol_hash": "7" * 64,
         "primary_estimand": "mean_paired_classification_error_difference_by_case",

@@ -578,6 +578,49 @@ def test_external_secondary_analysis_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_external_dependence_sensitivity_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "dependence"
+
+    assert (
+        main(
+            [
+                "external-dependence-sensitivity",
+                "--grid",
+                str(missing),
+                "--primary-plan",
+                str(missing),
+                "--primary-report",
+                str(missing),
+                "--secondary-report",
+                str(missing),
+                "--inferential-hierarchy",
+                str(missing),
+                "--benchmark-design",
+                str(missing),
+                "--dataset-root",
+                str(tmp_path / "datasets"),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "dependence-sensitivity-cli-test",
+                "--created-at-utc",
+                "2026-09-01T16:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-dependence-sensitivity"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],

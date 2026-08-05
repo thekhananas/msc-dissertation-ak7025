@@ -28,6 +28,7 @@ from socratic_tutor.benchmark.calibration import (
     record_uncalibrated_decision,
 )
 from socratic_tutor.benchmark.common import Sha256
+from socratic_tutor.benchmark.dependence_sensitivity import run_dependence_sensitivity
 from socratic_tutor.benchmark.design import load_design
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
 from socratic_tutor.benchmark.evaluator.models import ManifestStatus
@@ -519,6 +520,22 @@ def build_parser() -> argparse.ArgumentParser:
     secondary_analysis.add_argument("--code-revision", required=True)
     secondary_analysis.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    dependence_sensitivity = commands.add_parser(
+        "external-dependence-sensitivity",
+        help="Run descriptive subgroup, threshold, and tracker-update fragility checks",
+    )
+    dependence_sensitivity.add_argument("--grid", type=Path, required=True)
+    dependence_sensitivity.add_argument("--primary-plan", type=Path, required=True)
+    dependence_sensitivity.add_argument("--primary-report", type=Path, required=True)
+    dependence_sensitivity.add_argument("--secondary-report", type=Path, required=True)
+    dependence_sensitivity.add_argument("--inferential-hierarchy", type=Path, required=True)
+    dependence_sensitivity.add_argument("--benchmark-design", type=Path, required=True)
+    dependence_sensitivity.add_argument("--dataset-root", type=Path, required=True)
+    dependence_sensitivity.add_argument("--pixi-lock", type=Path, required=True)
+    dependence_sensitivity.add_argument("--output-root", type=Path, required=True)
+    dependence_sensitivity.add_argument("--code-revision", required=True)
+    dependence_sensitivity.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -909,6 +926,21 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             analysis_specification_path=cast(Path, args.analysis_specification),
             inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
             evidence_specificity_amendment_path=cast(Path, args.specificity_amendment),
+            dataset_root=cast(Path, args.dataset_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "external-dependence-sensitivity":
+        report = run_dependence_sensitivity(
+            grid_path=cast(Path, args.grid),
+            primary_analysis_plan_path=cast(Path, args.primary_plan),
+            primary_report_path=cast(Path, args.primary_report),
+            secondary_report_path=cast(Path, args.secondary_report),
+            inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
+            benchmark_design_path=cast(Path, args.benchmark_design),
             dataset_root=cast(Path, args.dataset_root),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),

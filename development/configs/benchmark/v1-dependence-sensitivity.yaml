@@ -1,0 +1,10 @@
+schema_version: 1
+schema_id: benchmark.dependence_sensitivity_grid.v1
+grid_version: dependence-sensitivity-v1
+status: post_reveal_exploratory_grid
+thresholds: [0.40, 0.50, 0.60, 0.70, 0.80]
+frozen_threshold: 0.60
+update_multipliers: [0.50, 0.75, 1.00, 1.25, 1.50]
+implemented_update_multiplier: 1.00
+interpretation_role: descriptive_fragility_only_cannot_rescue_primary
+selection_note: Analysis categories were frozen before criterion reveal; the symmetric grid values were operationalised after reveal and are exploratory.
