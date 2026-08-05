@@ -6,8 +6,9 @@ import csv
 import io
 import json
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import Field, ValidationError, model_validator
 
@@ -60,6 +61,20 @@ _SHEET_FIELDS = (
     "evidence_references",
 )
 type SelectionRole = Literal["primary_failure", "matched_success"]
+
+
+class FailureReviewLabel(StrEnum):
+    """Frozen failure categories plus the explicit successful-control label."""
+
+    ITEM_AMBIGUITY_OR_TEST_DEFECT = "item_ambiguity_or_test_defect"
+    SYNTHETIC_STUDENT_INCONSISTENCY = "synthetic_student_inconsistency"
+    EVIDENCE_EXTRACTION_OR_EXECUTION_ERROR = "evidence_extraction_or_execution_error"
+    TRACKER_UPDATE_OR_CALIBRATION_ERROR = "tracker_update_or_calibration_error"
+    POLICY_SELECTION_ERROR = "policy_selection_error"
+    TUTOR_RESPONSE_FAILURE = "tutor_response_failure"
+    PROVIDER_OR_SANDBOX_FAILURE = "provider_or_sandbox_failure"
+    UNCLASSIFIED = "unclassified"
+    NO_FAILURE_OBSERVED = "no_failure_observed"
 
 
 class FailureReviewError(ValueError):
@@ -210,6 +225,84 @@ class FailureReviewPreparationReport(ContractModel):
         return self
 
 
+class FailureReviewRecord(ContractModel):
+    """One immutable human judgement grounded in the visible review packet."""
+
+    schema_version: Literal[1] = 1
+    schema_id: Literal["benchmark.failure_review_record.v1"] = "benchmark.failure_review_record.v1"
+    packet_hash: Sha256
+    taxonomy_hash: Sha256
+    case_id: str = Field(min_length=1)
+    selection_role: SelectionRole
+    matched_case_id: str = Field(min_length=1)
+    rater_id: str = Field(min_length=1)
+    category: FailureReviewLabel
+    rationale: str = Field(min_length=1)
+    evidence_references: tuple[Sha256, ...] = Field(min_length=5, max_length=5)
+    recorded_at_utc: datetime
+    record_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_record(self) -> FailureReviewRecord:
+        _require_utc(self.recorded_at_utc)
+        if (
+            self.selection_role == "primary_failure"
+            and self.category is FailureReviewLabel.NO_FAILURE_OBSERVED
+        ):
+            raise ValueError("A primary failure cannot be labelled no failure observed")
+        if self.record_hash != model_content_hash(self, exclude={"record_hash"}):
+            raise ValueError("Failure-review record hash does not match its content")
+        return self
+
+
+class FailureReviewRecordReport(ContractModel):
+    """Complete independent labels for every item in one review packet."""
+
+    schema_version: Literal[1] = 1
+    schema_id: Literal["benchmark.failure_review_record_report.v1"] = (
+        "benchmark.failure_review_record_report.v1"
+    )
+    packet_hash: Sha256
+    taxonomy_hash: Sha256
+    rater_id: str = Field(min_length=1)
+    record_count: int = Field(ge=2)
+    primary_failure_count: int = Field(ge=1)
+    matched_success_count: int = Field(ge=1)
+    category_counts: dict[FailureReviewLabel, int]
+    records: tuple[FailureReviewRecord, ...] = Field(min_length=2)
+    completed_at_utc: datetime
+    report_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_report(self) -> FailureReviewRecordReport:
+        _require_utc(self.completed_at_utc)
+        if self.record_count != len(self.records):
+            raise ValueError("Failure-review record count does not reconcile")
+        if len({record.case_id for record in self.records}) != self.record_count:
+            raise ValueError("Failure-review records contain duplicate cases")
+        failures = sum(record.selection_role == "primary_failure" for record in self.records)
+        successes = self.record_count - failures
+        if (failures, successes) != (self.primary_failure_count, self.matched_success_count):
+            raise ValueError("Failure-review role counts do not reconcile")
+        observed_counts = {
+            category: sum(record.category is category for record in self.records)
+            for category in FailureReviewLabel
+        }
+        if self.category_counts != observed_counts:
+            raise ValueError("Failure-review category counts do not reconcile")
+        if any(
+            record.packet_hash != self.packet_hash
+            or record.taxonomy_hash != self.taxonomy_hash
+            or record.rater_id != self.rater_id
+            or record.recorded_at_utc != self.completed_at_utc
+            for record in self.records
+        ):
+            raise ValueError("Failure-review records have inconsistent provenance")
+        if self.report_hash != model_content_hash(self, exclude={"report_hash"}):
+            raise ValueError("Failure-review record-report hash does not match its content")
+        return self
+
+
 def prepare_failure_review(
     *,
     taxonomy_path: Path,
@@ -228,6 +321,7 @@ def prepare_failure_review(
 
     _require_utc(created_at_utc)
     taxonomy = load_failure_taxonomy(taxonomy_path)
+    _validate_review_labels(taxonomy)
     analysis_specification = load_analysis_specification(analysis_specification_path)
     manifest = load_and_verify_manifest(manifest_path)
     primary = _load_json(primary_report_path, PrimaryAnalysisReport)
@@ -315,6 +409,91 @@ def prepare_failure_review(
     return report
 
 
+def record_failure_review(
+    *,
+    taxonomy_path: Path,
+    packet_path: Path,
+    completed_sheet_path: Path,
+    rater_id: str,
+    output_path: Path,
+    recorded_at_utc: datetime,
+) -> FailureReviewRecordReport:
+    """Validate a completed sheet without allowing evidence columns to change."""
+
+    _require_utc(recorded_at_utc)
+    if not rater_id.strip():
+        raise FailureReviewError("Failure-review rater ID cannot be blank")
+    taxonomy = load_failure_taxonomy(taxonomy_path)
+    _validate_review_labels(taxonomy)
+    packet = _load_json(packet_path, FailureReviewPacket)
+    rows = _load_review_sheet(completed_sheet_path)
+    expected_rows = _sheet_rows(packet)
+    if len(rows) != len(expected_rows):
+        raise FailureReviewError("Completed failure-review sheet has the wrong row count")
+    expected_by_case = {row["case_id"]: row for row in expected_rows}
+    if len(expected_by_case) != len(expected_rows):
+        raise FailureReviewError("Failure-review packet contains duplicate cases")
+
+    records: list[FailureReviewRecord] = []
+    for row in rows:
+        case_id = row["case_id"]
+        expected = expected_by_case.get(case_id)
+        if expected is None:
+            raise FailureReviewError(f"Completed sheet contains unknown case: {case_id}")
+        for field in _SHEET_FIELDS:
+            if field not in {"category", "rationale"} and row[field] != expected[field]:
+                raise FailureReviewError(f"Completed sheet changed {field} for {case_id}")
+        category_text = row["category"].strip()
+        rationale = row["rationale"].strip()
+        try:
+            category = FailureReviewLabel(category_text)
+        except ValueError as error:
+            raise FailureReviewError(f"Invalid failure-review category for {case_id}") from error
+        if not rationale:
+            raise FailureReviewError(f"Failure-review rationale is blank for {case_id}")
+        item = next(item for item in packet.items if item.case_id == case_id)
+        records.append(
+            _make_record(
+                packet=packet,
+                taxonomy_hash_value=failure_taxonomy_hash(taxonomy),
+                item=item,
+                rater_id=rater_id.strip(),
+                category=category,
+                rationale=rationale,
+                evidence_references=tuple(row["evidence_references"].split(";")),
+                recorded_at_utc=recorded_at_utc,
+            )
+        )
+    if {record.case_id for record in records} != set(expected_by_case):
+        raise FailureReviewError("Completed failure-review sheet omits or duplicates a case")
+
+    ordered = tuple(sorted(records, key=lambda record: record.case_id))
+    content = {
+        "schema_version": 1,
+        "schema_id": "benchmark.failure_review_record_report.v1",
+        "packet_hash": packet.packet_hash,
+        "taxonomy_hash": failure_taxonomy_hash(taxonomy),
+        "rater_id": rater_id.strip(),
+        "record_count": len(ordered),
+        "primary_failure_count": packet.primary_failure_count,
+        "matched_success_count": packet.matched_success_count,
+        "category_counts": {
+            category: sum(record.category is category for record in ordered)
+            for category in FailureReviewLabel
+        },
+        "records": ordered,
+        "completed_at_utc": recorded_at_utc,
+    }
+    draft = FailureReviewRecordReport.model_construct(
+        _fields_set=set(content), **content, report_hash="0" * 64
+    )
+    report = FailureReviewRecordReport.model_validate(
+        {**content, "report_hash": model_content_hash(draft, exclude={"report_hash"})}
+    )
+    write_immutable_json(output_path, report)
+    return report
+
+
 def _match_successes(
     failures: list[PrimaryCaseResult],
     all_results: tuple[PrimaryCaseResult, ...],
@@ -346,6 +525,17 @@ def _match_successes(
         available.remove(selected)
         matches.append((failure, selected))
     return tuple(matches)
+
+
+def _validate_review_labels(taxonomy: FailureTaxonomy) -> None:
+    taxonomy_labels = {spec.category.value for spec in taxonomy.categories}
+    implemented_labels = {
+        label.value
+        for label in FailureReviewLabel
+        if label is not FailureReviewLabel.NO_FAILURE_OBSERVED
+    }
+    if taxonomy_labels != implemented_labels:
+        raise FailureReviewError("Failure-review labels differ from the frozen taxonomy")
 
 
 def _review_item(
@@ -516,8 +706,14 @@ def _review_sheet(packet: FailureReviewPacket) -> bytes:
     output = io.StringIO(newline="")
     writer = csv.DictWriter(output, fieldnames=_SHEET_FIELDS, lineterminator="\n")
     writer.writeheader()
+    writer.writerows(cast(Any, _sheet_rows(packet)))
+    return output.getvalue().encode("utf-8")
+
+
+def _sheet_rows(packet: FailureReviewPacket) -> tuple[dict[str, str], ...]:
+    rows: list[dict[str, str]] = []
     for item in packet.items:
-        writer.writerow(
+        rows.append(
             {
                 "case_id": item.case_id,
                 "selection_role": item.selection_role,
@@ -525,11 +721,11 @@ def _review_sheet(packet: FailureReviewPacket) -> bytes:
                 "target_concept": item.target_concept,
                 "misconception_id": item.misconception_id,
                 "evidence_pattern": item.evidence_pattern,
-                "criterion_outcome": item.criterion_outcome,
-                "dialogue_score": item.dialogue_score,
-                "probe_score": item.probe_score,
-                "dialogue_decision": item.dialogue_decision,
-                "probe_decision": item.probe_decision,
+                "criterion_outcome": str(item.criterion_outcome),
+                "dialogue_score": str(item.dialogue_score),
+                "probe_score": str(item.probe_score),
+                "dialogue_decision": str(item.dialogue_decision),
+                "probe_decision": str(item.probe_decision),
                 "public_response": item.public_exchange.response,
                 "evidence_response": item.evidence_exchange.response,
                 "criterion_response": item.criterion_exchange.response,
@@ -546,7 +742,61 @@ def _review_sheet(packet: FailureReviewPacket) -> bytes:
                 ),
             }
         )
-    return output.getvalue().encode("utf-8")
+    return tuple(rows)
+
+
+def _load_review_sheet(path: Path) -> tuple[dict[str, str], ...]:
+    try:
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            if tuple(reader.fieldnames or ()) != _SHEET_FIELDS:
+                raise FailureReviewError(
+                    "Completed failure-review columns do not match the template"
+                )
+            raw_rows = tuple(reader)
+    except (OSError, UnicodeError, csv.Error) as error:
+        raise FailureReviewError(
+            f"Could not read completed failure-review sheet: {path}"
+        ) from error
+    rows: list[dict[str, str]] = []
+    for raw in raw_rows:
+        if None in raw or any(value is None for value in raw.values()):
+            raise FailureReviewError("Completed failure-review sheet contains malformed columns")
+        rows.append({key: str(value) for key, value in raw.items()})
+    return tuple(rows)
+
+
+def _make_record(
+    *,
+    packet: FailureReviewPacket,
+    taxonomy_hash_value: Sha256,
+    item: FailureReviewItem,
+    rater_id: str,
+    category: FailureReviewLabel,
+    rationale: str,
+    evidence_references: tuple[str, ...],
+    recorded_at_utc: datetime,
+) -> FailureReviewRecord:
+    content = {
+        "schema_version": 1,
+        "schema_id": "benchmark.failure_review_record.v1",
+        "packet_hash": packet.packet_hash,
+        "taxonomy_hash": taxonomy_hash_value,
+        "case_id": item.case_id,
+        "selection_role": item.selection_role,
+        "matched_case_id": item.matched_case_id,
+        "rater_id": rater_id,
+        "category": category,
+        "rationale": rationale,
+        "evidence_references": evidence_references,
+        "recorded_at_utc": recorded_at_utc,
+    }
+    draft = FailureReviewRecord.model_construct(
+        _fields_set=set(content), **content, record_hash="0" * 64
+    )
+    return FailureReviewRecord.model_validate(
+        {**content, "record_hash": model_content_hash(draft, exclude={"record_hash"})}
+    )
 
 
 def _reviewer_instructions(taxonomy: FailureTaxonomy, packet: FailureReviewPacket) -> bytes:

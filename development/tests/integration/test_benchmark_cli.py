@@ -805,6 +805,39 @@ def test_failure_review_prepare_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_failure_review_record_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "record.json"
+
+    assert (
+        main(
+            [
+                "failure-review-record",
+                "--taxonomy",
+                str(missing),
+                "--packet",
+                str(missing),
+                "--completed-sheet",
+                str(missing),
+                "--rater-id",
+                "reviewer-a",
+                "--output",
+                str(output),
+                "--recorded-at-utc",
+                "2026-09-01T18:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "failure-review-record"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],
