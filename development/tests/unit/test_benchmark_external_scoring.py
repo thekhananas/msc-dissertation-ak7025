@@ -24,12 +24,14 @@ from socratic_tutor.benchmark.evaluator.scoring import (
 )
 from socratic_tutor.benchmark.evidence_specificity import EvidenceSpecificityAmendment
 from socratic_tutor.benchmark.external_criterion import run_external_criterion
+from socratic_tutor.benchmark.external_diagnostics import run_external_diagnostics
 from socratic_tutor.benchmark.external_replay import (
     ExternalReplayPlan,
     ExternalReplayReport,
     replay_published_datasets,
 )
 from socratic_tutor.benchmark.external_scoring import run_external_scoring
+from socratic_tutor.benchmark.external_seal import ExternalDecisionSealReport
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.benchmark.inferential_hierarchy import InferentialHierarchy
 from socratic_tutor.benchmark.missingness_sensitivity import run_missingness_sensitivity
@@ -334,6 +336,33 @@ def test_scores_sealed_run_once_and_preserves_missingness(tmp_path: Path) -> Non
         == missingness
     )
 
+    seal_report = _decision_seal_report(tmp_path)
+    seal_report_path = tmp_path / "external_decision_seal_report.json"
+    write_immutable_json(seal_report_path, seal_report)
+    diagnostics = run_external_diagnostics(
+        scoring_summary_path=tmp_path / "analysis" / "scoring-v1" / "external_scoring_summary.json",
+        primary_report_path=tmp_path / "analysis" / "primary-v1" / "primary_analysis_report.json",
+        decision_seal_report_path=seal_report_path,
+        dataset_root=tmp_path / "datasets",
+        pixi_lock_path=PIXI_LOCK,
+        output_root=tmp_path / "analysis" / "diagnostics-v1",
+        analysis_code_revision="external-diagnostics-unit",
+        created_at_utc=datetime(2026, 9, 1, 16, 3, tzinfo=UTC),
+    )
+    by_estimator = {record.estimator: record for record in diagnostics.estimator_diagnostics}
+    assert len(by_estimator) == 4
+    assert by_estimator["dialogue_only"].criterion_negative_case_count == 0
+    assert by_estimator["dialogue_only"].false_acceptance.status == "not_estimable_zero_denominator"
+    assert by_estimator["probe_informed"].false_acceptance.count == 0
+    assert by_estimator["probe_informed"].action_disagreement_with_dialogue.count == 24
+    assert diagnostics.run_failures.decision_invalid_count == 0
+    assert diagnostics.run_failures.criterion_provider_failure_count == 1
+    assert diagnostics.run_failures.criterion_sandbox_failure_count == 0
+    assert diagnostics.repeat_variability == "not_estimable_one_model_run_per_case"
+    assert diagnostics.precision_recall_status == "omitted_sparse_single_run"
+    assert diagnostics.network_calls_made == 0
+    assert diagnostics.sandbox_calls_made == 0
+
 
 def _calibration_report(
     *,
@@ -363,6 +392,42 @@ def _calibration_report(
         _fields_set=set(content), **content, report_hash="0" * 64
     )
     return UncalibratedDecisionReport.model_validate(
+        {**content, "report_hash": model_content_hash(draft, exclude={"report_hash"})}
+    )
+
+
+def _decision_seal_report(root: Path) -> ExternalDecisionSealReport:
+    conditions = FilesystemConditionCommitStore(root / "decision")
+    seal = FilesystemGlobalDecisionSealStore(root / "decision", conditions).load()
+    assert seal is not None
+    content = {
+        "schema_version": 1,
+        "schema_id": "benchmark.external_decision_seal_report.v1",
+        "run_id": seal.run_id,
+        "benchmark_version": "v1",
+        "seal_plan_hash": "1" * 64,
+        "decision_run_plan_hash": "2" * 64,
+        "generation_report_hash": "3" * 64,
+        "public_rating_report_hash": "4" * 64,
+        "methodology_clarification_hash": "5" * 64,
+        "inferential_hierarchy_hash": "6" * 64,
+        "planned_case_count": 24,
+        "complete_case_count": 24,
+        "precriterion_missing_case_count": 0,
+        "invalid_case_count": 0,
+        "evidence_execution_count": 24,
+        "usable_evidence_count": 24,
+        "prediction_count": 96,
+        "global_seal_hash": seal.seal_hash,
+        "decision_publication_hash": "7" * 64,
+        "sealed_at_utc": seal.sealed_at_utc,
+        "all_cases_complete": True,
+        "gate_passed": True,
+    }
+    draft = ExternalDecisionSealReport.model_construct(
+        _fields_set=set(content), **content, report_hash="0" * 64
+    )
+    return ExternalDecisionSealReport.model_validate(
         {**content, "report_hash": model_content_hash(draft, exclude={"report_hash"})}
     )
 

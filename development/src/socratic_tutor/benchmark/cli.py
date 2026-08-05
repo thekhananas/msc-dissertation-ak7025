@@ -60,6 +60,7 @@ from socratic_tutor.benchmark.external_decision import (
     load_external_decision_generation_plan,
     run_external_decision_generation_from_environment,
 )
+from socratic_tutor.benchmark.external_diagnostics import run_external_diagnostics
 from socratic_tutor.benchmark.external_protocol import (
     freeze_external_model_execution_protocol,
     load_external_model_execution_protocol,
@@ -574,6 +575,19 @@ def build_parser() -> argparse.ArgumentParser:
     rating_reliability.add_argument("--code-revision", required=True)
     rating_reliability.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    external_diagnostics = commands.add_parser(
+        "external-diagnostics",
+        help="Summarize safety, missingness, failures, and non-estimable stability",
+    )
+    external_diagnostics.add_argument("--scoring-summary", type=Path, required=True)
+    external_diagnostics.add_argument("--primary-report", type=Path, required=True)
+    external_diagnostics.add_argument("--decision-seal-report", type=Path, required=True)
+    external_diagnostics.add_argument("--dataset-root", type=Path, required=True)
+    external_diagnostics.add_argument("--pixi-lock", type=Path, required=True)
+    external_diagnostics.add_argument("--output-root", type=Path, required=True)
+    external_diagnostics.add_argument("--code-revision", required=True)
+    external_diagnostics.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -1012,6 +1026,18 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             procedure_record_path=cast(Path, args.procedure_record),
             ratings_a_path=cast(Path, args.ratings_a),
             ratings_b_path=cast(Path, args.ratings_b),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "external-diagnostics":
+        report = run_external_diagnostics(
+            scoring_summary_path=cast(Path, args.scoring_summary),
+            primary_report_path=cast(Path, args.primary_report),
+            decision_seal_report_path=cast(Path, args.decision_seal_report),
+            dataset_root=cast(Path, args.dataset_root),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),

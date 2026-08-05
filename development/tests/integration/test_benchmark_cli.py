@@ -725,6 +725,43 @@ def test_public_rating_reliability_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_external_diagnostics_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "diagnostics"
+
+    assert (
+        main(
+            [
+                "external-diagnostics",
+                "--scoring-summary",
+                str(missing),
+                "--primary-report",
+                str(missing),
+                "--decision-seal-report",
+                str(missing),
+                "--dataset-root",
+                str(tmp_path / "datasets"),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "external-diagnostics-cli-test",
+                "--created-at-utc",
+                "2026-09-01T16:03:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-diagnostics"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],
