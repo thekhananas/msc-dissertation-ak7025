@@ -58,3 +58,29 @@ def test_validation_command_reports_frozen_scope(capsys: pytest.CaptureFixture[s
     assert '"tracker_count": 5' in captured.out
     assert '"claim_scope": "glass_box_simulator_robustness_not_human_cognition"' in (captured.out)
     assert captured.err == ""
+
+
+def test_development_simulation_command_cannot_select_the_test_split(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(
+        [
+            "simulate-development",
+            "--config",
+            str(CONFIG),
+            "--output-root",
+            str(tmp_path),
+            "--run-id",
+            "tracker-cli-development-test",
+            "--code-revision",
+            "b8cada9",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    assert '"split": "development"' in captured.out
+    assert '"deterministic_replay_verified": true' in captured.out
+    assert '"episode_count": 120' in captured.out
+    assert captured.err == ""

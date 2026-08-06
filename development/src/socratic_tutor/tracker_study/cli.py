@@ -12,6 +12,10 @@ from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
 )
+from socratic_tutor.tracker_study.simulation import (
+    publish_development_matrix,
+    simulate_verified_development_matrix,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -20,6 +24,14 @@ def build_parser() -> argparse.ArgumentParser:
     validate = commands.add_parser("validate", help="Verify the frozen study inputs")
     validate.add_argument("--config", type=Path, required=True)
     validate.add_argument("--trace", type=Path, required=True)
+    simulate = commands.add_parser(
+        "simulate-development",
+        help="Run and publish the frozen development stress matrix",
+    )
+    simulate.add_argument("--config", type=Path, required=True)
+    simulate.add_argument("--output-root", type=Path, required=True)
+    simulate.add_argument("--run-id", required=True)
+    simulate.add_argument("--code-revision", required=True)
     return parser
 
 
@@ -46,21 +58,31 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _dispatch(args: argparse.Namespace) -> dict[str, object]:
-    if args.command != "validate":
-        raise ValueError(f"Unknown tracker-study command: {args.command}")
     configuration = load_tracker_study_configuration(cast(Path, args.config))
-    trace = load_hand_worked_trace(cast(Path, args.trace), configuration)
-    return {
-        "study_id": configuration.study_id,
-        "configuration_hash": configuration.configuration_hash,
-        "trace_hash": trace.trace_hash,
-        "tracker_count": len(configuration.trackers.tracker_ids),
-        "channel_count": len(configuration.observation_models),
-        "stress_condition_count": len(configuration.stress_conditions),
-        "test_episodes_per_condition": configuration.experiment.test_episodes_per_condition,
-        "turns_per_episode": configuration.experiment.turns_per_episode,
-        "claim_scope": configuration.claim_scope,
-    }
+    if args.command == "validate":
+        trace = load_hand_worked_trace(cast(Path, args.trace), configuration)
+        return {
+            "study_id": configuration.study_id,
+            "configuration_hash": configuration.configuration_hash,
+            "trace_hash": trace.trace_hash,
+            "tracker_count": len(configuration.trackers.tracker_ids),
+            "channel_count": len(configuration.observation_models),
+            "stress_condition_count": len(configuration.stress_conditions),
+            "test_episodes_per_condition": configuration.experiment.test_episodes_per_condition,
+            "turns_per_episode": configuration.experiment.turns_per_episode,
+            "claim_scope": configuration.claim_scope,
+        }
+    if args.command == "simulate-development":
+        matrix, replay_hash = simulate_verified_development_matrix(configuration)
+        manifest = publish_development_matrix(
+            matrix,
+            replay_content_hash=replay_hash,
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+            code_revision=cast(str, args.code_revision),
+        )
+        return manifest.model_dump(mode="json")
+    raise ValueError(f"Unknown tracker-study command: {args.command}")
 
 
 def _print_json(value: dict[str, Any], *, stream: Any) -> None:
