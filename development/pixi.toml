@@ -25,12 +25,17 @@ cmd = "pnpm install --frozen-lockfile"
 
 [tasks.dev-api]
 cmd = "uvicorn apps.api.main:app --reload --host 127.0.0.1 --port 8000"
+depends-on = ["prepare-demo-log"]
 
 [tasks.dev-web]
 cmd = "pnpm --dir apps/web dev --host 127.0.0.1"
 
 [tasks.dev]
 cmd = "pnpm dev"
+depends-on = ["prepare-demo-log"]
+
+[tasks.prepare-demo-log]
+cmd = "python scripts/prepare_demo_log.py"
 
 [tasks.test]
 cmd = "pytest"
@@ -59,6 +64,9 @@ depends-on = ["typecheck-python", "typecheck-web"]
 [tasks.config-smoke]
 cmd = "python experiments/compose_config.py --cfg job --resolve"
 
+[tasks.benchmark-validate]
+cmd = "python scripts/validate_benchmark.py data/benchmarks/dev-v0/manifest.yaml"
+
 [tasks.docs-check]
 cmd = "python scripts/check_docs.py"
 
@@ -67,4 +75,4 @@ cmd = "pnpm --dir apps/web build"
 
 [tasks.check]
 cmd = "python -c \"print('All workspace checks passed')\""
-depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "docs-check", "build-web"]
+depends-on = ["lint", "format-check", "typecheck", "test", "test-web", "test-e2e", "config-smoke", "benchmark-validate", "docs-check", "build-web"]
