@@ -96,6 +96,7 @@ from socratic_tutor.benchmark.methodology_clarification import (
     load_public_answer_rating_report,
 )
 from socratic_tutor.benchmark.missingness_sensitivity import run_missingness_sensitivity
+from socratic_tutor.benchmark.negative_result_audit import run_negative_result_audit
 from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
 from socratic_tutor.benchmark.probe_correction_sensitivity import (
     run_probe_correction_sensitivity,
@@ -665,6 +666,23 @@ def build_parser() -> argparse.ArgumentParser:
     failure_review_reliability.add_argument("--code-revision", required=True)
     failure_review_reliability.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    negative_result_audit = commands.add_parser(
+        "negative-result-audit",
+        help="Verify that protected benchmark inputs did not change after reveal",
+    )
+    negative_result_audit.add_argument("--repository-root", type=Path, required=True)
+    negative_result_audit.add_argument("--manifest", type=Path, required=True)
+    negative_result_audit.add_argument("--analysis-specification", type=Path, required=True)
+    negative_result_audit.add_argument("--calibration-report", type=Path, required=True)
+    negative_result_audit.add_argument("--decision-seal-plan", type=Path, required=True)
+    negative_result_audit.add_argument("--decision-seal-report", type=Path, required=True)
+    negative_result_audit.add_argument("--criterion-plan", type=Path, required=True)
+    negative_result_audit.add_argument("--criterion-integrity-report", type=Path, required=True)
+    negative_result_audit.add_argument("--pixi-lock", type=Path, required=True)
+    negative_result_audit.add_argument("--output-root", type=Path, required=True)
+    negative_result_audit.add_argument("--code-revision", required=True)
+    negative_result_audit.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -1179,6 +1197,22 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
         report = run_failure_review_reliability(
             primary_review_path=cast(Path, args.primary_review),
             secondary_review_path=cast(Path, args.secondary_review),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "negative-result-audit":
+        report = run_negative_result_audit(
+            repository_root=cast(Path, args.repository_root),
+            manifest_path=cast(Path, args.manifest),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            calibration_report_path=cast(Path, args.calibration_report),
+            decision_seal_plan_path=cast(Path, args.decision_seal_plan),
+            decision_seal_report_path=cast(Path, args.decision_seal_report),
+            criterion_plan_path=cast(Path, args.criterion_plan),
+            criterion_integrity_report_path=cast(Path, args.criterion_integrity_report),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),
