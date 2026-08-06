@@ -74,6 +74,9 @@ from socratic_tutor.benchmark.external_replay import run_external_preanalysis_re
 from socratic_tutor.benchmark.external_scoring import run_external_scoring
 from socratic_tutor.benchmark.external_seal import run_external_decision_seal_with_modal
 from socratic_tutor.benchmark.failure_review import prepare_failure_review, record_failure_review
+from socratic_tutor.benchmark.failure_review_reliability import (
+    run_failure_review_reliability,
+)
 from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
     load_failure_taxonomy,
@@ -651,6 +654,17 @@ def build_parser() -> argparse.ArgumentParser:
     failure_review_record.add_argument("--output", type=Path, required=True)
     failure_review_record.add_argument("--recorded-at-utc", type=_utc_datetime, required=True)
 
+    failure_review_reliability = commands.add_parser(
+        "failure-review-reliability",
+        help="Compare two complete failure reviews of the same packet",
+    )
+    failure_review_reliability.add_argument("--primary-review", type=Path, required=True)
+    failure_review_reliability.add_argument("--secondary-review", type=Path, required=True)
+    failure_review_reliability.add_argument("--pixi-lock", type=Path, required=True)
+    failure_review_reliability.add_argument("--output-root", type=Path, required=True)
+    failure_review_reliability.add_argument("--code-revision", required=True)
+    failure_review_reliability.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -1159,6 +1173,16 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             rater_id=cast(str, args.rater_id),
             output_path=cast(Path, args.output),
             recorded_at_utc=cast(datetime, args.recorded_at_utc),
+        )
+        return report, True
+    if command == "failure-review-reliability":
+        report = run_failure_review_reliability(
+            primary_review_path=cast(Path, args.primary_review),
+            secondary_review_path=cast(Path, args.secondary_review),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, True
     if command == "evaluate":
