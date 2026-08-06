@@ -1,0 +1,135 @@
+schema_version: 1
+schema_id: tracker_study.configuration.v1
+study_id: bayesian-evidence-robustness-v1
+claim_scope: glass_box_simulator_robustness_not_human_cognition
+configuration_status: prespecified_before_results
+confidence_assignment: fixed_channel_mapping_not_fitted
+held_out_benchmark_outcomes_used: false
+external_model_data_used: false
+human_data_used: false
+
+latent_dynamics:
+  initial_mastery_probability: 0.35
+  learn_probability: 0.08
+  forget_probability: 0.02
+
+observation_probability_floor: 0.05
+channels_per_turn:
+  - public_answer
+  - executable_probe
+  - self_explanation
+contradictory_channel_pair:
+  - public_answer
+  - executable_probe
+
+observation_models:
+  - channel: public_answer
+    given_mastered:
+      supports_mastery: 0.72
+      supports_non_mastery: 0.28
+    given_not_mastered:
+      supports_mastery: 0.38
+      supports_non_mastery: 0.62
+    confidence_supports_mastery: 0.70
+    confidence_supports_non_mastery: 0.70
+  - channel: executable_probe
+    given_mastered:
+      supports_mastery: 0.90
+      supports_non_mastery: 0.10
+    given_not_mastered:
+      supports_mastery: 0.08
+      supports_non_mastery: 0.92
+    confidence_supports_mastery: 0.95
+    confidence_supports_non_mastery: 0.95
+  - channel: self_explanation
+    given_mastered:
+      supports_mastery: 0.68
+      supports_non_mastery: 0.32
+    given_not_mastered:
+      supports_mastery: 0.32
+      supports_non_mastery: 0.68
+    confidence_supports_mastery: 0.65
+    confidence_supports_non_mastery: 0.65
+
+stress_conditions:
+  - condition: clean
+    definition: Sample all three channels from their frozen base observation matrices.
+    generator_reliability_scale: 1.0
+    inversion_probability: 0.0
+    missing_probability: 0.0
+    contradictory_pair_probability: 0.0
+    tracker_uses_base_observation_model: true
+  - condition: uninformative
+    definition: Move every generator probability to 0.5, making evidence independent of mastery.
+    generator_reliability_scale: 0.0
+    inversion_probability: 0.0
+    missing_probability: 0.0
+    contradictory_pair_probability: 0.0
+    tracker_uses_base_observation_model: true
+  - condition: inverted
+    definition: Sample from the base matrices, then swap the two support labels.
+    generator_reliability_scale: 1.0
+    inversion_probability: 1.0
+    missing_probability: 0.0
+    contradictory_pair_probability: 0.0
+    tracker_uses_base_observation_model: true
+  - condition: missing
+    definition: Replace each scheduled observation with a missing record with probability 0.5.
+    generator_reliability_scale: 1.0
+    inversion_probability: 0.0
+    missing_probability: 0.50
+    contradictory_pair_probability: 0.0
+    tracker_uses_base_observation_model: true
+  - condition: reliability_misspecified
+    definition: Halve each generator probability's distance from 0.5 while trackers retain the base matrices.
+    generator_reliability_scale: 0.50
+    inversion_probability: 0.0
+    missing_probability: 0.0
+    contradictory_pair_probability: 0.0
+    tracker_uses_base_observation_model: true
+  - condition: contradictory
+    definition: Sample executable evidence from its base matrix, force the public answer to the opposite category, and sample self-explanation normally.
+    generator_reliability_scale: 1.0
+    inversion_probability: 0.0
+    missing_probability: 0.0
+    contradictory_pair_probability: 1.0
+    tracker_uses_base_observation_model: true
+
+seeds:
+  root: 9032026
+  development: 9032101
+  training: 9032202
+  validation: 9032303
+  test: 9032404
+
+experiment:
+  development_episodes_per_condition: 20
+  test_episodes_per_condition: 500
+  turns_per_episode: 40
+  ece_bin_count: 10
+  canonical_split: test
+  canonical_test_run_limit: 1
+
+trackers:
+  tracker_ids:
+    - last_observation
+    - hard_bkt
+    - legacy_fractional_bernoulli
+    - channel_aware_virtual_evidence
+    - bounded_channel_aware
+  probability_floor: 0.000001
+  hard_bkt_slip: 0.15
+  hard_bkt_guess: 0.20
+  legacy_noise_epsilon: 0.15
+  bounded_log_likelihood_kappa: 2.0
+  channel_trust_weights:
+    public_answer: 0.50
+    executable_probe: 0.90
+    self_explanation: 0.40
+
+sensitivity:
+  trust_weight_multipliers: [0.25, 0.50, 0.75, 1.0]
+  clipping_kappas: [0.5, 1.0, 2.0, 4.0]
+  reliability_scales: [0.25, 0.50, 0.75, 1.0]
+
+configuration_hash: 8b1656f59265b04ac255c2d825807b3d8ed3fd8f43c2e454d07c58d7ef221c4b

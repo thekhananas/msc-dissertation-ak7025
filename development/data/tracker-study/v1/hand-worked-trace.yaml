@@ -1,0 +1,26 @@
+schema_version: 1
+schema_id: tracker_study.hand_worked_trace.v1
+configuration_hash: 8b1656f59265b04ac255c2d825807b3d8ed3fd8f43c2e454d07c58d7ef221c4b
+prior_mastery_probability: 0.4
+channel: executable_probe
+category: supports_mastery
+likelihood_if_mastered: 0.9
+likelihood_if_not_mastered: 0.08
+raw_log_likelihood_ratio: 2.4203681286504293
+ordinary_posterior: 0.8823529411764706
+trust_weight: 0.9
+clipping_kappa: 2.0
+bounded_log_odds_delta: 1.8
+bounded_posterior: 0.8013152260326584
+ordinary_next_turn_probability: 0.8741176470588234
+bounded_next_turn_probability: 0.8011837034293925
+assumptions:
+  - The mastery state is binary and the prior probability is 0.4.
+  - The executable probe uses the frozen base observation probabilities.
+  - Learning and forgetting occur after the evidence update.
+calculation_notes:
+  - The raw likelihood ratio is 0.9 divided by 0.08, which equals 11.25.
+  - Adding log(11.25) to the prior log-odds gives an ordinary posterior of 0.8823529411764706.
+  - Clipping log(11.25) to 2.0 and multiplying by trust 0.9 gives a bounded log-odds change of 1.8.
+  - Applying learning 0.08 and forgetting 0.02 gives the two recorded next-turn probabilities.
+trace_hash: e345746e6eaa4c1a4253e581f22a4f5a50f5a1e274ee9a73a37b3132fd039885
