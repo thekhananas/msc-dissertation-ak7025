@@ -99,6 +99,7 @@ from socratic_tutor.benchmark.methodology_clarification import (
 from socratic_tutor.benchmark.missingness_sensitivity import run_missingness_sensitivity
 from socratic_tutor.benchmark.negative_result_audit import run_negative_result_audit
 from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
+from socratic_tutor.benchmark.primary_analysis_seal import seal_primary_analysis
 from socratic_tutor.benchmark.probe_correction_sensitivity import (
     run_probe_correction_sensitivity,
 )
@@ -724,6 +725,16 @@ def build_parser() -> argparse.ArgumentParser:
     final_replay.add_argument("--code-revision", required=True)
     final_replay.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    analysis_seal = commands.add_parser(
+        "primary-analysis-seal",
+        help="Bind and close the complete primary-analysis evidence chain",
+    )
+    analysis_seal.add_argument("--analysis-root", type=Path, required=True)
+    analysis_seal.add_argument("--pixi-lock", type=Path, required=True)
+    analysis_seal.add_argument("--output-root", type=Path, required=True)
+    analysis_seal.add_argument("--code-revision", required=True)
+    analysis_seal.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -1297,6 +1308,15 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, report.gate_passed
+    if command == "primary-analysis-seal":
+        manifest = seal_primary_analysis(
+            analysis_root=cast(Path, args.analysis_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return manifest, True
     if command == "evaluate":
         return (
             evaluate_published_run(
