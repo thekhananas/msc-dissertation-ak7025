@@ -142,6 +142,7 @@ from socratic_tutor.benchmark.research_checks import (
     run_shortcut_audit,
 )
 from socratic_tutor.benchmark.resource_reconciliation import run_resource_reconciliation
+from socratic_tutor.benchmark.result_interpretation import run_result_interpretation
 from socratic_tutor.benchmark.sandbox_rehearsal import (
     load_sandbox_rehearsal_plan,
     run_recorded_sandbox_rehearsal_with_modal,
@@ -683,6 +684,21 @@ def build_parser() -> argparse.ArgumentParser:
     negative_result_audit.add_argument("--code-revision", required=True)
     negative_result_audit.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    result_interpretation = commands.add_parser(
+        "result-interpretation",
+        help="Record conservative wording for the sealed primary and secondary results",
+    )
+    result_interpretation.add_argument("--primary-report", type=Path, required=True)
+    result_interpretation.add_argument("--secondary-report", type=Path, required=True)
+    result_interpretation.add_argument("--probe-correction-plan", type=Path, required=True)
+    result_interpretation.add_argument("--probe-correction-report", type=Path, required=True)
+    result_interpretation.add_argument("--negative-result-audit-plan", type=Path, required=True)
+    result_interpretation.add_argument("--negative-result-audit-report", type=Path, required=True)
+    result_interpretation.add_argument("--pixi-lock", type=Path, required=True)
+    result_interpretation.add_argument("--output-root", type=Path, required=True)
+    result_interpretation.add_argument("--code-revision", required=True)
+    result_interpretation.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -1213,6 +1229,20 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             decision_seal_report_path=cast(Path, args.decision_seal_report),
             criterion_plan_path=cast(Path, args.criterion_plan),
             criterion_integrity_report_path=cast(Path, args.criterion_integrity_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "result-interpretation":
+        report = run_result_interpretation(
+            primary_report_path=cast(Path, args.primary_report),
+            secondary_report_path=cast(Path, args.secondary_report),
+            probe_correction_plan_path=cast(Path, args.probe_correction_plan),
+            probe_correction_report_path=cast(Path, args.probe_correction_report),
+            negative_result_audit_plan_path=cast(Path, args.negative_result_audit_plan),
+            negative_result_audit_report_path=cast(Path, args.negative_result_audit_report),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),
