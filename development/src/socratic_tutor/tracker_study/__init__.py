@@ -1,5 +1,9 @@
 """Glass-box robustness study for evidence-aware mastery trackers."""
 
+from socratic_tutor.tracker_study.analysis_spec import (
+    TrackerStudyAnalysisSpecification,
+    load_tracker_study_analysis_specification,
+)
 from socratic_tutor.tracker_study.config import (
     HandWorkedTrace,
     TrackerStudyConfiguration,
@@ -37,11 +41,13 @@ __all__ = [
     "StressMatrix",
     "StressMatrixManifest",
     "StudySplit",
+    "TrackerStudyAnalysisSpecification",
     "TrackerStudyConfiguration",
     "TrackerTurnEstimate",
     "TrackerUpdate",
     "build_trackers",
     "load_hand_worked_trace",
+    "load_tracker_study_analysis_specification",
     "load_tracker_study_configuration",
     "propagate_mastery_probability",
     "publish_development_matrix",

@@ -8,6 +8,9 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from socratic_tutor.tracker_study.analysis_spec import (
+    load_tracker_study_analysis_specification,
+)
 from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
@@ -24,6 +27,12 @@ def build_parser() -> argparse.ArgumentParser:
     validate = commands.add_parser("validate", help="Verify the frozen study inputs")
     validate.add_argument("--config", type=Path, required=True)
     validate.add_argument("--trace", type=Path, required=True)
+    validate_analysis = commands.add_parser(
+        "validate-analysis",
+        help="Verify the prespecified tracker-study analysis",
+    )
+    validate_analysis.add_argument("--config", type=Path, required=True)
+    validate_analysis.add_argument("--analysis", type=Path, required=True)
     simulate = commands.add_parser(
         "simulate-development",
         help="Run and publish the frozen development stress matrix",
@@ -71,6 +80,24 @@ def _dispatch(args: argparse.Namespace) -> dict[str, object]:
             "test_episodes_per_condition": configuration.experiment.test_episodes_per_condition,
             "turns_per_episode": configuration.experiment.turns_per_episode,
             "claim_scope": configuration.claim_scope,
+        }
+    if args.command == "validate-analysis":
+        specification = load_tracker_study_analysis_specification(
+            cast(Path, args.analysis),
+            configuration,
+        )
+        return {
+            "study_id": specification.study_id,
+            "configuration_hash": specification.configuration_hash,
+            "analysis_specification_hash": specification.analysis_specification_hash,
+            "primary_metric": specification.primary.metric,
+            "candidate_tracker": specification.primary.candidate_tracker,
+            "reference_tracker": specification.primary.reference_tracker,
+            "adverse_condition_count": len(specification.primary.adverse_conditions),
+            "development_results_inspected_before_freeze": (
+                specification.development_results_inspected_before_freeze
+            ),
+            "claim_scope": specification.claim_scope,
         }
     if args.command == "simulate-development":
         matrix, replay_hash = simulate_verified_development_matrix(configuration)

@@ -1,0 +1,74 @@
+schema_version: 1
+schema_id: tracker_study.analysis_specification.v1
+study_id: bayesian-evidence-robustness-v1
+configuration_hash: 8b1656f59265b04ac255c2d825807b3d8ed3fd8f43c2e454d07c58d7ef221c4b
+specification_status: prespecified_before_metric_analysis
+claim_scope: glass_box_simulator_robustness_not_human_cognition
+development_results_inspected_before_freeze: false
+held_out_benchmark_outcomes_used: false
+external_model_data_used: false
+human_data_used: false
+
+primary:
+  metric: brier_score
+  candidate_tracker: bounded_channel_aware
+  reference_tracker: channel_aware_virtual_evidence
+  adverse_conditions:
+    - uninformative
+    - inverted
+    - missing
+    - reliability_misspecified
+    - contradictory
+  unit_of_analysis: episode_index
+  aggregation: equal_mean_over_turns_then_adverse_conditions
+  estimand: candidate_minus_reference_mean_adverse_brier
+  favourable_direction: negative
+  confidence_level: 0.95
+  interval_method: paired_episode_percentile_bootstrap
+  bootstrap_repetitions: 10000
+  bootstrap_seed: 9032505
+  test_method: paired_episode_sign_swap_mean
+  test_repetitions: 100000
+  test_seed: 9032606
+  clean_guardrail_metric: candidate_minus_reference_clean_brier
+  maximum_clean_brier_degradation: 0.01
+  decision_rule: robust_if_primary_upper_interval_below_zero_and_clean_upper_interval_at_most_guardrail
+
+metrics:
+  reported_metrics:
+    - brier_score
+    - negative_log_likelihood
+    - expected_calibration_error
+    - classification_error
+    - mean_absolute_posterior_update
+  probability_floor: 0.000001
+  classification_threshold: 0.5
+  ece_bin_count: 10
+  ece_definition: equal_width_probability_bins_weighted_absolute_mean_probability_minus_outcome
+  secondary_comparisons_adjusted_for_multiplicity: false
+  secondary_comparisons_status: descriptive_not_confirmatory
+
+runtime:
+  status: descriptive_platform_specific_not_inferential
+  warmup_repetitions: 3
+  measured_repetitions: 20
+  summary: median_nanoseconds_per_non_missing_update
+  deterministic_operation_count_reported: true
+
+sensitivity:
+  use_configuration_grids_without_selection: true
+  status: descriptive_no_parameter_selection_after_test
+  trust_weight_grid_source: configuration.sensitivity.trust_weight_multipliers
+  clipping_grid_source: configuration.sensitivity.clipping_kappas
+  reliability_grid_source: configuration.sensitivity.reliability_scales
+
+interpretation_order:
+  - primary_adverse_brier
+  - clean_performance_guardrail
+  - condition_level_metrics
+  - calibration_and_classification
+  - sensitivity
+  - runtime_and_operation_count
+  - simulator_limits
+
+analysis_specification_hash: 4eb5ef269db2bac4ac74dc9bb000ba987bcb499b208ebe861ce0e601b545b0e1
