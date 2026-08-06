@@ -81,6 +81,7 @@ from socratic_tutor.benchmark.failure_taxonomy import (
     failure_taxonomy_hash,
     load_failure_taxonomy,
 )
+from socratic_tutor.benchmark.final_replay import run_final_replay
 from socratic_tutor.benchmark.freeze import prepare_benchmark_freeze
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.inferential_hierarchy import (
@@ -699,6 +700,30 @@ def build_parser() -> argparse.ArgumentParser:
     result_interpretation.add_argument("--code-revision", required=True)
     result_interpretation.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    final_replay = commands.add_parser(
+        "final-replay",
+        help="Rebuild scored datasets and analyses without external services",
+    )
+    final_replay.add_argument("--repository-root", type=Path, required=True)
+    final_replay.add_argument("--external-replay-report", type=Path, required=True)
+    final_replay.add_argument("--scoring-plan", type=Path, required=True)
+    final_replay.add_argument("--scoring-summary", type=Path, required=True)
+    final_replay.add_argument("--primary-plan", type=Path, required=True)
+    final_replay.add_argument("--primary-report", type=Path, required=True)
+    final_replay.add_argument("--secondary-plan", type=Path, required=True)
+    final_replay.add_argument("--secondary-report", type=Path, required=True)
+    final_replay.add_argument("--analysis-specification", type=Path, required=True)
+    final_replay.add_argument("--calibration-report", type=Path, required=True)
+    final_replay.add_argument("--public-manifest", type=Path, required=True)
+    final_replay.add_argument("--benchmark-root", type=Path, required=True)
+    final_replay.add_argument("--seal-root", type=Path, required=True)
+    final_replay.add_argument("--inferential-hierarchy", type=Path, required=True)
+    final_replay.add_argument("--specificity-amendment", type=Path, required=True)
+    final_replay.add_argument("--pixi-lock", type=Path, required=True)
+    final_replay.add_argument("--output-root", type=Path, required=True)
+    final_replay.add_argument("--code-revision", required=True)
+    final_replay.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
     evaluate = commands.add_parser("evaluate", help="Verify and summarize local datasets")
     evaluate.add_argument("--dataset-root", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -1249,6 +1274,29 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, True
+    if command == "final-replay":
+        report = run_final_replay(
+            repository_root=cast(Path, args.repository_root),
+            external_replay_report_path=cast(Path, args.external_replay_report),
+            canonical_scoring_plan_path=cast(Path, args.scoring_plan),
+            canonical_scoring_summary_path=cast(Path, args.scoring_summary),
+            canonical_primary_plan_path=cast(Path, args.primary_plan),
+            canonical_primary_report_path=cast(Path, args.primary_report),
+            canonical_secondary_plan_path=cast(Path, args.secondary_plan),
+            canonical_secondary_report_path=cast(Path, args.secondary_report),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            calibration_report_path=cast(Path, args.calibration_report),
+            public_manifest_path=cast(Path, args.public_manifest),
+            benchmark_root=cast(Path, args.benchmark_root),
+            source_seal_root=cast(Path, args.seal_root),
+            inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
+            specificity_amendment_path=cast(Path, args.specificity_amendment),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            replay_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, report.gate_passed
     if command == "evaluate":
         return (
             evaluate_published_run(
