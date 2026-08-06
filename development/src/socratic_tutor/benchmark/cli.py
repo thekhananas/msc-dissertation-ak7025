@@ -137,6 +137,7 @@ from socratic_tutor.benchmark.research_checks import (
     run_sensitivity_analysis,
     run_shortcut_audit,
 )
+from socratic_tutor.benchmark.resource_reconciliation import run_resource_reconciliation
 from socratic_tutor.benchmark.sandbox_rehearsal import (
     load_sandbox_rehearsal_plan,
     run_recorded_sandbox_rehearsal_with_modal,
@@ -578,6 +579,24 @@ def build_parser() -> argparse.ArgumentParser:
     probe_correction.add_argument("--output-root", type=Path, required=True)
     probe_correction.add_argument("--code-revision", required=True)
     probe_correction.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
+    resource_reconciliation = commands.add_parser(
+        "external-resource-reconcile",
+        help="Reconcile observed quality, provider workload, and sandbox burden",
+    )
+    resource_reconciliation.add_argument("--generation-report", type=Path, required=True)
+    resource_reconciliation.add_argument("--criterion-report", type=Path, required=True)
+    resource_reconciliation.add_argument("--decision-seal-report", type=Path, required=True)
+    resource_reconciliation.add_argument("--primary-report", type=Path, required=True)
+    resource_reconciliation.add_argument("--correction-report", type=Path, required=True)
+    resource_reconciliation.add_argument("--decision-responses", type=Path, required=True)
+    resource_reconciliation.add_argument("--criterion-responses", type=Path, required=True)
+    resource_reconciliation.add_argument("--evidence-execution-root", type=Path, required=True)
+    resource_reconciliation.add_argument("--measured-artifact-root", type=Path, required=True)
+    resource_reconciliation.add_argument("--pixi-lock", type=Path, required=True)
+    resource_reconciliation.add_argument("--output-root", type=Path, required=True)
+    resource_reconciliation.add_argument("--code-revision", required=True)
+    resource_reconciliation.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
     rating_reliability = commands.add_parser(
         "public-rating-reliability",
@@ -1070,6 +1089,23 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             primary_report_path=cast(Path, args.primary_report),
             failure_review_report_path=cast(Path, args.failure_review_report),
             evidence_execution_root=cast(Path, args.evidence_execution_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
+        )
+        return report, True
+    if command == "external-resource-reconcile":
+        report = run_resource_reconciliation(
+            generation_report_path=cast(Path, args.generation_report),
+            criterion_report_path=cast(Path, args.criterion_report),
+            decision_seal_report_path=cast(Path, args.decision_seal_report),
+            primary_report_path=cast(Path, args.primary_report),
+            correction_report_path=cast(Path, args.correction_report),
+            decision_responses_path=cast(Path, args.decision_responses),
+            criterion_responses_path=cast(Path, args.criterion_responses),
+            evidence_execution_root=cast(Path, args.evidence_execution_root),
+            measured_artifact_root=cast(Path, args.measured_artifact_root),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),

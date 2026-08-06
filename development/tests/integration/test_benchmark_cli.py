@@ -875,6 +875,53 @@ def test_probe_correction_sensitivity_fails_closed_for_missing_sources(
     assert not output.exists()
 
 
+def test_external_resource_reconciliation_fails_closed_for_missing_sources(
+    tmp_path: Path,
+    capsys: CaptureFixture[str],
+) -> None:
+    missing = tmp_path / "missing.json"
+    output = tmp_path / "resource-reconciliation"
+
+    assert (
+        main(
+            [
+                "external-resource-reconcile",
+                "--generation-report",
+                str(missing),
+                "--criterion-report",
+                str(missing),
+                "--decision-seal-report",
+                str(missing),
+                "--primary-report",
+                str(missing),
+                "--correction-report",
+                str(missing),
+                "--decision-responses",
+                str(missing),
+                "--criterion-responses",
+                str(missing),
+                "--evidence-execution-root",
+                str(tmp_path / "evidence"),
+                "--measured-artifact-root",
+                str(tmp_path / "artifacts"),
+                "--pixi-lock",
+                str(missing),
+                "--output-root",
+                str(output),
+                "--code-revision",
+                "resource-reconciliation-cli-test",
+                "--created-at-utc",
+                "2026-09-01T20:00:00Z",
+            ]
+        )
+        == 1
+    )
+    error = json.loads(capsys.readouterr().err)
+    assert error["command"] == "external-resource-reconcile"
+    assert error["status"] == "error"
+    assert not output.exists()
+
+
 def _run_generate(arguments: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "scripts/benchmark_generate.py", *arguments],
