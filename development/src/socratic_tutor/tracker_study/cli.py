@@ -16,6 +16,7 @@ from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
 )
+from socratic_tutor.tracker_study.runtime import run_development_runtime_profile
 from socratic_tutor.tracker_study.sensitivity import run_development_sensitivity
 from socratic_tutor.tracker_study.simulation import (
     publish_development_matrix,
@@ -59,6 +60,19 @@ def build_parser() -> argparse.ArgumentParser:
     sensitivity.add_argument("--output-root", type=Path, required=True)
     sensitivity.add_argument("--run-id", required=True)
     sensitivity.add_argument("--code-revision", required=True)
+    profile = commands.add_parser(
+        "profile-development",
+        help="Profile configured tracker updates on the development workload",
+    )
+    profile.add_argument("--config", type=Path, required=True)
+    profile.add_argument("--analysis", type=Path, required=True)
+    profile.add_argument("--simulation-manifest", type=Path, required=True)
+    profile.add_argument("--development-analysis-plan", type=Path, required=True)
+    profile.add_argument("--development-analysis-report", type=Path, required=True)
+    profile.add_argument("--pixi-lock", type=Path, required=True)
+    profile.add_argument("--output-root", type=Path, required=True)
+    profile.add_argument("--run-id", required=True)
+    profile.add_argument("--code-revision", required=True)
     simulate = commands.add_parser(
         "simulate-development",
         help="Run and publish the frozen development stress matrix",
@@ -155,6 +169,23 @@ def _dispatch(args: argparse.Namespace) -> dict[str, object]:
             output_root=cast(Path, args.output_root),
             run_id=cast(str, args.run_id),
             sensitivity_code_revision=cast(str, args.code_revision),
+        )
+        return report.model_dump(mode="json")
+    if args.command == "profile-development":
+        specification = load_tracker_study_analysis_specification(
+            cast(Path, args.analysis),
+            configuration,
+        )
+        report = run_development_runtime_profile(
+            simulation_manifest_path=cast(Path, args.simulation_manifest),
+            development_analysis_plan_path=cast(Path, args.development_analysis_plan),
+            development_analysis_report_path=cast(Path, args.development_analysis_report),
+            configuration=configuration,
+            specification=specification,
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+            runtime_code_revision=cast(str, args.code_revision),
         )
         return report.model_dump(mode="json")
     if args.command == "simulate-development":
