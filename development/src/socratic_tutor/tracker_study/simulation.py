@@ -155,6 +155,64 @@ class StressMatrixManifest(ContractModel):
         return self
 
 
+class CanonicalStressMatrixManifest(ContractModel):
+    schema_version: Literal[1] = 1
+    schema_id: Literal["tracker_study.canonical_stress_matrix_manifest.v1"] = (
+        "tracker_study.canonical_stress_matrix_manifest.v1"
+    )
+    study_id: str
+    run_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{2,99}$")
+    code_revision: str = Field(pattern=r"^[0-9a-f]{40}$")
+    configuration_hash: Sha256
+    canonical_execution_plan_hash: Sha256
+    split: Literal[StudySplit.TEST] = StudySplit.TEST
+    result_scope: Literal["canonical_glass_box_simulator_test"] = (
+        "canonical_glass_box_simulator_test"
+    )
+    access_scope: Literal["simulator_restricted"] = "simulator_restricted"
+    trajectory_file: Literal["canonical_trajectories.jsonl"] = "canonical_trajectories.jsonl"
+    trajectory_file_sha256: Sha256
+    trajectory_content_hash: Sha256
+    replay_content_hash: Sha256
+    deterministic_replay_verified: Literal[True] = True
+    matched_latent_paths_verified: Literal[True] = True
+    random_generator: Literal["numpy.PCG64"] = "numpy.PCG64"
+    canonical_test_run_limit: Literal[1] = 1
+    condition_count: int = Field(ge=1)
+    episodes_per_condition: int = Field(ge=1)
+    episode_count: int = Field(ge=1)
+    turns_per_episode: int = Field(ge=1)
+    turn_count: int = Field(ge=1)
+    observation_count: int = Field(ge=1)
+    missing_observation_count: int = Field(ge=0)
+    tracker_estimate_count: int = Field(ge=1)
+    external_model_call_count: Literal[0] = 0
+    sandbox_call_count: Literal[0] = 0
+    human_record_count: Literal[0] = 0
+    human_learning_claim_supported: Literal[False] = False
+    tutoring_efficacy_claim_supported: Literal[False] = False
+    manifest_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_manifest(self) -> CanonicalStressMatrixManifest:
+        if self.trajectory_content_hash != self.replay_content_hash:
+            raise ValueError("Canonical replay hash differs from the first simulation")
+        if self.condition_count != len(StressCondition):
+            raise ValueError("Canonical manifest does not contain every stress condition")
+        if self.episode_count != self.condition_count * self.episodes_per_condition:
+            raise ValueError("Canonical manifest episode count is inconsistent")
+        if self.turn_count != self.episode_count * self.turns_per_episode:
+            raise ValueError("Canonical manifest turn count is inconsistent")
+        if self.observation_count != self.turn_count * len(EvidenceChannel):
+            raise ValueError("Canonical manifest observation count is inconsistent")
+        if self.tracker_estimate_count != self.turn_count * len(TrackerId):
+            raise ValueError("Canonical manifest tracker-estimate count is inconsistent")
+        expected_hash = canonical_sha256(self.model_dump(mode="json", exclude={"manifest_hash"}))
+        if self.manifest_hash != expected_hash:
+            raise ValueError("Canonical stress-matrix manifest hash does not match its content")
+        return self
+
+
 def simulate_verified_development_matrix(
     configuration: TrackerStudyConfiguration,
     *,
@@ -174,6 +232,20 @@ def simulate_verified_development_matrix(
     )
     if first.content_hash != replay.content_hash:
         raise RuntimeError("Deterministic stress-matrix replay produced different content")
+    return first, replay.content_hash
+
+
+def simulate_verified_canonical_matrix(
+    configuration: TrackerStudyConfiguration,
+) -> tuple[StressMatrix, Sha256]:
+    """Run the one fixed test matrix twice and require exact content agreement."""
+
+    first = simulate_stress_matrix(configuration, split=StudySplit.TEST)
+    replay = simulate_stress_matrix(configuration, split=StudySplit.TEST)
+    if first.content_hash != replay.content_hash:
+        raise RuntimeError("Deterministic canonical replay produced different content")
+    if first.episodes_per_condition != configuration.experiment.test_episodes_per_condition:
+        raise RuntimeError("Canonical simulation did not use the frozen test episode count")
     return first, replay.content_hash
 
 
@@ -240,6 +312,75 @@ def publish_development_matrix(
     )
     write_immutable_bytes(trajectory_path, trajectory_bytes)
     write_immutable_json(output_root / "stress_matrix_manifest.json", manifest)
+    return manifest
+
+
+def publish_canonical_matrix(
+    matrix: StressMatrix,
+    *,
+    replay_content_hash: Sha256,
+    output_root: Path,
+    run_id: str,
+    code_revision: str,
+    configuration: TrackerStudyConfiguration,
+    canonical_execution_plan_hash: Sha256,
+) -> CanonicalStressMatrixManifest:
+    """Publish the single fixed test matrix without weakening its claim boundary."""
+
+    if matrix.split is not StudySplit.TEST:
+        raise ValueError("The canonical publisher accepts test trajectories only")
+    if matrix.episodes_per_condition != configuration.experiment.test_episodes_per_condition:
+        raise ValueError("Canonical trajectories must use the frozen test episode count")
+    if matrix.configuration_hash != configuration.configuration_hash:
+        raise ValueError("Canonical trajectories belong to another configuration")
+    trajectory_bytes = b"".join(
+        canonical_json_bytes(episode) + b"\n" for episode in matrix.episodes
+    )
+    turn_count = sum(len(episode.turns) for episode in matrix.episodes)
+    missing_count = sum(
+        observation.category is EvidenceCategory.MISSING
+        for episode in matrix.episodes
+        for turn in episode.turns
+        for observation in turn.observations
+    )
+    content = {
+        "schema_version": 1,
+        "schema_id": "tracker_study.canonical_stress_matrix_manifest.v1",
+        "study_id": matrix.study_id,
+        "run_id": run_id,
+        "code_revision": code_revision,
+        "configuration_hash": matrix.configuration_hash,
+        "canonical_execution_plan_hash": canonical_execution_plan_hash,
+        "split": StudySplit.TEST,
+        "result_scope": "canonical_glass_box_simulator_test",
+        "access_scope": "simulator_restricted",
+        "trajectory_file": "canonical_trajectories.jsonl",
+        "trajectory_file_sha256": file_sha256(trajectory_bytes),
+        "trajectory_content_hash": matrix.content_hash,
+        "replay_content_hash": replay_content_hash,
+        "deterministic_replay_verified": True,
+        "matched_latent_paths_verified": True,
+        "random_generator": "numpy.PCG64",
+        "canonical_test_run_limit": configuration.experiment.canonical_test_run_limit,
+        "condition_count": len(StressCondition),
+        "episodes_per_condition": matrix.episodes_per_condition,
+        "episode_count": len(matrix.episodes),
+        "turns_per_episode": matrix.turns_per_episode,
+        "turn_count": turn_count,
+        "observation_count": turn_count * len(EvidenceChannel),
+        "missing_observation_count": missing_count,
+        "tracker_estimate_count": turn_count * len(TrackerId),
+        "external_model_call_count": 0,
+        "sandbox_call_count": 0,
+        "human_record_count": 0,
+        "human_learning_claim_supported": False,
+        "tutoring_efficacy_claim_supported": False,
+    }
+    manifest = CanonicalStressMatrixManifest.model_validate(
+        {**content, "manifest_hash": canonical_sha256(content)}
+    )
+    write_immutable_bytes(output_root / "canonical_trajectories.jsonl", trajectory_bytes)
+    write_immutable_json(output_root / "canonical_stress_matrix_manifest.json", manifest)
     return manifest
 
 

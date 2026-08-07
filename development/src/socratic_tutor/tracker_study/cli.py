@@ -12,6 +12,7 @@ from socratic_tutor.tracker_study.analysis import run_development_analysis
 from socratic_tutor.tracker_study.analysis_spec import (
     load_tracker_study_analysis_specification,
 )
+from socratic_tutor.tracker_study.canonical import run_canonical_study
 from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
@@ -84,6 +85,12 @@ def build_parser() -> argparse.ArgumentParser:
     publication.add_argument("--pixi-lock", type=Path, required=True)
     publication.add_argument("--output-root", type=Path, required=True)
     publication.add_argument("--code-revision", required=True)
+    canonical = commands.add_parser(
+        "run-canonical",
+        help="Run the single frozen test matrix and its prespecified analysis",
+    )
+    canonical.add_argument("--execution-plan", type=Path, required=True)
+    canonical.add_argument("--code-revision", required=True)
     simulate = commands.add_parser(
         "simulate-development",
         help="Run and publish the frozen development stress matrix",
@@ -118,6 +125,12 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _dispatch(args: argparse.Namespace) -> dict[str, object]:
+    if args.command == "run-canonical":
+        report = run_canonical_study(
+            execution_plan_path=cast(Path, args.execution_plan),
+            code_revision=cast(str, args.code_revision),
+        )
+        return report.model_dump(mode="json")
     if args.command == "publish-development":
         manifest = publish_development_results(
             analysis_root=cast(Path, args.analysis_root),

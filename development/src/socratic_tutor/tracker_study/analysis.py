@@ -1,4 +1,4 @@
-"""Deterministic metric analysis for tracker-study development trajectories."""
+"""Deterministic metric analysis for tracker-study trajectories."""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ from socratic_tutor.tracker_study.config import (
     TrackerStudyConfiguration,
 )
 from socratic_tutor.tracker_study.simulation import (
+    CanonicalStressMatrixManifest,
     SimulatedEpisode,
     StressMatrix,
     StressMatrixManifest,
@@ -168,6 +169,100 @@ class TrackerDevelopmentAnalysisReport(ContractModel):
         return self
 
 
+class TrackerCanonicalAnalysisPlan(ContractModel):
+    schema_version: Literal[1] = 1
+    schema_id: Literal["tracker_study.canonical_analysis_plan.v1"] = (
+        "tracker_study.canonical_analysis_plan.v1"
+    )
+    study_id: str
+    run_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{2,99}$")
+    split: Literal[StudySplit.TEST] = StudySplit.TEST
+    simulation_manifest_hash: Sha256
+    trajectory_file_sha256: Sha256
+    trajectory_content_hash: Sha256
+    configuration_hash: Sha256
+    canonical_execution_plan_hash: Sha256
+    analysis_specification_hash: Sha256
+    analysis_code_revision: str = Field(pattern=r"^[0-9a-f]{40}$")
+    pixi_lock_sha256: Sha256
+    episode_count_per_condition: int = Field(ge=1)
+    canonical_test_run_limit: Literal[1] = 1
+    external_model_call_count: Literal[0] = 0
+    sandbox_call_count: Literal[0] = 0
+    human_record_count: Literal[0] = 0
+    plan_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_plan(self) -> TrackerCanonicalAnalysisPlan:
+        if self.plan_hash != model_content_hash(self, exclude={"plan_hash"}):
+            raise ValueError("Canonical analysis plan hash does not match its content")
+        return self
+
+
+class TrackerCanonicalAnalysisReport(ContractModel):
+    schema_version: Literal[1] = 1
+    schema_id: Literal["tracker_study.canonical_analysis_report.v1"] = (
+        "tracker_study.canonical_analysis_report.v1"
+    )
+    study_id: str
+    run_id: str
+    split: Literal[StudySplit.TEST] = StudySplit.TEST
+    analysis_plan_hash: Sha256
+    result_status: Literal["canonical_glass_box_simulator_result"] = (
+        "canonical_glass_box_simulator_result"
+    )
+    simulator_robustness_claim_allowed: Literal[True] = True
+    condition_metric_count: Literal[30] = 30
+    condition_metrics: tuple[TrackerConditionMetrics, ...] = Field(
+        min_length=30,
+        max_length=30,
+    )
+    primary_adverse_brier: PairedEpisodeInference
+    clean_brier_guardrail: PairedEpisodeInterval
+    maximum_clean_brier_degradation: float = Field(ge=0.0, le=1.0)
+    primary_interval_passed: bool
+    clean_guardrail_passed: bool
+    primary_decision_status: Literal[
+        "robust_under_declared_simulator",
+        "not_robust_primary_interval",
+        "not_robust_clean_guardrail",
+        "not_robust_primary_and_clean_guardrail",
+    ]
+    sensitivity_status: Literal["development_only_no_test_parameter_selection"] = (
+        "development_only_no_test_parameter_selection"
+    )
+    runtime_status: Literal["development_platform_profile_reported_separately"] = (
+        "development_platform_profile_reported_separately"
+    )
+    inference_scope: Literal["repeated_episodes_from_declared_simulator_only"] = (
+        "repeated_episodes_from_declared_simulator_only"
+    )
+    human_learning_claim_supported: Literal[False] = False
+    tutoring_efficacy_claim_supported: Literal[False] = False
+    reduced_cognitive_offloading_claim_supported: Literal[False] = False
+    report_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_report(self) -> TrackerCanonicalAnalysisReport:
+        expected_order = tuple(
+            (condition, tracker_id) for condition in StressCondition for tracker_id in TrackerId
+        )
+        actual_order = tuple((row.condition, row.tracker_id) for row in self.condition_metrics)
+        if actual_order != expected_order:
+            raise ValueError("Canonical condition metrics differ from the frozen order")
+        if self.primary_adverse_brier.episode_count != self.clean_brier_guardrail.episode_count:
+            raise ValueError("Canonical primary and clean comparisons use different episodes")
+        expected_status = _canonical_decision_status(
+            primary_passed=self.primary_interval_passed,
+            clean_passed=self.clean_guardrail_passed,
+        )
+        if self.primary_decision_status != expected_status:
+            raise ValueError("Canonical decision status does not match the frozen rule")
+        if self.report_hash != model_content_hash(self, exclude={"report_hash"}):
+            raise ValueError("Canonical analysis report hash does not match its content")
+        return self
+
+
 def calculate_binary_metrics(
     *,
     probabilities: tuple[float, ...],
@@ -260,6 +355,172 @@ def run_development_analysis(
     write_immutable_json(output_root / "development_analysis_plan.json", plan)
     write_immutable_json(output_root / "development_analysis_report.json", report)
     return report
+
+
+def run_canonical_analysis(
+    *,
+    simulation_manifest_path: Path,
+    configuration: TrackerStudyConfiguration,
+    specification: TrackerStudyAnalysisSpecification,
+    pixi_lock_path: Path,
+    output_root: Path,
+    run_id: str,
+    analysis_code_revision: str,
+    canonical_execution_plan_hash: Sha256,
+) -> TrackerCanonicalAnalysisReport:
+    """Apply the prespecified decision rule once to the fixed test matrix."""
+
+    manifest, matrix = load_verified_canonical_stress_matrix(
+        simulation_manifest_path,
+        configuration,
+    )
+    if specification.configuration_hash != configuration.configuration_hash:
+        raise TrackerStudyAnalysisError("Analysis specification and configuration differ")
+    if matrix.episodes_per_condition != configuration.experiment.test_episodes_per_condition:
+        raise TrackerStudyAnalysisError("Canonical matrix has the wrong test episode count")
+    if manifest.canonical_execution_plan_hash != canonical_execution_plan_hash:
+        raise TrackerStudyAnalysisError("Canonical simulation and analysis plans differ")
+    try:
+        pixi_lock_hash = file_sha256(pixi_lock_path.read_bytes())
+    except OSError as error:
+        raise TrackerStudyAnalysisError(f"Could not read Pixi lock: {pixi_lock_path}") from error
+    plan_content = {
+        "schema_version": 1,
+        "schema_id": "tracker_study.canonical_analysis_plan.v1",
+        "study_id": manifest.study_id,
+        "run_id": run_id,
+        "split": StudySplit.TEST,
+        "simulation_manifest_hash": manifest.manifest_hash,
+        "trajectory_file_sha256": manifest.trajectory_file_sha256,
+        "trajectory_content_hash": manifest.trajectory_content_hash,
+        "configuration_hash": manifest.configuration_hash,
+        "canonical_execution_plan_hash": canonical_execution_plan_hash,
+        "analysis_specification_hash": specification.analysis_specification_hash,
+        "analysis_code_revision": analysis_code_revision,
+        "pixi_lock_sha256": pixi_lock_hash,
+        "episode_count_per_condition": matrix.episodes_per_condition,
+        "canonical_test_run_limit": configuration.experiment.canonical_test_run_limit,
+        "external_model_call_count": 0,
+        "sandbox_call_count": 0,
+        "human_record_count": 0,
+    }
+    plan = TrackerCanonicalAnalysisPlan.model_validate(
+        {**plan_content, "plan_hash": canonical_sha256(plan_content)}
+    )
+    report = analyse_canonical_matrix(matrix, specification=specification, plan=plan)
+    write_immutable_json(output_root / "canonical_analysis_plan.json", plan)
+    write_immutable_json(output_root / "canonical_analysis_report.json", report)
+    return report
+
+
+def load_verified_canonical_stress_matrix(
+    manifest_path: Path,
+    configuration: TrackerStudyConfiguration,
+) -> tuple[CanonicalStressMatrixManifest, StressMatrix]:
+    """Load canonical trajectories only after every recorded hash reconciles."""
+
+    try:
+        manifest = CanonicalStressMatrixManifest.model_validate_json(
+            manifest_path.read_text(encoding="utf-8")
+        )
+        trajectory_bytes = (manifest_path.parent / manifest.trajectory_file).read_bytes()
+        if file_sha256(trajectory_bytes) != manifest.trajectory_file_sha256:
+            raise TrackerStudyAnalysisError("Canonical trajectory file hash differs")
+        episodes = tuple(
+            SimulatedEpisode.model_validate(json.loads(line))
+            for line in trajectory_bytes.decode("utf-8").splitlines()
+            if line
+        )
+        matrix = StressMatrix(
+            study_id=manifest.study_id,
+            configuration_hash=manifest.configuration_hash,
+            split=manifest.split,
+            episodes_per_condition=manifest.episodes_per_condition,
+            turns_per_episode=manifest.turns_per_episode,
+            episodes=episodes,
+        )
+    except TrackerStudyAnalysisError:
+        raise
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValidationError) as error:
+        raise TrackerStudyAnalysisError(
+            f"Could not verify canonical tracker trajectories: {manifest_path}"
+        ) from error
+    if manifest.configuration_hash != configuration.configuration_hash:
+        raise TrackerStudyAnalysisError("Canonical manifest belongs to another configuration")
+    if manifest.episodes_per_condition != configuration.experiment.test_episodes_per_condition:
+        raise TrackerStudyAnalysisError("Canonical manifest has the wrong test episode count")
+    if matrix.content_hash != manifest.trajectory_content_hash:
+        raise TrackerStudyAnalysisError("Canonical trajectory content hash differs")
+    return manifest, matrix
+
+
+def analyse_canonical_matrix(
+    matrix: StressMatrix,
+    *,
+    specification: TrackerStudyAnalysisSpecification,
+    plan: TrackerCanonicalAnalysisPlan,
+) -> TrackerCanonicalAnalysisReport:
+    if matrix.split is not StudySplit.TEST:
+        raise TrackerStudyAnalysisError("Canonical analysis requires the test split")
+    rows, episode_brier = _condition_metrics(matrix, specification)
+    primary = _paired_inference(
+        _primary_episode_effects(
+            episode_brier,
+            episode_count=matrix.episodes_per_condition,
+            specification=specification,
+        ),
+        specification,
+    )
+    clean = _paired_interval(
+        _clean_episode_effects(
+            episode_brier,
+            episode_count=matrix.episodes_per_condition,
+            specification=specification,
+        ),
+        specification,
+    )
+    primary_passed = primary.interval_upper < 0.0
+    clean_passed = clean.interval_upper <= specification.primary.maximum_clean_brier_degradation
+    content = {
+        "schema_version": 1,
+        "schema_id": "tracker_study.canonical_analysis_report.v1",
+        "study_id": matrix.study_id,
+        "run_id": plan.run_id,
+        "split": StudySplit.TEST,
+        "analysis_plan_hash": plan.plan_hash,
+        "result_status": "canonical_glass_box_simulator_result",
+        "simulator_robustness_claim_allowed": True,
+        "condition_metric_count": 30,
+        "condition_metrics": rows,
+        "primary_adverse_brier": primary,
+        "clean_brier_guardrail": clean,
+        "maximum_clean_brier_degradation": (specification.primary.maximum_clean_brier_degradation),
+        "primary_interval_passed": primary_passed,
+        "clean_guardrail_passed": clean_passed,
+        "primary_decision_status": _canonical_decision_status(
+            primary_passed=primary_passed,
+            clean_passed=clean_passed,
+        ),
+        "sensitivity_status": "development_only_no_test_parameter_selection",
+        "runtime_status": "development_platform_profile_reported_separately",
+        "inference_scope": "repeated_episodes_from_declared_simulator_only",
+        "human_learning_claim_supported": False,
+        "tutoring_efficacy_claim_supported": False,
+        "reduced_cognitive_offloading_claim_supported": False,
+    }
+    return TrackerCanonicalAnalysisReport.model_validate(
+        {**content, "report_hash": canonical_sha256(content)}
+    )
+
+
+def _canonical_decision_status(*, primary_passed: bool, clean_passed: bool) -> str:
+    if primary_passed and clean_passed:
+        return "robust_under_declared_simulator"
+    if not primary_passed and not clean_passed:
+        return "not_robust_primary_and_clean_guardrail"
+    if not primary_passed:
+        return "not_robust_primary_interval"
+    return "not_robust_clean_guardrail"
 
 
 def load_verified_stress_matrix(
