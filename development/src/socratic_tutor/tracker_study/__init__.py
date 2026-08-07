@@ -21,6 +21,14 @@ from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
 )
+from socratic_tutor.tracker_study.sensitivity import (
+    AnchorReconciliation,
+    SensitivityDimension,
+    TrackerDevelopmentSensitivityPlan,
+    TrackerDevelopmentSensitivityReport,
+    TrackerSensitivityPoint,
+    run_development_sensitivity,
+)
 from socratic_tutor.tracker_study.simulation import (
     SimulatedEpisode,
     SimulatedTurn,
@@ -43,6 +51,7 @@ from socratic_tutor.tracker_study.trackers import (
 )
 
 __all__ = [
+    "AnchorReconciliation",
     "BinaryMetricSummary",
     "ConfiguredMasteryTracker",
     "EvidenceObservation",
@@ -50,6 +59,7 @@ __all__ = [
     "MasteryTracker",
     "PairedEpisodeInference",
     "PairedEpisodeInterval",
+    "SensitivityDimension",
     "SimulatedEpisode",
     "SimulatedTurn",
     "StressMatrix",
@@ -58,6 +68,9 @@ __all__ = [
     "TrackerConditionMetrics",
     "TrackerDevelopmentAnalysisPlan",
     "TrackerDevelopmentAnalysisReport",
+    "TrackerDevelopmentSensitivityPlan",
+    "TrackerDevelopmentSensitivityReport",
+    "TrackerSensitivityPoint",
     "TrackerStudyAnalysisSpecification",
     "TrackerStudyConfiguration",
     "TrackerTurnEstimate",
@@ -71,6 +84,7 @@ __all__ = [
     "propagate_mastery_probability",
     "publish_development_matrix",
     "run_development_analysis",
+    "run_development_sensitivity",
     "simulate_episode",
     "simulate_stress_matrix",
     "simulate_verified_development_matrix",

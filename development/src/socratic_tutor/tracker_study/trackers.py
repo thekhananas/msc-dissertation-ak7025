@@ -66,16 +66,22 @@ class ConfiguredMasteryTracker:
     tracker_id: TrackerId
     configuration: TrackerStudyConfiguration
     trust_weight_override: float | None = None
+    trust_weight_multiplier: float = 1.0
     clipping_kappa_override: float | None = None
     clipping_disabled: bool = False
+    assumed_channel_reliability_scale: float = 1.0
 
     def __post_init__(self) -> None:
         if self.trust_weight_override is not None and not (
             0.0 <= self.trust_weight_override <= 1.0
         ):
             raise ValueError("Trust-weight override must lie in [0, 1]")
+        if not 0.0 <= self.trust_weight_multiplier <= 1.0:
+            raise ValueError("Trust-weight multiplier must lie in [0, 1]")
         if self.clipping_kappa_override is not None and self.clipping_kappa_override <= 0.0:
             raise ValueError("Clipping override must be positive")
+        if not 0.0 <= self.assumed_channel_reliability_scale <= 1.0:
+            raise ValueError("Assumed channel reliability scale must lie in [0, 1]")
 
     def update(self, prior: float, observation: EvidenceObservation) -> TrackerUpdate:
         floor = self.configuration.trackers.probability_floor
@@ -122,7 +128,11 @@ class ConfiguredMasteryTracker:
                 update_kind="legacy_fractional_pseudo_likelihood",
             )
 
-        likelihoods = channel_likelihoods(observation, self.configuration)
+        likelihoods = channel_likelihoods(
+            observation,
+            self.configuration,
+            reliability_scale=self.assumed_channel_reliability_scale,
+        )
         raw_delta = math.log(likelihoods[0] / likelihoods[1])
         if self.tracker_id is TrackerId.CHANNEL_AWARE:
             applied_delta = raw_delta
@@ -131,6 +141,7 @@ class ConfiguredMasteryTracker:
             trust = self.trust_weight_override
             if trust is None:
                 trust = self.configuration.trackers.channel_trust_weights[observation.channel]
+            trust *= self.trust_weight_multiplier
             kappa = self.clipping_kappa_override
             if kappa is None:
                 kappa = self.configuration.trackers.bounded_log_likelihood_kappa
@@ -166,19 +177,28 @@ def build_trackers(
 
 
 def channel_likelihoods(
-    observation: EvidenceObservation, configuration: TrackerStudyConfiguration
+    observation: EvidenceObservation,
+    configuration: TrackerStudyConfiguration,
+    *,
+    reliability_scale: float = 1.0,
 ) -> tuple[float, float]:
     """Return P(observation | mastered) and P(observation | not mastered)."""
 
+    if not 0.0 <= reliability_scale <= 1.0:
+        raise ValueError("Channel reliability scale must lie in [0, 1]")
     if observation.category is EvidenceCategory.MISSING:
         return (1.0, 1.0)
     model = next(
         item for item in configuration.observation_models if item.channel is observation.channel
     )
     field = observation.category.value
+    mastered = getattr(model.given_mastered, field)
+    not_mastered = getattr(model.given_not_mastered, field)
+    if reliability_scale == 1.0:
+        return mastered, not_mastered
     return (
-        getattr(model.given_mastered, field),
-        getattr(model.given_not_mastered, field),
+        0.5 + reliability_scale * (mastered - 0.5),
+        0.5 + reliability_scale * (not_mastered - 0.5),
     )
 
 
