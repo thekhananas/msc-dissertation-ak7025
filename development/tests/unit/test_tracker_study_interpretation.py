@@ -12,6 +12,7 @@ from socratic_tutor.tracker_study import (
     load_tracker_study_analysis_specification,
     load_tracker_study_configuration,
     publish_canonical_matrix,
+    publish_canonical_results,
     publish_development_matrix,
     run_canonical_analysis,
     run_canonical_interpretation,
@@ -86,6 +87,35 @@ def test_interpretation_reconciles_sources_and_limits_claims(
     assert first.learned_trust_extension_status == (
         "omitted_to_protect_time_box_and_avoid_post_test_model_selection"
     )
+
+    publication_root = tmp_path / "canonical-publication"
+    publication_time = datetime(2026, 9, 3, 12, 30, tzinfo=UTC)
+    publication = publish_canonical_results(
+        canonical_root=canonical_root,
+        interpretation_root=output_root,
+        pixi_lock_path=ROOT / "pixi.lock",
+        output_root=publication_root,
+        publication_code_revision="baf40df",
+        generated_at_utc=publication_time,
+    )
+    publication_retry = publish_canonical_results(
+        canonical_root=canonical_root,
+        interpretation_root=output_root,
+        pixi_lock_path=ROOT / "pixi.lock",
+        output_root=publication_root,
+        publication_code_revision="baf40df",
+    )
+
+    assert publication == publication_retry
+    assert publication.generated_at_utc == publication_time
+    assert not publication.human_learning_claim_supported
+    assert not publication.tutoring_efficacy_claim_supported
+    assert (publication_root / "tracker_study_canonical.pdf").read_bytes().startswith(b"%PDF")
+    svg = (publication_root / "tracker_study_canonical.svg").read_text(encoding="utf-8")
+    assert "Held-out glass-box simulation" in svg
+    assert "not evidence of student learning" in svg
+    claims = (publication_root / "canonical_claim_boundaries.csv").read_text(encoding="utf-8")
+    assert "human_learning_improvement,False" in claims
 
 
 def _publish_sources(

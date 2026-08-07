@@ -24,6 +24,10 @@ from socratic_tutor.tracker_study.canonical import (
     load_canonical_execution_plan,
     run_canonical_study,
 )
+from socratic_tutor.tracker_study.canonical_publication import (
+    TrackerCanonicalPublicationManifest,
+    publish_canonical_results,
+)
 from socratic_tutor.tracker_study.config import (
     HandWorkedTrace,
     TrackerStudyConfiguration,
@@ -100,6 +104,7 @@ __all__ = [
     "TrackerCanonicalAnalysisReport",
     "TrackerCanonicalInterpretationPlan",
     "TrackerCanonicalInterpretationReport",
+    "TrackerCanonicalPublicationManifest",
     "TrackerConditionMetrics",
     "TrackerDevelopmentAnalysisPlan",
     "TrackerDevelopmentAnalysisReport",
@@ -124,6 +129,7 @@ __all__ = [
     "load_verified_stress_matrix",
     "propagate_mastery_probability",
     "publish_canonical_matrix",
+    "publish_canonical_results",
     "publish_development_matrix",
     "publish_development_results",
     "run_canonical_analysis",

@@ -13,6 +13,7 @@ from socratic_tutor.tracker_study.analysis_spec import (
     load_tracker_study_analysis_specification,
 )
 from socratic_tutor.tracker_study.canonical import run_canonical_study
+from socratic_tutor.tracker_study.canonical_publication import publish_canonical_results
 from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
@@ -103,6 +104,15 @@ def build_parser() -> argparse.ArgumentParser:
     interpretation.add_argument("--pixi-lock", type=Path, required=True)
     interpretation.add_argument("--output-root", type=Path, required=True)
     interpretation.add_argument("--code-revision", required=True)
+    canonical_publication = commands.add_parser(
+        "publish-canonical",
+        help="Create report-ready tables and vector figures from canonical results",
+    )
+    canonical_publication.add_argument("--canonical-root", type=Path, required=True)
+    canonical_publication.add_argument("--interpretation-root", type=Path, required=True)
+    canonical_publication.add_argument("--pixi-lock", type=Path, required=True)
+    canonical_publication.add_argument("--output-root", type=Path, required=True)
+    canonical_publication.add_argument("--code-revision", required=True)
     simulate = commands.add_parser(
         "simulate-development",
         help="Run and publish the frozen development stress matrix",
@@ -137,6 +147,15 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _dispatch(args: argparse.Namespace) -> dict[str, object]:
+    if args.command == "publish-canonical":
+        manifest = publish_canonical_results(
+            canonical_root=cast(Path, args.canonical_root),
+            interpretation_root=cast(Path, args.interpretation_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+        )
+        return manifest.model_dump(mode="json")
     if args.command == "interpret-canonical":
         report = run_canonical_interpretation(
             execution_plan_path=cast(Path, args.execution_plan),
