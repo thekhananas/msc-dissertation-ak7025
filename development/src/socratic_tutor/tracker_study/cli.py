@@ -16,6 +16,7 @@ from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
 )
+from socratic_tutor.tracker_study.publication import publish_development_results
 from socratic_tutor.tracker_study.runtime import run_development_runtime_profile
 from socratic_tutor.tracker_study.sensitivity import run_development_sensitivity
 from socratic_tutor.tracker_study.simulation import (
@@ -73,6 +74,16 @@ def build_parser() -> argparse.ArgumentParser:
     profile.add_argument("--output-root", type=Path, required=True)
     profile.add_argument("--run-id", required=True)
     profile.add_argument("--code-revision", required=True)
+    publication = commands.add_parser(
+        "publish-development",
+        help="Create report-ready development tables and vector figures",
+    )
+    publication.add_argument("--analysis-root", type=Path, required=True)
+    publication.add_argument("--sensitivity-root", type=Path, required=True)
+    publication.add_argument("--runtime-root", type=Path, required=True)
+    publication.add_argument("--pixi-lock", type=Path, required=True)
+    publication.add_argument("--output-root", type=Path, required=True)
+    publication.add_argument("--code-revision", required=True)
     simulate = commands.add_parser(
         "simulate-development",
         help="Run and publish the frozen development stress matrix",
@@ -107,6 +118,16 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _dispatch(args: argparse.Namespace) -> dict[str, object]:
+    if args.command == "publish-development":
+        manifest = publish_development_results(
+            analysis_root=cast(Path, args.analysis_root),
+            sensitivity_root=cast(Path, args.sensitivity_root),
+            runtime_root=cast(Path, args.runtime_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+        )
+        return manifest.model_dump(mode="json")
     configuration = load_tracker_study_configuration(cast(Path, args.config))
     if args.command == "validate":
         trace = load_hand_worked_trace(cast(Path, args.trace), configuration)

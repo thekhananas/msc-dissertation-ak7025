@@ -21,6 +21,10 @@ from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
 )
+from socratic_tutor.tracker_study.publication import (
+    TrackerDevelopmentPublicationManifest,
+    publish_development_results,
+)
 from socratic_tutor.tracker_study.runtime import (
     RuntimePlatform,
     TrackerDevelopmentRuntimePlan,
@@ -76,6 +80,7 @@ __all__ = [
     "TrackerConditionMetrics",
     "TrackerDevelopmentAnalysisPlan",
     "TrackerDevelopmentAnalysisReport",
+    "TrackerDevelopmentPublicationManifest",
     "TrackerDevelopmentRuntimePlan",
     "TrackerDevelopmentRuntimeReport",
     "TrackerDevelopmentSensitivityPlan",
@@ -94,6 +99,7 @@ __all__ = [
     "load_verified_stress_matrix",
     "propagate_mastery_probability",
     "publish_development_matrix",
+    "publish_development_results",
     "run_development_analysis",
     "run_development_runtime_profile",
     "run_development_sensitivity",
