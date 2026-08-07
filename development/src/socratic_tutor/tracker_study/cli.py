@@ -17,6 +17,7 @@ from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
 )
+from socratic_tutor.tracker_study.interpretation import run_canonical_interpretation
 from socratic_tutor.tracker_study.publication import publish_development_results
 from socratic_tutor.tracker_study.runtime import run_development_runtime_profile
 from socratic_tutor.tracker_study.sensitivity import run_development_sensitivity
@@ -91,6 +92,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     canonical.add_argument("--execution-plan", type=Path, required=True)
     canonical.add_argument("--code-revision", required=True)
+    interpretation = commands.add_parser(
+        "interpret-canonical",
+        help="Publish the claim-bounded interpretation of the canonical result",
+    )
+    interpretation.add_argument("--execution-plan", type=Path, required=True)
+    interpretation.add_argument("--canonical-root", type=Path, required=True)
+    interpretation.add_argument("--sensitivity-root", type=Path, required=True)
+    interpretation.add_argument("--runtime-root", type=Path, required=True)
+    interpretation.add_argument("--pixi-lock", type=Path, required=True)
+    interpretation.add_argument("--output-root", type=Path, required=True)
+    interpretation.add_argument("--code-revision", required=True)
     simulate = commands.add_parser(
         "simulate-development",
         help="Run and publish the frozen development stress matrix",
@@ -125,6 +137,17 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _dispatch(args: argparse.Namespace) -> dict[str, object]:
+    if args.command == "interpret-canonical":
+        report = run_canonical_interpretation(
+            execution_plan_path=cast(Path, args.execution_plan),
+            canonical_root=cast(Path, args.canonical_root),
+            sensitivity_root=cast(Path, args.sensitivity_root),
+            runtime_root=cast(Path, args.runtime_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            interpretation_code_revision=cast(str, args.code_revision),
+        )
+        return report.model_dump(mode="json")
     if args.command == "run-canonical":
         report = run_canonical_study(
             execution_plan_path=cast(Path, args.execution_plan),

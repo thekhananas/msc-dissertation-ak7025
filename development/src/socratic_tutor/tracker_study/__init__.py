@@ -30,6 +30,11 @@ from socratic_tutor.tracker_study.config import (
     load_hand_worked_trace,
     load_tracker_study_configuration,
 )
+from socratic_tutor.tracker_study.interpretation import (
+    TrackerCanonicalInterpretationPlan,
+    TrackerCanonicalInterpretationReport,
+    run_canonical_interpretation,
+)
 from socratic_tutor.tracker_study.publication import (
     TrackerDevelopmentPublicationManifest,
     publish_development_results,
@@ -93,6 +98,8 @@ __all__ = [
     "StudySplit",
     "TrackerCanonicalAnalysisPlan",
     "TrackerCanonicalAnalysisReport",
+    "TrackerCanonicalInterpretationPlan",
+    "TrackerCanonicalInterpretationReport",
     "TrackerConditionMetrics",
     "TrackerDevelopmentAnalysisPlan",
     "TrackerDevelopmentAnalysisReport",
@@ -120,6 +127,7 @@ __all__ = [
     "publish_development_matrix",
     "publish_development_results",
     "run_canonical_analysis",
+    "run_canonical_interpretation",
     "run_canonical_study",
     "run_development_analysis",
     "run_development_runtime_profile",
