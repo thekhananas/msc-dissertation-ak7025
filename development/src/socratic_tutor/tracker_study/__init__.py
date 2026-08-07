@@ -1,5 +1,16 @@
 """Glass-box robustness study for evidence-aware mastery trackers."""
 
+from socratic_tutor.tracker_study.analysis import (
+    BinaryMetricSummary,
+    PairedEpisodeInference,
+    PairedEpisodeInterval,
+    TrackerConditionMetrics,
+    TrackerDevelopmentAnalysisPlan,
+    TrackerDevelopmentAnalysisReport,
+    calculate_binary_metrics,
+    load_verified_stress_matrix,
+    run_development_analysis,
+)
 from socratic_tutor.tracker_study.analysis_spec import (
     TrackerStudyAnalysisSpecification,
     load_tracker_study_analysis_specification,
@@ -32,25 +43,34 @@ from socratic_tutor.tracker_study.trackers import (
 )
 
 __all__ = [
+    "BinaryMetricSummary",
     "ConfiguredMasteryTracker",
     "EvidenceObservation",
     "HandWorkedTrace",
     "MasteryTracker",
+    "PairedEpisodeInference",
+    "PairedEpisodeInterval",
     "SimulatedEpisode",
     "SimulatedTurn",
     "StressMatrix",
     "StressMatrixManifest",
     "StudySplit",
+    "TrackerConditionMetrics",
+    "TrackerDevelopmentAnalysisPlan",
+    "TrackerDevelopmentAnalysisReport",
     "TrackerStudyAnalysisSpecification",
     "TrackerStudyConfiguration",
     "TrackerTurnEstimate",
     "TrackerUpdate",
     "build_trackers",
+    "calculate_binary_metrics",
     "load_hand_worked_trace",
     "load_tracker_study_analysis_specification",
     "load_tracker_study_configuration",
+    "load_verified_stress_matrix",
     "propagate_mastery_probability",
     "publish_development_matrix",
+    "run_development_analysis",
     "simulate_episode",
     "simulate_stress_matrix",
     "simulate_verified_development_matrix",

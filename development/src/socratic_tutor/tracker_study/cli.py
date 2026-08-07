@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from socratic_tutor.tracker_study.analysis import run_development_analysis
 from socratic_tutor.tracker_study.analysis_spec import (
     load_tracker_study_analysis_specification,
 )
@@ -33,6 +34,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_analysis.add_argument("--config", type=Path, required=True)
     validate_analysis.add_argument("--analysis", type=Path, required=True)
+    analyse = commands.add_parser(
+        "analyse-development",
+        help="Analyse verified development trajectories under the frozen specification",
+    )
+    analyse.add_argument("--config", type=Path, required=True)
+    analyse.add_argument("--analysis", type=Path, required=True)
+    analyse.add_argument("--simulation-manifest", type=Path, required=True)
+    analyse.add_argument("--pixi-lock", type=Path, required=True)
+    analyse.add_argument("--output-root", type=Path, required=True)
+    analyse.add_argument("--run-id", required=True)
+    analyse.add_argument("--code-revision", required=True)
     simulate = commands.add_parser(
         "simulate-development",
         help="Run and publish the frozen development stress matrix",
@@ -99,6 +111,21 @@ def _dispatch(args: argparse.Namespace) -> dict[str, object]:
             ),
             "claim_scope": specification.claim_scope,
         }
+    if args.command == "analyse-development":
+        specification = load_tracker_study_analysis_specification(
+            cast(Path, args.analysis),
+            configuration,
+        )
+        report = run_development_analysis(
+            simulation_manifest_path=cast(Path, args.simulation_manifest),
+            configuration=configuration,
+            specification=specification,
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+            analysis_code_revision=cast(str, args.code_revision),
+        )
+        return report.model_dump(mode="json")
     if args.command == "simulate-development":
         matrix, replay_hash = simulate_verified_development_matrix(configuration)
         manifest = publish_development_matrix(
