@@ -100,6 +100,7 @@ from socratic_tutor.benchmark.missingness_sensitivity import run_missingness_sen
 from socratic_tutor.benchmark.negative_result_audit import run_negative_result_audit
 from socratic_tutor.benchmark.primary_analysis import run_primary_analysis
 from socratic_tutor.benchmark.primary_analysis_seal import seal_primary_analysis
+from socratic_tutor.benchmark.primary_figure import render_primary_result_figure
 from socratic_tutor.benchmark.probe_correction_sensitivity import (
     run_probe_correction_sensitivity,
 )
@@ -561,6 +562,18 @@ def build_parser() -> argparse.ArgumentParser:
     dependence_figure.add_argument("--svg-output", type=Path, required=True)
     dependence_figure.add_argument("--manifest", type=Path, required=True)
     dependence_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
+    primary_figure = commands.add_parser(
+        "external-primary-figure",
+        help="Render the case-level sealed primary benchmark result",
+    )
+    primary_figure.add_argument("--primary-report", type=Path, required=True)
+    primary_figure.add_argument("--interpretation-plan", type=Path, required=True)
+    primary_figure.add_argument("--interpretation-report", type=Path, required=True)
+    primary_figure.add_argument("--pixi-lock", type=Path, required=True)
+    primary_figure.add_argument("--output-root", type=Path, required=True)
+    primary_figure.add_argument("--code-revision", required=True)
+    primary_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
     missingness_sensitivity = commands.add_parser(
         "external-missingness-bound",
@@ -1153,6 +1166,17 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             pdf_output_path=cast(Path, args.pdf_output),
             svg_output_path=cast(Path, args.svg_output),
             manifest_path=cast(Path, args.manifest),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
+    if command == "external-primary-figure":
+        manifest = render_primary_result_figure(
+            primary_report_path=cast(Path, args.primary_report),
+            interpretation_plan_path=cast(Path, args.interpretation_plan),
+            interpretation_report_path=cast(Path, args.interpretation_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
             generated_at_utc=cast(datetime | None, args.generated_at_utc),
         )
         return manifest, True
