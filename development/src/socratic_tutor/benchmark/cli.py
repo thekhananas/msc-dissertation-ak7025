@@ -145,6 +145,7 @@ from socratic_tutor.benchmark.research_checks import (
     run_sensitivity_analysis,
     run_shortcut_audit,
 )
+from socratic_tutor.benchmark.resource_figure import render_resource_figure
 from socratic_tutor.benchmark.resource_reconciliation import run_resource_reconciliation
 from socratic_tutor.benchmark.result_interpretation import run_result_interpretation
 from socratic_tutor.benchmark.sandbox_rehearsal import (
@@ -631,6 +632,17 @@ def build_parser() -> argparse.ArgumentParser:
     resource_reconciliation.add_argument("--output-root", type=Path, required=True)
     resource_reconciliation.add_argument("--code-revision", required=True)
     resource_reconciliation.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
+    resource_figure = commands.add_parser(
+        "external-resource-figure",
+        help="Render observed benchmark quality beside provider and sandbox burden",
+    )
+    resource_figure.add_argument("--resource-plan", type=Path, required=True)
+    resource_figure.add_argument("--resource-report", type=Path, required=True)
+    resource_figure.add_argument("--pixi-lock", type=Path, required=True)
+    resource_figure.add_argument("--output-root", type=Path, required=True)
+    resource_figure.add_argument("--code-revision", required=True)
+    resource_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
     rating_reliability = commands.add_parser(
         "public-rating-reliability",
@@ -1241,6 +1253,16 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, True
+    if command == "external-resource-figure":
+        manifest = render_resource_figure(
+            resource_plan_path=cast(Path, args.resource_plan),
+            resource_report_path=cast(Path, args.resource_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
     if command == "external-resource-reconcile":
         report = run_resource_reconciliation(
             generation_report_path=cast(Path, args.generation_report),
