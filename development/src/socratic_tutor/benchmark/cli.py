@@ -154,6 +154,7 @@ from socratic_tutor.benchmark.sandbox_rehearsal import (
 )
 from socratic_tutor.benchmark.secondary_analysis import run_secondary_analysis
 from socratic_tutor.benchmark.specificity_figure import render_specificity_figure
+from socratic_tutor.benchmark.study_design_figure import render_study_design_figure
 from socratic_tutor.contracts import ContractModel
 
 
@@ -643,6 +644,20 @@ def build_parser() -> argparse.ArgumentParser:
     resource_figure.add_argument("--output-root", type=Path, required=True)
     resource_figure.add_argument("--code-revision", required=True)
     resource_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
+    study_design_figure = commands.add_parser(
+        "external-study-design-figure",
+        help="Render the sealed commit-before-reveal study flow",
+    )
+    study_design_figure.add_argument("--benchmark-design", type=Path, required=True)
+    study_design_figure.add_argument("--decision-seal-plan", type=Path, required=True)
+    study_design_figure.add_argument("--decision-seal-report", type=Path, required=True)
+    study_design_figure.add_argument("--criterion-plan", type=Path, required=True)
+    study_design_figure.add_argument("--criterion-report", type=Path, required=True)
+    study_design_figure.add_argument("--pixi-lock", type=Path, required=True)
+    study_design_figure.add_argument("--output-root", type=Path, required=True)
+    study_design_figure.add_argument("--code-revision", required=True)
+    study_design_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
     rating_reliability = commands.add_parser(
         "public-rating-reliability",
@@ -1257,6 +1272,19 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
         manifest = render_resource_figure(
             resource_plan_path=cast(Path, args.resource_plan),
             resource_report_path=cast(Path, args.resource_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
+    if command == "external-study-design-figure":
+        manifest = render_study_design_figure(
+            benchmark_design_path=cast(Path, args.benchmark_design),
+            decision_seal_plan_path=cast(Path, args.decision_seal_plan),
+            decision_seal_report_path=cast(Path, args.decision_seal_report),
+            criterion_plan_path=cast(Path, args.criterion_plan),
+            criterion_report_path=cast(Path, args.criterion_report),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             publication_code_revision=cast(str, args.code_revision),
