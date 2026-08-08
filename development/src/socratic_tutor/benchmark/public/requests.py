@@ -52,8 +52,9 @@ class PublicChannelRequestBuilder:
             target_concept=case.target_concept,
             public_interaction=interaction,
         )
-        assert_public_payload_safe(payload.model_dump(mode="json"))
-        return create_student_generation_request(spec=spec, payload=payload)
+        request = create_student_generation_request(spec=spec, payload=payload)
+        assert_public_payload_safe(request.model_dump(mode="json"))
+        return request
 
     def build_evidence(
         self,
@@ -75,8 +76,9 @@ class PublicChannelRequestBuilder:
             target_concept=case.target_concept,
             evidence_probe=probe,
         )
-        assert_public_payload_safe(payload.model_dump(mode="json"))
-        return create_student_generation_request(spec=spec, payload=payload)
+        request = create_student_generation_request(spec=spec, payload=payload)
+        assert_public_payload_safe(request.model_dump(mode="json"))
+        return request
 
     def _case(self, case_id: str) -> BenchmarkCaseView:
         try:

@@ -6,7 +6,7 @@ from typing import Annotated, Literal
 from pydantic import Field, model_validator
 
 from socratic_tutor.benchmark.common import Sha256
-from socratic_tutor.benchmark.hashing import canonical_sha256
+from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
 from socratic_tutor.contracts.models import ContractModel
 
 
@@ -39,8 +39,17 @@ class GenerationRequestSpec(ContractModel):
     run_id: str = Field(min_length=1)
     sample_id: str = Field(min_length=1)
     system_prompt_version: str = Field(min_length=1)
+    system_prompt: str = Field(min_length=1)
+    system_prompt_sha256: Sha256
     model_route: ModelRoute
     sampling: SamplingConfig
+
+    @model_validator(mode="after")
+    def validate_system_prompt_hash(self) -> "GenerationRequestSpec":
+        expected_hash = file_sha256(self.system_prompt.encode("utf-8"))
+        if self.system_prompt_sha256 != expected_hash:
+            raise ValueError("System prompt hash does not match prompt content")
+        return self
 
 
 class PublicTaskPayload(ContractModel):
@@ -99,6 +108,8 @@ class StudentGenerationRequest(ContractModel):
     sample_id: str = Field(min_length=1)
     channel: GenerationChannel
     system_prompt_version: str = Field(min_length=1)
+    system_prompt: str = Field(min_length=1)
+    system_prompt_sha256: Sha256
     task_payload: GenerationTaskPayload
     model_route: ModelRoute
     sampling: SamplingConfig
@@ -111,6 +122,9 @@ class StudentGenerationRequest(ContractModel):
             raise ValueError("Request channel must match task payload channel")
         if self.task_payload.case_id != self.case_id:
             raise ValueError("Request case ID must match task payload case ID")
+        expected_prompt_hash = file_sha256(self.system_prompt.encode("utf-8"))
+        if self.system_prompt_sha256 != expected_prompt_hash:
+            raise ValueError("System prompt hash does not match prompt content")
         expected_namespace = generation_cache_namespace(self.channel)
         if self.cache_namespace != expected_namespace:
             raise ValueError("Cache namespace must match the isolated generation channel")
@@ -147,6 +161,8 @@ def create_student_generation_request(
         "sample_id": spec.sample_id,
         "channel": payload.channel,
         "system_prompt_version": spec.system_prompt_version,
+        "system_prompt": spec.system_prompt,
+        "system_prompt_sha256": spec.system_prompt_sha256,
         "task_payload": payload,
         "model_route": spec.model_route,
         "sampling": spec.sampling,
