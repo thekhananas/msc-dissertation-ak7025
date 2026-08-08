@@ -151,6 +151,7 @@ from socratic_tutor.benchmark.sandbox_rehearsal import (
     run_recorded_sandbox_rehearsal_with_modal,
 )
 from socratic_tutor.benchmark.secondary_analysis import run_secondary_analysis
+from socratic_tutor.benchmark.specificity_figure import render_specificity_figure
 from socratic_tutor.contracts import ContractModel
 
 
@@ -574,6 +575,18 @@ def build_parser() -> argparse.ArgumentParser:
     primary_figure.add_argument("--output-root", type=Path, required=True)
     primary_figure.add_argument("--code-revision", required=True)
     primary_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
+    specificity_figure = commands.add_parser(
+        "external-specificity-figure",
+        help="Render the sealed evidence-specificity result and contrastive controls",
+    )
+    specificity_figure.add_argument("--secondary-report", type=Path, required=True)
+    specificity_figure.add_argument("--interpretation-plan", type=Path, required=True)
+    specificity_figure.add_argument("--interpretation-report", type=Path, required=True)
+    specificity_figure.add_argument("--pixi-lock", type=Path, required=True)
+    specificity_figure.add_argument("--output-root", type=Path, required=True)
+    specificity_figure.add_argument("--code-revision", required=True)
+    specificity_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
     missingness_sensitivity = commands.add_parser(
         "external-missingness-bound",
@@ -1172,6 +1185,17 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
     if command == "external-primary-figure":
         manifest = render_primary_result_figure(
             primary_report_path=cast(Path, args.primary_report),
+            interpretation_plan_path=cast(Path, args.interpretation_plan),
+            interpretation_report_path=cast(Path, args.interpretation_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
+    if command == "external-specificity-figure":
+        manifest = render_specificity_figure(
+            secondary_report_path=cast(Path, args.secondary_report),
             interpretation_plan_path=cast(Path, args.interpretation_plan),
             interpretation_report_path=cast(Path, args.interpretation_report),
             pixi_lock_path=cast(Path, args.pixi_lock),
