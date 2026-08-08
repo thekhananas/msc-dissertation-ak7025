@@ -73,6 +73,7 @@ from socratic_tutor.benchmark.external_rehearsal import (
 from socratic_tutor.benchmark.external_replay import run_external_preanalysis_replay
 from socratic_tutor.benchmark.external_scoring import run_external_scoring
 from socratic_tutor.benchmark.external_seal import run_external_decision_seal_with_modal
+from socratic_tutor.benchmark.failure_figure import render_failure_figure
 from socratic_tutor.benchmark.failure_review import prepare_failure_review, record_failure_review
 from socratic_tutor.benchmark.failure_review_reliability import (
     run_failure_review_reliability,
@@ -695,6 +696,19 @@ def build_parser() -> argparse.ArgumentParser:
     failure_review_reliability.add_argument("--code-revision", required=True)
     failure_review_reliability.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
+    failure_figure = commands.add_parser(
+        "external-failure-figure",
+        help="Render the observable failure review and reviewer-consistency boundary",
+    )
+    failure_figure.add_argument("--primary-review", type=Path, required=True)
+    failure_figure.add_argument("--secondary-review", type=Path, required=True)
+    failure_figure.add_argument("--reliability-plan", type=Path, required=True)
+    failure_figure.add_argument("--reliability-report", type=Path, required=True)
+    failure_figure.add_argument("--pixi-lock", type=Path, required=True)
+    failure_figure.add_argument("--output-root", type=Path, required=True)
+    failure_figure.add_argument("--code-revision", required=True)
+    failure_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
     negative_result_audit = commands.add_parser(
         "negative-result-audit",
         help="Verify that protected benchmark inputs did not change after reveal",
@@ -1303,6 +1317,18 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, True
+    if command == "external-failure-figure":
+        manifest = render_failure_figure(
+            primary_review_path=cast(Path, args.primary_review),
+            secondary_review_path=cast(Path, args.secondary_review),
+            reliability_plan_path=cast(Path, args.reliability_plan),
+            reliability_report_path=cast(Path, args.reliability_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
     if command == "negative-result-audit":
         report = run_negative_result_audit(
             repository_root=cast(Path, args.repository_root),
