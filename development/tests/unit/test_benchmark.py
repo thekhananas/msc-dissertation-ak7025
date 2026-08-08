@@ -58,9 +58,8 @@ from socratic_tutor.benchmark.replay import (
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK_ROOT = WORKSPACE_ROOT / "data" / "benchmarks" / "dev-v0"
 MANIFEST_PATH = BENCHMARK_ROOT / "manifest.yaml"
-SYSTEM_PROMPT = (
-    "Act as the student for one isolated Python task. Return only the final response or code."
-)
+SYSTEM_PROMPT_PATH = BENCHMARK_ROOT / "prompts" / "student-system-v1.md"
+SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
 
 
 def generation_spec(*, system_prompt: str = SYSTEM_PROMPT) -> GenerationRequestSpec:
@@ -82,6 +81,45 @@ def test_development_manifest_passes_structure_and_inventory_checks() -> None:
     assert len(manifest.cases) == 2
     assert manifest.conditions == EXPECTED_CONDITIONS
     assert all(review.decision.value == "pending" for review in manifest.reviews)
+
+
+def test_generation_prompt_is_inventoried_and_content_addressed() -> None:
+    manifest = load_and_verify_manifest(MANIFEST_PATH)
+    prompt = manifest.generation
+
+    assert prompt.system_prompt_version == "student-system-v1"
+    assert prompt.system_prompt_ref == "prompts/student-system-v1.md"
+    assert prompt.system_prompt_sha256 == file_sha256(SYSTEM_PROMPT.encode("utf-8"))
+
+    changed_generation = prompt.model_copy(update={"system_prompt_sha256": "0" * 64})
+    changed_manifest = manifest.model_copy(update={"generation": changed_generation})
+    with pytest.raises(BenchmarkValidationError, match="generation-prompt-hash"):
+        validate_manifest_structure(changed_manifest)
+
+
+def test_review_scope_covers_every_condition_defining_artifact() -> None:
+    manifest = load_and_verify_manifest(MANIFEST_PATH)
+    reviews = {review.case_id: review for review in manifest.reviews}
+
+    for case in manifest.cases:
+        public = case.public
+        criterion = case.criterion
+        reviewed_paths = {item.path for item in reviews[public.case_id].reviewed_files}
+        required_paths = {
+            public.public_fixture_ref,
+            public.evidence_probe_ref,
+            public.evidence_test_ref,
+            public.initial_tracker_ref,
+            public.unrelated_control_ref,
+            public.corruption_spec_ref,
+            manifest.generation.system_prompt_ref,
+            criterion.criterion_prompt_ref,
+            criterion.test_bundle_ref,
+            criterion.rubric_ref,
+            criterion.label_rationale_ref,
+            criterion.structural_difference_record_ref,
+        }
+        assert required_paths <= reviewed_paths
 
 
 def test_public_projection_contains_no_evaluator_material() -> None:

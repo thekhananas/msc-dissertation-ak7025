@@ -152,6 +152,9 @@ class GenerationSpec(ContractModel):
 
     provider: str = Field(min_length=1)
     model: str = Field(min_length=1)
+    system_prompt_version: str = Field(min_length=1)
+    system_prompt_ref: RelativePath
+    system_prompt_sha256: Sha256
     repeats_per_case: int = Field(ge=1)
     temperature: float = Field(ge=0.0, le=2.0)
     max_output_tokens: int = Field(ge=1)

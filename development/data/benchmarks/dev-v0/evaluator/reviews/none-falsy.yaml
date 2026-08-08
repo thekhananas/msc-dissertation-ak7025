@@ -4,6 +4,9 @@ status: pending
 author: Anas Khan
 reviewer: independent-reviewer-tbd
 review_scope:
+  - public_dialogue_represents_the_declared_evidence_pattern
   - evidence_and_assessment_measure_the_same_concept
   - assessment_does_not_repeat_the_evidence_solution
   - authored_tests_match_the_prompts
+  - initial_tracker_and_negative_controls_are_appropriate
+  - student_system_prompt_is_condition_neutral
