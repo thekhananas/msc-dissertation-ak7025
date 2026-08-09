@@ -84,6 +84,9 @@ from socratic_tutor.benchmark.failure_taxonomy import (
 )
 from socratic_tutor.benchmark.final_replay import run_final_replay
 from socratic_tutor.benchmark.freeze import prepare_benchmark_freeze
+from socratic_tutor.benchmark.harness_correction_analysis import (
+    run_harness_correction_analysis,
+)
 from socratic_tutor.benchmark.harness_correction_replay import (
     run_harness_correction_replay_with_modal,
 )
@@ -329,6 +332,24 @@ def build_parser() -> argparse.ArgumentParser:
     harness_correction.add_argument("--run-id", required=True)
     harness_correction.add_argument("--code-revision", required=True)
     harness_correction.add_argument("--created-at-utc", type=_utc_datetime, required=True)
+
+    correction_analysis = commands.add_parser(
+        "harness-correction-analyse",
+        help="Measure how the corrected harness changes the sealed study result",
+    )
+    correction_analysis.add_argument("--correction-report", type=Path, required=True)
+    correction_analysis.add_argument("--public-manifest", type=Path, required=True)
+    correction_analysis.add_argument("--public-rating-report", type=Path, required=True)
+    correction_analysis.add_argument("--methodology-clarification", type=Path, required=True)
+    correction_analysis.add_argument("--inferential-hierarchy", type=Path, required=True)
+    correction_analysis.add_argument("--analysis-specification", type=Path, required=True)
+    correction_analysis.add_argument("--original-primary-report", type=Path, required=True)
+    correction_analysis.add_argument("--original-secondary-report", type=Path, required=True)
+    correction_analysis.add_argument("--benchmark-root", type=Path, required=True)
+    correction_analysis.add_argument("--pixi-lock", type=Path, required=True)
+    correction_analysis.add_argument("--output-root", type=Path, required=True)
+    correction_analysis.add_argument("--code-revision", required=True)
+    correction_analysis.add_argument("--created-at-utc", type=_utc_datetime)
 
     rating_freeze = commands.add_parser(
         "public-rating-freeze",
@@ -1010,6 +1031,23 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, report.gate_passed
+    if command == "harness-correction-analyse":
+        report = run_harness_correction_analysis(
+            correction_report_path=cast(Path, args.correction_report),
+            public_manifest_path=cast(Path, args.public_manifest),
+            public_rating_report_path=cast(Path, args.public_rating_report),
+            methodology_clarification_path=cast(Path, args.methodology_clarification),
+            inferential_hierarchy_path=cast(Path, args.inferential_hierarchy),
+            analysis_specification_path=cast(Path, args.analysis_specification),
+            original_primary_report_path=cast(Path, args.original_primary_report),
+            original_secondary_report_path=cast(Path, args.original_secondary_report),
+            benchmark_root=cast(Path, args.benchmark_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime | None, args.created_at_utc),
+        )
+        return report, True
     if command == "public-rating-freeze":
         result = freeze_public_rating_boundary(
             plan=load_public_rating_guide_plan(cast(Path, args.plan)),
