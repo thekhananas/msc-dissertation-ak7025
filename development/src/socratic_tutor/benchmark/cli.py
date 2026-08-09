@@ -84,6 +84,9 @@ from socratic_tutor.benchmark.failure_taxonomy import (
 )
 from socratic_tutor.benchmark.final_replay import run_final_replay
 from socratic_tutor.benchmark.freeze import prepare_benchmark_freeze
+from socratic_tutor.benchmark.harness_correction_replay import (
+    run_harness_correction_replay_with_modal,
+)
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.benchmark.inferential_hierarchy import (
     freeze_inferential_hierarchy,
@@ -311,6 +314,21 @@ def build_parser() -> argparse.ArgumentParser:
     sandbox_rehearsal.add_argument("--recorded-responses", type=Path, required=True)
     sandbox_rehearsal.add_argument("--output-root", type=Path, required=True)
     sandbox_rehearsal.add_argument("--run-id", required=True)
+
+    harness_correction = commands.add_parser(
+        "harness-correction-replay",
+        help="Replay frozen evidence and criterion code after the sequence-comparison fix",
+    )
+    harness_correction.add_argument("--manifest", type=Path, required=True)
+    harness_correction.add_argument("--decision-responses", type=Path, required=True)
+    harness_correction.add_argument("--criterion-responses", type=Path, required=True)
+    harness_correction.add_argument("--original-evidence-root", type=Path, required=True)
+    harness_correction.add_argument("--original-criterion-root", type=Path, required=True)
+    harness_correction.add_argument("--pixi-lock", type=Path, required=True)
+    harness_correction.add_argument("--output-root", type=Path, required=True)
+    harness_correction.add_argument("--run-id", required=True)
+    harness_correction.add_argument("--code-revision", required=True)
+    harness_correction.add_argument("--created-at-utc", type=_utc_datetime, required=True)
 
     rating_freeze = commands.add_parser(
         "public-rating-freeze",
@@ -976,6 +994,20 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             recorded_responses_path=cast(Path, args.recorded_responses),
             output_root=cast(Path, args.output_root),
             run_id=cast(str, args.run_id),
+        )
+        return report, report.gate_passed
+    if command == "harness-correction-replay":
+        report = run_harness_correction_replay_with_modal(
+            manifest_path=cast(Path, args.manifest),
+            decision_responses_path=cast(Path, args.decision_responses),
+            criterion_responses_path=cast(Path, args.criterion_responses),
+            original_evidence_root=cast(Path, args.original_evidence_root),
+            original_criterion_root=cast(Path, args.original_criterion_root),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            run_id=cast(str, args.run_id),
+            code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime, args.created_at_utc),
         )
         return report, report.gate_passed
     if command == "public-rating-freeze":
