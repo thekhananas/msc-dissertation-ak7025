@@ -156,6 +156,7 @@ from socratic_tutor.benchmark.secondary_analysis import run_secondary_analysis
 from socratic_tutor.benchmark.specificity_figure import render_specificity_figure
 from socratic_tutor.benchmark.study_design_figure import render_study_design_figure
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.publication.system_boundary import render_system_boundary_figure
 
 
 class SmokeManifest(ContractModel):
@@ -658,6 +659,17 @@ def build_parser() -> argparse.ArgumentParser:
     study_design_figure.add_argument("--output-root", type=Path, required=True)
     study_design_figure.add_argument("--code-revision", required=True)
     study_design_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
+    system_boundary_figure = commands.add_parser(
+        "system-boundary-figure",
+        help="Render the frozen demo, benchmark, and analysis boundaries",
+    )
+    system_boundary_figure.add_argument("--specification", type=Path, required=True)
+    system_boundary_figure.add_argument("--source-root", type=Path, required=True)
+    system_boundary_figure.add_argument("--pixi-lock", type=Path, required=True)
+    system_boundary_figure.add_argument("--output-root", type=Path, required=True)
+    system_boundary_figure.add_argument("--code-revision", required=True)
+    system_boundary_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
     rating_reliability = commands.add_parser(
         "public-rating-reliability",
@@ -1285,6 +1297,16 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             decision_seal_report_path=cast(Path, args.decision_seal_report),
             criterion_plan_path=cast(Path, args.criterion_plan),
             criterion_report_path=cast(Path, args.criterion_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
+    if command == "system-boundary-figure":
+        manifest = render_system_boundary_figure(
+            specification_path=cast(Path, args.specification),
+            source_root=cast(Path, args.source_root),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             publication_code_revision=cast(str, args.code_revision),

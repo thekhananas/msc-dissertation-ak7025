@@ -1,0 +1,180 @@
+schema_version: 1
+schema_id: publication.system_boundary_specification.v1
+specification_version: v1
+status: frozen
+frozen_at_utc: 2026-09-03T13:45:00Z
+
+title: What runs in the demo, the benchmark, and the offline analysis?
+subtitle: The project has separate execution paths that share typed contracts and immutable records, not live hidden state.
+
+boundaries:
+  - boundary_id: interactive_demo
+    title: Interactive proof-of-concept demo
+    statement: A person can complete a local tutoring turn and inspect the simple state update.
+  - boundary_id: external_benchmark
+    title: Sealed external-model benchmark
+    statement: A pinned evaluation model supplies responses; predictions are sealed before the later outcome is requested.
+  - boundary_id: offline_analysis
+    title: Offline analysis and tracker study
+    statement: Analysis reads frozen records; it makes no provider or sandbox calls.
+
+nodes:
+  - node_id: demo_user
+    boundary_id: interactive_demo
+    lane: 0
+    order: 1
+    title: Person using demo
+    detail: Submits a visible answer to one authored practice task.
+    kind: actor
+  - node_id: web_api
+    boundary_id: interactive_demo
+    lane: 0
+    order: 2
+    title: React + FastAPI
+    detail: Displays the session and validates each request.
+    kind: interface
+  - node_id: langgraph_turn
+    boundary_id: interactive_demo
+    lane: 0
+    order: 3
+    title: LangGraph turn
+    detail: Classifies evidence, updates the simple tracker, and chooses a heuristic action.
+    kind: orchestration
+  - node_id: template_tutor
+    boundary_id: interactive_demo
+    lane: 0
+    order: 4
+    title: Reviewed prompt template
+    detail: Returns the next Socratic prompt; no live LLM is called.
+    kind: generation
+  - node_id: local_log
+    boundary_id: interactive_demo
+    lane: 0
+    order: 5
+    title: Hash-chained JSONL
+    detail: Preserves local turn events for replay and inspection.
+    kind: storage
+
+  - node_id: frozen_cases
+    boundary_id: external_benchmark
+    lane: 0
+    order: 1
+    title: Frozen authored cases
+    detail: Public, evidence, and criterion contexts remain separate.
+    kind: data
+  - node_id: evaluation_model
+    boundary_id: external_benchmark
+    lane: 0
+    order: 2
+    title: Pinned evaluation model
+    detail: Cerebras gpt-oss-120b; not a human learner or validated student simulator.
+    kind: model
+  - node_id: evidence_path
+    boundary_id: external_benchmark
+    lane: 0
+    order: 3
+    title: Evidence sandbox + tracker
+    detail: Modal executes probe code; simple-v1 converts visible evidence into a prediction.
+    kind: execution
+  - node_id: decision_seal
+    boundary_id: external_benchmark
+    lane: 0
+    order: 4
+    title: Immutable decision seal
+    detail: Locks four condition predictions per case before outcome access.
+    kind: storage
+  - node_id: criterion_gate
+    boundary_id: external_benchmark
+    lane: 0
+    order: 5
+    title: Post-seal criterion gate
+    detail: Releases the separate criterion request only after the global seal.
+    kind: control
+  - node_id: criterion_outcomes
+    boundary_id: external_benchmark
+    lane: 0
+    order: 6
+    title: Sandbox outcome records
+    detail: Executes criterion code and stores completed or missing outcomes.
+    kind: storage
+
+  - node_id: immutable_records
+    boundary_id: offline_analysis
+    lane: 0
+    order: 1
+    title: Immutable benchmark records
+    detail: Predictions, outcomes, reviews, hashes, and execution accounting.
+    kind: data
+  - node_id: paired_analysis
+    boundary_id: offline_analysis
+    lane: 0
+    order: 2
+    title: Paired statistical analysis
+    detail: Computes effects, uncertainty, controls, missingness, and failures.
+    kind: analysis
+  - node_id: report_outputs
+    boundary_id: offline_analysis
+    lane: 0
+    order: 3
+    title: Report and demo figures
+    detail: Reproducible PDF, SVG, CSV, and manifest outputs.
+    kind: publication
+
+  - node_id: glass_box_simulator
+    boundary_id: offline_analysis
+    lane: 1
+    order: 1
+    title: Glass-box simulator
+    detail: Generates known latent states and controlled observation stress.
+    kind: simulation
+  - node_id: bayesian_trackers
+    boundary_id: offline_analysis
+    lane: 1
+    order: 2
+    title: Five Bayesian trackers
+    detail: Includes ordinary and bounded channel-aware updates.
+    kind: model
+  - node_id: robustness_outputs
+    boundary_id: offline_analysis
+    lane: 1
+    order: 3
+    title: Simulator robustness result
+    detail: Reports estimation quality and update cost, not teaching outcomes.
+    kind: publication
+
+edges:
+  - {source: demo_user, target: web_api, label: answer}
+  - {source: web_api, target: langgraph_turn, label: validated request}
+  - {source: langgraph_turn, target: template_tutor, label: action + state}
+  - {source: template_tutor, target: local_log, label: visible turn event}
+  - {source: frozen_cases, target: evaluation_model, label: isolated prompts}
+  - {source: evaluation_model, target: evidence_path, label: public + evidence responses}
+  - {source: evidence_path, target: decision_seal, label: four predictions}
+  - {source: decision_seal, target: criterion_gate, label: global seal}
+  - {source: criterion_gate, target: criterion_outcomes, label: criterion request}
+  - {source: immutable_records, target: paired_analysis, label: read only}
+  - {source: paired_analysis, target: report_outputs, label: verified results}
+  - {source: glass_box_simulator, target: bayesian_trackers, label: matched trajectories}
+  - {source: bayesian_trackers, target: robustness_outputs, label: stress metrics}
+
+source_files:
+  - apps/web/src/App.tsx
+  - apps/api/main.py
+  - src/socratic_tutor/sessions.py
+  - src/socratic_tutor/graph/turn_graph.py
+  - src/socratic_tutor/tracking/simple.py
+  - src/socratic_tutor/policies/heuristic.py
+  - src/socratic_tutor/generation/templates.py
+  - src/socratic_tutor/trajectories/events.py
+  - src/socratic_tutor/benchmark/external_seal.py
+  - src/socratic_tutor/benchmark/external_criterion.py
+  - src/socratic_tutor/sandbox/modal.py
+  - src/socratic_tutor/benchmark/primary_analysis.py
+  - src/socratic_tutor/tracker_study/simulation.py
+
+claim_boundaries:
+  - The current interactive demo uses reviewed templates and makes no live LLM call.
+  - The external model is an evaluation model, not a human learner or validated student simulator.
+  - The external benchmark measures prediction on fixed authored cases, not tutoring efficacy.
+  - The Bayesian tracker study uses simulated latent states and does not measure human learning.
+  - Offline analysis reads frozen records and does not rerun the model or sandbox.
