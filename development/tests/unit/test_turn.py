@@ -4,12 +4,14 @@ import pytest
 from pydantic import ValidationError
 
 from socratic_tutor.contracts import (
+    Evidence,
     EvidenceCategory,
     StudentSubmission,
     TrackerState,
     TutorAction,
 )
 from socratic_tutor.guardrails import check_prompt
+from socratic_tutor.policies import choose_action
 from socratic_tutor.tasks import load_task
 from socratic_tutor.tracking import initial_tracker_state, update_tracker
 from socratic_tutor.turn import run_turn
@@ -78,6 +80,23 @@ def test_tracker_is_bounded_after_repeated_evidence() -> None:
         state = update_tracker(state, correct)
 
     assert state.mastery_probability == 1.0
+
+
+def test_incorrect_evidence_does_not_claim_a_specific_misconception() -> None:
+    task = load_task()
+    evidence = Evidence(
+        category=EvidenceCategory.INCORRECT,
+        confidence=1.0,
+        rationale="All executable checks failed.",
+    )
+
+    tracker = update_tracker(initial_tracker_state(task.concept), evidence)
+    decision = choose_action(evidence)
+
+    assert tracker.mastery_probability == 0.3
+    assert tracker.last_evidence is EvidenceCategory.INCORRECT
+    assert decision.action is TutorAction.HINT
+    assert "assuming a misconception" in decision.rationale
 
 
 def test_repeated_evidence_advances_prompt_variants() -> None:

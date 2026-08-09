@@ -7,6 +7,10 @@ _ACTIONS: dict[EvidenceCategory, tuple[TutorAction, str]] = {
         TutorAction.TRANSFER,
         "Correct evidence supports moving to a nearby transfer question.",
     ),
+    EvidenceCategory.INCORRECT: (
+        TutorAction.HINT,
+        "Incorrect evidence should receive a conceptual hint without assuming a misconception.",
+    ),
     EvidenceCategory.MISCONCEPTION: (
         TutorAction.HINT,
         "A recognised misconception should receive a conceptual hint, not the answer.",
