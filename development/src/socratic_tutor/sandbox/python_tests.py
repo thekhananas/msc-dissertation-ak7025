@@ -247,6 +247,18 @@ def decode(value):
     return base64.b64decode(value.encode("ascii")).decode("utf-8")
 
 
+def normalise(value):
+    if isinstance(value, (list, tuple)):
+        return tuple(normalise(item) for item in value)
+    if isinstance(value, dict):
+        return tuple(sorted((key, normalise(item)) for key, item in value.items()))
+    return value
+
+
+def equal(actual, expected):
+    return normalise(actual) == normalise(expected)
+
+
 try:
     source = decode(sys.argv[1])
     bundle = json.loads(decode(sys.argv[2]))
@@ -261,15 +273,15 @@ try:
             failed = 0
             for check in bundle["checks"]:
                 if check["kind"] == "no_args":
-                    successful = candidate() == check["expected"]
+                    successful = equal(candidate(), check["expected"])
                 elif check["kind"] == "args":
-                    successful = candidate(**check["args"]) == check["expected"]
+                    successful = equal(candidate(**check["args"]), check["expected"])
                 elif check["kind"] == "snapshot":
                     original = list(check["input_items"])
                     snapshot, returned_original = candidate(original, check["value"])
                     successful = (
-                        snapshot == check["expected_snapshot"]
-                        and original == check["expected_original_after"]
+                        equal(snapshot, check["expected_snapshot"])
+                        and equal(original, check["expected_original_after"])
                         and returned_original is original
                     )
                     if check.get("snapshot_must_be_distinct"):
@@ -279,13 +291,17 @@ try:
                     actual = candidate(original)
                     successful = True
                     if "expected" in check:
-                        successful = successful and actual == check["expected"]
+                        successful = successful and equal(actual, check["expected"])
                     if "expected_input_after" in check:
-                        successful = successful and original == check["expected_input_after"]
+                        successful = successful and equal(
+                            original, check["expected_input_after"]
+                        )
                     if check.get("expected_return_is_input"):
                         successful = successful and actual is original
                 elif check["kind"] == "label":
-                    successful = candidate(check["label"], check["default"]) == check["expected"]
+                    successful = equal(
+                        candidate(check["label"], check["default"]), check["expected"]
+                    )
                 else:
                     raise ValueError("Unsupported authored test check")
                 if successful:

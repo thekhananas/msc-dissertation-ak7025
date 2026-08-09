@@ -1,5 +1,7 @@
 """Tests for preparing and parsing isolated authored Python tests."""
 
+import subprocess
+import sys
 from pathlib import Path
 
 from socratic_tutor.benchmark.evaluator.loader import load_and_verify_manifest
@@ -42,6 +44,9 @@ DEV_BUNDLES = (
 ZERO_ARGUMENT_BUNDLE = (
     WORKSPACE_ROOT / "data" / "benchmarks" / "v1" / "evidence" / "h-c1m1-01-tests.yaml"
 )
+NESTED_TUPLE_BUNDLE = (
+    WORKSPACE_ROOT / "data" / "benchmarks" / "v1" / "evidence" / "h-c1m2-02-tests.yaml"
+)
 
 
 class CapturingExecutor:
@@ -52,6 +57,26 @@ class CapturingExecutor:
     def execute(self, request: SandboxExecutionRequest) -> SandboxExecutionResult:
         self.command = request.command
         return self.result
+
+
+class TrustedFixtureExecutor:
+    """Run only fixed test submissions through the generated isolated command."""
+
+    def execute(self, request: SandboxExecutionRequest) -> SandboxExecutionResult:
+        completed = subprocess.run(
+            (sys.executable, *request.command[1:]),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=request.timeout_seconds,
+        )
+        return SandboxExecutionResult(
+            status="completed" if completed.returncode == 0 else "failed",
+            sandbox_id="trusted-test-fixture",
+            exit_code=completed.returncode,
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+        )
 
 
 def test_extracts_one_explicit_python_block_and_builds_isolated_command() -> None:
@@ -157,3 +182,32 @@ def test_loads_every_frozen_criterion_bundle_before_heldout_execution() -> None:
     assert {check.harness_check()["kind"] for bundle in bundles for check in bundle.checks} == {
         "args"
     }
+
+
+def test_harness_compares_yaml_sequences_by_value_without_erasing_nested_values() -> None:
+    executor = TrustedFixtureExecutor()
+    correct = execute_authored_python_tests(
+        executor,
+        response=(
+            "```python\n"
+            "def predicted_positions() -> tuple[tuple[int, int], tuple[int, int]]:\n"
+            "    return ((2, 4), (9, 9))\n"
+            "```"
+        ),
+        bundle_path=NESTED_TUPLE_BUNDLE,
+    )
+    incorrect = execute_authored_python_tests(
+        executor,
+        response=(
+            "```python\n"
+            "def predicted_positions() -> tuple[tuple[int, int], tuple[int, int]]:\n"
+            "    return ((2, 4), (9, 8))\n"
+            "```"
+        ),
+        bundle_path=NESTED_TUPLE_BUNDLE,
+    )
+
+    assert correct.outcome is not None
+    assert (correct.outcome.passed, correct.outcome.failed) == (1, 0)
+    assert incorrect.outcome is not None
+    assert (incorrect.outcome.passed, incorrect.outcome.failed) == (0, 1)
