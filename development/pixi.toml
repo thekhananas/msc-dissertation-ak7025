@@ -118,6 +118,9 @@ cmd = "python scripts/benchmark_generate.py"
 [tasks.benchmark-evaluate]
 cmd = "python scripts/benchmark_cli.py evaluate"
 
+[tasks.harness-correction-replay]
+cmd = "python scripts/benchmark_cli.py harness-correction-replay --manifest data/benchmarks/v1/manifest.yaml --decision-responses artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/recorded_responses.jsonl --criterion-responses artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/criterion/recorded_responses.jsonl --original-evidence-root artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/decision/evidence_executions --original-criterion-root artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/criterion/records --pixi-lock pixi.lock --output-root artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001 --run-id cerebras-gpt-oss-120b-v1-harness-correction-20260903-001 --code-revision $(git rev-parse HEAD) --created-at-utc 2026-09-03T13:55:41Z"
+
 [tasks.docs-check]
 cmd = "python scripts/check_docs.py"
 
