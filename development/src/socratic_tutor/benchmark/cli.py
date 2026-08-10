@@ -87,6 +87,7 @@ from socratic_tutor.benchmark.freeze import prepare_benchmark_freeze
 from socratic_tutor.benchmark.harness_correction_analysis import (
     run_harness_correction_analysis,
 )
+from socratic_tutor.benchmark.harness_correction_closure import close_harness_correction
 from socratic_tutor.benchmark.harness_correction_replay import (
     run_harness_correction_replay_with_modal,
 )
@@ -350,6 +351,22 @@ def build_parser() -> argparse.ArgumentParser:
     correction_analysis.add_argument("--output-root", type=Path, required=True)
     correction_analysis.add_argument("--code-revision", required=True)
     correction_analysis.add_argument("--created-at-utc", type=_utc_datetime)
+
+    correction_closure = commands.add_parser(
+        "harness-correction-close",
+        help="Reclose benchmark claims after the complete harness correction",
+    )
+    correction_closure.add_argument("--original-closure", type=Path, required=True)
+    correction_closure.add_argument("--correction-replay-report", type=Path, required=True)
+    correction_closure.add_argument("--correction-analysis-plan", type=Path, required=True)
+    correction_closure.add_argument("--correction-analysis-report", type=Path, required=True)
+    correction_closure.add_argument("--partial-correction-report", type=Path, required=True)
+    correction_closure.add_argument("--original-interpretation-report", type=Path, required=True)
+    correction_closure.add_argument("--original-resource-report", type=Path, required=True)
+    correction_closure.add_argument("--pixi-lock", type=Path, required=True)
+    correction_closure.add_argument("--output-root", type=Path, required=True)
+    correction_closure.add_argument("--code-revision", required=True)
+    correction_closure.add_argument("--created-at-utc", type=_utc_datetime)
 
     rating_freeze = commands.add_parser(
         "public-rating-freeze",
@@ -1045,6 +1062,21 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             analysis_code_revision=cast(str, args.code_revision),
+            created_at_utc=cast(datetime | None, args.created_at_utc),
+        )
+        return report, True
+    if command == "harness-correction-close":
+        report = close_harness_correction(
+            original_closure_path=cast(Path, args.original_closure),
+            correction_replay_report_path=cast(Path, args.correction_replay_report),
+            correction_analysis_plan_path=cast(Path, args.correction_analysis_plan),
+            correction_analysis_report_path=cast(Path, args.correction_analysis_report),
+            partial_correction_report_path=cast(Path, args.partial_correction_report),
+            original_interpretation_report_path=cast(Path, args.original_interpretation_report),
+            original_resource_report_path=cast(Path, args.original_resource_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            code_revision=cast(str, args.code_revision),
             created_at_utc=cast(datetime | None, args.created_at_utc),
         )
         return report, True
