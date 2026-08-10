@@ -87,6 +87,9 @@ from socratic_tutor.benchmark.freeze import prepare_benchmark_freeze
 from socratic_tutor.benchmark.harness_correction_analysis import (
     run_harness_correction_analysis,
 )
+from socratic_tutor.benchmark.harness_correction_case_figure import (
+    render_harness_correction_case_figure,
+)
 from socratic_tutor.benchmark.harness_correction_closure import close_harness_correction
 from socratic_tutor.benchmark.harness_correction_figure import (
     render_harness_correction_figure,
@@ -383,6 +386,19 @@ def build_parser() -> argparse.ArgumentParser:
     correction_figure.add_argument("--output-root", type=Path, required=True)
     correction_figure.add_argument("--code-revision", required=True)
     correction_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
+    correction_case_figure = commands.add_parser(
+        "harness-correction-case-figure",
+        help="Publish the corrected outcome for every authored benchmark case",
+    )
+    correction_case_figure.add_argument("--correction-analysis-plan", type=Path, required=True)
+    correction_case_figure.add_argument("--correction-analysis-report", type=Path, required=True)
+    correction_case_figure.add_argument("--correction-closure-plan", type=Path, required=True)
+    correction_case_figure.add_argument("--correction-closure-report", type=Path, required=True)
+    correction_case_figure.add_argument("--pixi-lock", type=Path, required=True)
+    correction_case_figure.add_argument("--output-root", type=Path, required=True)
+    correction_case_figure.add_argument("--code-revision", required=True)
+    correction_case_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
     rating_freeze = commands.add_parser(
         "public-rating-freeze",
@@ -1098,6 +1114,18 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
         return report, True
     if command == "harness-correction-figure":
         manifest = render_harness_correction_figure(
+            correction_analysis_plan_path=cast(Path, args.correction_analysis_plan),
+            correction_analysis_report_path=cast(Path, args.correction_analysis_report),
+            correction_closure_plan_path=cast(Path, args.correction_closure_plan),
+            correction_closure_report_path=cast(Path, args.correction_closure_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
+    if command == "harness-correction-case-figure":
+        manifest = render_harness_correction_case_figure(
             correction_analysis_plan_path=cast(Path, args.correction_analysis_plan),
             correction_analysis_report_path=cast(Path, args.correction_analysis_report),
             correction_closure_plan_path=cast(Path, args.correction_closure_plan),

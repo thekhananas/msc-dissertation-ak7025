@@ -138,7 +138,7 @@ def render_harness_correction_figure(
         pixi_lock_hash = file_sha256(pixi_lock_path.read_bytes())
     except OSError as error:
         raise HarnessCorrectionFigureError(f"Could not read Pixi lock: {pixi_lock_path}") from error
-    _validate_sources(
+    validate_harness_correction_sources(
         analysis_plan=analysis_plan,
         analysis=analysis,
         closure_plan=closure_plan,
@@ -575,7 +575,7 @@ def _style_axis(axis: Axes, *, grid_axis: Literal["x", "y"]) -> None:
     axis.set_axisbelow(True)
 
 
-def _validate_sources(
+def validate_harness_correction_sources(
     *,
     analysis_plan: HarnessCorrectionAnalysisPlan,
     analysis: HarnessCorrectionAnalysisReport,

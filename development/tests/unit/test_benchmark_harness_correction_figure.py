@@ -18,7 +18,7 @@ from socratic_tutor.benchmark.harness_correction_figure import (
     HarnessCorrectionFigureError,
     _render_vector_files,
     _summary_csv,
-    _validate_sources,
+    validate_harness_correction_sources,
 )
 from socratic_tutor.benchmark.statistics import PairedCaseInference
 
@@ -59,7 +59,7 @@ def test_source_validation_rejects_a_closure_from_another_analysis() -> None:
         correction_analysis_report_hash=OTHER_HASH,
     )
     with pytest.raises(HarnessCorrectionFigureError, match="another correction analysis report"):
-        _validate_sources(
+        validate_harness_correction_sources(
             analysis_plan=analysis_plan,
             analysis=analysis,
             closure_plan=closure_plan,
