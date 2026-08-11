@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -12,6 +13,25 @@ from socratic_tutor.benchmark.hashing import canonical_json_bytes
 
 class ArtifactConflictError(ValueError):
     """An immutable artifact path already contains different content."""
+
+
+def artifact_locations(output_root: Path) -> dict[str, Any]:
+    """Describe files written beneath an output root for command-line users."""
+
+    working_directory = Path.cwd().resolve()
+    resolved_root = output_root.resolve()
+    files = sorted(path for path in resolved_root.rglob("*") if path.is_file())
+    relative_files: list[str] = []
+    for path in files:
+        try:
+            relative_files.append(path.relative_to(working_directory).as_posix())
+        except ValueError:
+            relative_files.append(str(path))
+    return {
+        "working_directory": str(working_directory),
+        "output_root": str(resolved_root),
+        "files": relative_files,
+    }
 
 
 def immutable_json_bytes(value: BaseModel | dict[str, object]) -> bytes:

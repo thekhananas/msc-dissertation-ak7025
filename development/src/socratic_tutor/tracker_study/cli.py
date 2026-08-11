@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from socratic_tutor.benchmark.artifacts import artifact_locations
 from socratic_tutor.tracker_study.analysis import run_development_analysis
 from socratic_tutor.tracker_study.analysis_spec import (
     load_tracker_study_analysis_specification,
@@ -139,6 +140,8 @@ def main(argv: list[str] | None = None) -> int:
             stream=sys.stderr,
         )
         return 1
+    if isinstance(getattr(args, "output_root", None), Path):
+        result["artifact_locations"] = artifact_locations(cast(Path, args.output_root))
     _print_json(
         {"command": str(args.command), "result": result, "status": "ok"},
         stream=sys.stdout,

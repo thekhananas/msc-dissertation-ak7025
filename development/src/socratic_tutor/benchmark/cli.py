@@ -14,7 +14,7 @@ from socratic_tutor.benchmark.analysis_spec import (
     analysis_specification_hash,
     load_analysis_specification,
 )
-from socratic_tutor.benchmark.artifacts import write_immutable_json
+from socratic_tutor.benchmark.artifacts import artifact_locations, write_immutable_json
 from socratic_tutor.benchmark.behavior_audit import (
     load_student_behavior_audit_plan,
     run_student_behavior_audit_from_environment,
@@ -941,10 +941,13 @@ def main(argv: list[str] | None = None) -> int:
             stream=sys.stderr,
         )
         return 1
+    result_payload = _json_value(result)
+    if isinstance(result_payload, dict) and isinstance(getattr(args, "output_root", None), Path):
+        result_payload["artifact_locations"] = artifact_locations(cast(Path, args.output_root))
     _print_json(
         {
             "command": str(args.command),
-            "result": _json_value(result),
+            "result": result_payload,
             "status": "ok" if gate_passed else "gate_failed",
         },
         stream=sys.stdout,

@@ -36,14 +36,23 @@ from socratic_tutor.benchmark.resource_reconciliation import (
     ResourceReconciliationReport,
 )
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.publication.figure_style import (
+    BLUE,
+    GREEN,
+    GREY,
+    INK,
+    LIGHT_GREY,
+    MUTED,
+    ORANGE,
+)
 
-_BLUE = "#0072B2"
-_ORANGE = "#D55E00"
-_GREEN = "#009E73"
-_GREY = "#7A858F"
-_LIGHT_GREY = "#D7DDE2"
-_INK = "#17212B"
-_MUTED = "#56616B"
+_BLUE = BLUE
+_ORANGE = ORANGE
+_GREEN = GREEN
+_GREY = GREY
+_LIGHT_GREY = LIGHT_GREY
+_INK = INK
+_MUTED = MUTED
 _TITLE = "The corrected probe result required more work for one changed decision"
 _STYLE: dict[str, object] = {
     "axes.edgecolor": _LIGHT_GREY,
