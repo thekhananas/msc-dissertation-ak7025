@@ -14,16 +14,11 @@ from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.contracts import ContractModel
 
+from .contracts import PolicyId, ProbeClassId
+
 
 class AcquisitionStudyPlanError(ValueError):
     """A frozen acquisition-study input is missing or inconsistent."""
-
-
-class ProbeClassId(StrEnum):
-    HIGH_RELIABILITY_DENSE = "high_reliability_dense"
-    HIGH_RELIABILITY_SPARSE = "high_reliability_sparse"
-    MODERATE_RELIABILITY_DENSE = "moderate_reliability_dense"
-    ASYMMETRIC_RELIABILITY_DENSE = "asymmetric_reliability_dense"
 
 
 class EvaluationEnvironmentId(StrEnum):
@@ -39,16 +34,6 @@ class EvaluationEnvironmentId(StrEnum):
 class EnvironmentRole(StrEnum):
     MATCHED_SANITY_CHECK = "matched_sanity_check"
     HELD_OUT_MISMATCH = "held_out_mismatch"
-
-
-class PolicyId(StrEnum):
-    RELIABILITY_AWARE_BOUNDED = "reliability_aware_quantile_bounded"
-    SEEDED_RANDOM_BOUNDED = "seeded_random_bounded"
-    UNCERTAINTY_ONLY_BOUNDED = "uncertainty_only_bounded"
-    PLUG_IN_EVSI_BOUNDED = "plug_in_evsi_bounded"
-    NEVER_PROBE = "never_probe"
-    ALWAYS_PROBE_BOUNDED = "always_probe_bounded"
-    ORACLE_TRUE_RELIABILITY_BOUNDED = "oracle_true_reliability_bounded"
 
 
 class ProbeClassCalibration(ContractModel):
