@@ -1,5 +1,8 @@
 """Tests for the corrected quality-and-resource publication."""
 
+# These tests intentionally exercise private helpers to isolate validation failures.
+# pyright: reportPrivateUsage=false
+
 from datetime import UTC, datetime
 
 import pytest
