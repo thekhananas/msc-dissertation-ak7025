@@ -1,0 +1,131 @@
+schema_version: 1
+schema_id: acquisition_study.analysis_specification.v1
+study_id: reliability-aware-probing-v1
+status: frozen_before_policy_implementation
+frozen_date: "2026-09-05"
+research_question: >-
+  Across predeclared matched and misspecified simulator environments, can a
+  reliability-aware Bayesian policy use a fixed 50% probe budget to reduce
+  later-task prediction error relative to random, uncertainty-only, and
+  ordinary value-of-information selection?
+environment_specification_path: configs/acquisition-study/v1-environments.yaml
+environment_specification_hash: 4f72b0944ea61598408910498fb5d017db9ee1f7ac09cc1a2e01edcf42a0191b
+development_results_inspected_before_freeze: false
+evaluation_results_inspected_before_freeze: false
+external_model_data_used: false
+human_data_used: false
+
+policy_information_allowed:
+  - case_id
+  - prior_success_probability
+  - probe_class
+  - calibration_beta_posterior
+  - remaining_probe_budget
+policy_information_forbidden:
+  - family_id
+  - evaluation_environment_id
+  - evaluation_reliability_parameters
+  - latent_outcome
+  - unrequested_probe_outcome
+  - criterion_outcome
+  - future_missingness_or_family_fault
+
+policies:
+  candidate: reliability_aware_quantile_bounded
+  matched_budget_comparators:
+    - seeded_random_bounded
+    - uncertainty_only_bounded
+    - plug_in_evsi_bounded
+  endpoints:
+    - never_probe
+    - always_probe_bounded
+  oracle_reference: oracle_true_reliability_bounded
+  conservative_reliability_quantile: 0.10
+  bounded_log_likelihood_kappa: 2.0
+  plug_in_reliability_summary: posterior_mean
+  reliability_draw_count: 8192
+  reliability_draw_seed: 9052808
+  tie_break: ascending_case_id
+  random_policy_seed: 9052707
+  primary_comparison_isolates: acquisition_ranking_with_common_bounded_update
+
+primary:
+  metric: final_classification_error
+  classification_threshold: 0.5
+  unit_of_analysis: episode
+  primary_budget_fraction: 0.5
+  exact_selected_probes_per_episode: 20
+  matched_environment: matched
+  held_out_environments:
+    - lower_reliability
+    - asymmetric_errors
+    - irrelevant_evidence
+    - inverted_evidence
+    - difficulty_missingness
+    - correlated_family_failures
+  aggregation: equal_mean_across_held_out_environments
+  estimand: candidate_minus_comparator_paired_episode_error
+  interval_method: stratified_paired_episode_percentile_bootstrap
+  bootstrap_pairing: same_episode_indices_within_environment_independent_between_environments
+  bootstrap_repetitions: 20000
+  bootstrap_seed: 9052505
+  familywise_alpha: 0.05
+  multiplicity_method: bonferroni_three_primary_comparisons
+  simultaneous_confidence_level: 0.9833333333333333
+  practical_difference_for_description: 0.01
+  precision_target_half_width: 0.02
+  precision_basis: ten_independent_families_with_arbitrary_dependence_within_each_family
+  comparison_claim_rule: simultaneous_upper_interval_below_zero
+  overall_advantage_rule: comparison_claim_holds_for_all_three_comparators
+  robustness_rule: overall_advantage_and_no_held_out_point_regression_against_plug_in_evsi
+  p_value_status: not_primary_intervals_drive_claims
+
+secondary:
+  budget_fractions: [0.0, 0.25, 0.5, 0.75, 1.0]
+  metrics:
+    - classification_error
+    - brier_score
+    - negative_log_likelihood
+    - expected_calibration_error
+  status: descriptive_not_confirmatory
+  asymmetric_false_positive_costs: [0.5, 1.0, 2.0]
+  probability_floor: 0.000001
+  ece_bin_count: 10
+  calibration_seed_sensitivity: repeat_complete_analysis_over_twenty_predeclared_calibration_seeds
+
+ablations:
+  - replace_lower_quantile_with_posterior_mean
+  - remove_bounded_update_from_candidate
+  - remove_both_reliability_conservatism_and_bounded_update
+  - compare_dense_and_sparse_classes_with_equal_expected_reliability
+negative_control: shuffle_probe_class_reliability_summaries
+
+safeguards:
+  paired_episode_key: environment_id_and_episode_id
+  missing_probe_rule: consume_budget_keep_case_no_update
+  episode_exclusion_rule: none_after_generation
+  software_failure_rule: invalidate_run_fix_version_and_rerun
+  canonical_evaluation_run_limit: 1
+  exact_retry_allowed: true
+  parameter_selection_after_evaluation_allowed: false
+  evaluation_outcomes_update_reliability_allowed: false
+
+claims:
+  simulator_prediction_claim_allowed: true
+  human_learning_claim_allowed: false
+  tutoring_efficacy_claim_allowed: false
+  cognitive_offloading_claim_allowed: false
+  deployed_cost_saving_claim_allowed: false
+  state_of_the_art_claim_allowed: false
+  matched_environment_alone_supports_robustness: false
+
+interpretation_order:
+  - design_integrity
+  - primary_held_out_macro_average
+  - comparator_specific_intervals
+  - per_environment_and_worst_environment
+  - matched_sanity_check
+  - secondary_budgets_ablations_and_negative_control
+  - simulator_and_claim_limits
+
+plan_hash: 6dcfcb630f5f33d14b4f8d8eb64019505a803d6350b9b8d2ffed82afc3350919

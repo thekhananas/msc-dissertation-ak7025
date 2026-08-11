@@ -1,0 +1,205 @@
+schema_version: 1
+schema_id: acquisition_study.environment_specification.v1
+study_id: reliability-aware-probing-v1
+status: frozen_before_policy_implementation
+claim_scope: glass_box_prediction_not_human_learning
+external_model_data_used: false
+human_data_used: false
+reliability_transform_formula: chance_plus_scale_times_base_minus_chance_then_optional_inversion
+environment_generation_order:
+  - sample_prior_and_hidden_outcome
+  - derive_environment_reliability
+  - sample_probe_outcome
+  - apply_case_and_family_inversion
+  - replace_with_missing_outcome
+
+calibration:
+  environment_id: calibration_assumed_model
+  seed: 9052202
+  sensitivity_seeds:
+    - 9053001
+    - 9053002
+    - 9053003
+    - 9053004
+    - 9053005
+    - 9053006
+    - 9053007
+    - 9053008
+    - 9053009
+    - 9053010
+    - 9053011
+    - 9053012
+    - 9053013
+    - 9053014
+    - 9053015
+    - 9053016
+    - 9053017
+    - 9053018
+    - 9053019
+    - 9053020
+  beta_prior_alpha: 1.0
+  beta_prior_beta: 1.0
+  probe_classes:
+    - probe_class: high_reliability_dense
+      sensitivity: 0.90
+      specificity: 0.92
+      mastered_samples: 160
+      non_mastered_samples: 160
+      cases_per_episode: 10
+    - probe_class: high_reliability_sparse
+      sensitivity: 0.90
+      specificity: 0.92
+      mastered_samples: 12
+      non_mastered_samples: 12
+      cases_per_episode: 10
+    - probe_class: moderate_reliability_dense
+      sensitivity: 0.78
+      specificity: 0.82
+      mastered_samples: 160
+      non_mastered_samples: 160
+      cases_per_episode: 10
+    - probe_class: asymmetric_reliability_dense
+      sensitivity: 0.92
+      specificity: 0.64
+      mastered_samples: 160
+      non_mastered_samples: 160
+      cases_per_episode: 10
+
+episodes:
+  development_episodes_per_environment: 50
+  evaluation_episodes_per_environment: 2000
+  candidates_per_episode: 40
+  families_per_episode: 10
+  cases_per_family: 4
+  latent_evaluation_seed: 9052404
+  prior_beta_alpha: 2.0
+  prior_beta_beta: 2.0
+  prior_probability_floor: 0.05
+  truth_sampling: bernoulli_from_prior_probability
+  family_assignment: one_case_per_probe_class
+  episode_sampling: independent_episodes
+  family_sampling: independent_families_with_arbitrary_within_family_fault_dependence
+  environment_latent_streams: distinct_stream_per_environment_derived_from_latent_seed
+  prior_difficulty_formula: one_minus_two_times_absolute_prior_minus_half
+
+evaluation_environments:
+  - environment_id: matched
+    role: matched_sanity_check
+    evidence_seed: 9052411
+    definition: Uses the same reliability model that generates calibration evidence.
+    reliability:
+      sensitivity_scale_from_chance: 1.0
+      specificity_scale_from_chance: 1.0
+      outcome_inversion_probability: 0.0
+    missingness:
+      base_probability: 0.0
+      prior_difficulty_slope: 0.0
+      maximum_probability: 0.0
+      selected_probe_consumes_budget_when_missing: true
+    family_fault:
+      probability: 0.0
+      mode: invert_all_probe_outcomes_in_family
+
+  - environment_id: lower_reliability
+    role: held_out_mismatch
+    evidence_seed: 9052422
+    definition: Halves every probe class's reliability above chance without changing calibration.
+    reliability:
+      sensitivity_scale_from_chance: 0.50
+      specificity_scale_from_chance: 0.50
+      outcome_inversion_probability: 0.0
+    missingness:
+      base_probability: 0.0
+      prior_difficulty_slope: 0.0
+      maximum_probability: 0.0
+      selected_probe_consumes_budget_when_missing: true
+    family_fault:
+      probability: 0.0
+      mode: invert_all_probe_outcomes_in_family
+
+  - environment_id: asymmetric_errors
+    role: held_out_mismatch
+    evidence_seed: 9052433
+    definition: Reduces sensitivity much more than specificity, creating excess false negatives.
+    reliability:
+      sensitivity_scale_from_chance: 0.20
+      specificity_scale_from_chance: 1.0
+      outcome_inversion_probability: 0.0
+    missingness:
+      base_probability: 0.0
+      prior_difficulty_slope: 0.0
+      maximum_probability: 0.0
+      selected_probe_consumes_budget_when_missing: true
+    family_fault:
+      probability: 0.0
+      mode: invert_all_probe_outcomes_in_family
+
+  - environment_id: irrelevant_evidence
+    role: held_out_mismatch
+    evidence_seed: 9052444
+    definition: Makes every executable result independent of the hidden outcome.
+    reliability:
+      sensitivity_scale_from_chance: 0.0
+      specificity_scale_from_chance: 0.0
+      outcome_inversion_probability: 0.0
+    missingness:
+      base_probability: 0.0
+      prior_difficulty_slope: 0.0
+      maximum_probability: 0.0
+      selected_probe_consumes_budget_when_missing: true
+    family_fault:
+      probability: 0.0
+      mode: invert_all_probe_outcomes_in_family
+
+  - environment_id: inverted_evidence
+    role: held_out_mismatch
+    evidence_seed: 9052455
+    definition: Reverses every executable result after sampling it from the base reliability model.
+    reliability:
+      sensitivity_scale_from_chance: 1.0
+      specificity_scale_from_chance: 1.0
+      outcome_inversion_probability: 1.0
+    missingness:
+      base_probability: 0.0
+      prior_difficulty_slope: 0.0
+      maximum_probability: 0.0
+      selected_probe_consumes_budget_when_missing: true
+    family_fault:
+      probability: 0.0
+      mode: invert_all_probe_outcomes_in_family
+
+  - environment_id: difficulty_missingness
+    role: held_out_mismatch
+    evidence_seed: 9052466
+    definition: Makes a selected probe more likely to return no result when its prior is near one half.
+    reliability:
+      sensitivity_scale_from_chance: 1.0
+      specificity_scale_from_chance: 1.0
+      outcome_inversion_probability: 0.0
+    missingness:
+      base_probability: 0.05
+      prior_difficulty_slope: 0.55
+      maximum_probability: 0.60
+      selected_probe_consumes_budget_when_missing: true
+    family_fault:
+      probability: 0.0
+      mode: invert_all_probe_outcomes_in_family
+
+  - environment_id: correlated_family_failures
+    role: held_out_mismatch
+    evidence_seed: 9052477
+    definition: Inverts all four probe outcomes in a family together with probability 0.30.
+    reliability:
+      sensitivity_scale_from_chance: 1.0
+      specificity_scale_from_chance: 1.0
+      outcome_inversion_probability: 0.0
+    missingness:
+      base_probability: 0.0
+      prior_difficulty_slope: 0.0
+      maximum_probability: 0.0
+      selected_probe_consumes_budget_when_missing: true
+    family_fault:
+      probability: 0.30
+      mode: invert_all_probe_outcomes_in_family
+
+specification_hash: 4f72b0944ea61598408910498fb5d017db9ee1f7ac09cc1a2e01edcf42a0191b
