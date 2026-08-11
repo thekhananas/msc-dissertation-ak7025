@@ -59,7 +59,10 @@ def _key(sample_id: str) -> BenchmarkSampleKey:
     )
 
 
-def _plan(*sample_ids: str) -> DecisionRunPlan:
+def _plan(
+    *sample_ids: str,
+    public_manifest_hash: str | None = None,
+) -> DecisionRunPlan:
     def marker(name: str) -> str:
         return canonical_sha256({"fixture": name})
 
@@ -71,7 +74,7 @@ def _plan(*sample_ids: str) -> DecisionRunPlan:
             dirty_worktree=False,
             pixi_lock_hash=marker("pixi-lock"),
             resolved_config_hash=marker("config"),
-            public_manifest_hash=marker("public-manifest"),
+            public_manifest_hash=public_manifest_hash or marker("public-manifest"),
             split_hash=marker("split"),
             prompt_version="benchmark-student-v1",
             prompt_hash=marker("prompt"),
@@ -97,6 +100,12 @@ def _seal_records(
     for record in records:
         store.append(record)
     return store.seal(_key(sample_id)).sealed_at_utc
+
+
+benchmark_key = _key
+decision_plan = _plan
+prediction_records_for_sample = _records
+seal_sample_records = _seal_records
 
 
 def test_global_seal_accounts_for_complete_missing_and_invalid_samples(
