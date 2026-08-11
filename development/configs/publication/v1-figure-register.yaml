@@ -12,7 +12,7 @@ format_rule: >-
 figures:
   - figure_id: FIG-01
     title: System boundaries and evidence paths
-    question: What ran in the demo, external benchmark, and tracker study?
+    question: Which parts of the project run in the demo, external benchmark, and tracker study?
     source: configs/publication/v1-system-boundary.yaml
     command: pixi run python scripts/benchmark_cli.py system-boundary-figure
     outputs: system_boundaries.pdf, system_boundaries.svg, system_boundary_components.csv
@@ -24,7 +24,7 @@ figures:
 
   - figure_id: FIG-02
     title: Benchmark design and commit-reveal sequence
-    question: How were public responses, evidence, and criterion outcomes kept separate?
+    question: How were predictions kept separate from the later coding outcome?
     source: configs/benchmark/v1-analysis-spec.yaml
     command: pixi run python scripts/benchmark_cli.py study-design-figure
     outputs: external_study_design.pdf, external_study_design.svg, study_design_stages.csv
@@ -36,7 +36,7 @@ figures:
 
   - figure_id: FIG-03
     title: Original and corrected benchmark result
-    question: How did the harness correction change the primary comparison?
+    question: How did the test-harness correction change the primary comparison?
     source: artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json
     command: pixi run harness-correction-figure
     outputs: harness_correction_result.pdf, harness_correction_result.svg, harness_correction_summary.csv

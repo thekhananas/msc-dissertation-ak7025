@@ -37,7 +37,7 @@ _GREY = "#7A858F"
 _LIGHT_GREY = "#D7DDE2"
 _INK = "#17212B"
 _MUTED = "#56616B"
-_TITLE = "A test-harness fault changed the benchmark conclusion"
+_TITLE = "A test-harness error changed the benchmark result"
 _STYLE: dict[str, object] = {
     "axes.edgecolor": _LIGHT_GREY,
     "axes.labelcolor": _INK,
@@ -45,9 +45,9 @@ _STYLE: dict[str, object] = {
     "axes.titlecolor": _INK,
     "axes.titlesize": 11,
     "axes.titleweight": "bold",
-    "figure.facecolor": "white",
-    "font.family": ["DejaVu Sans", "sans-serif"],
-    "font.size": 9,
+    "figure.facecolor": "#FAFAF7",
+    "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.size": 11,
     "pdf.fonttype": 42,
     "savefig.bbox": "tight",
     "savefig.facecolor": "white",
@@ -367,33 +367,32 @@ def _build_figure(
     accuracy_axis = figure.add_subplot(grid[0, 0])
     effect_axis = figure.add_subplot(grid[0, 1])
     relevance_axis = figure.add_subplot(grid[0, 2])
-    figure.suptitle(_TITLE, x=0.07, y=0.965, ha="left", fontsize=19, fontweight="bold")
+    figure.suptitle(_TITLE, x=0.07, y=0.965, ha="left", fontsize=22, fontweight="bold")
     figure.text(
         0.07,
         0.895,
-        "The original result is retained for transparency; the complete replay is a "
-        "post-hoc correction.",
+        "The original result is shown for transparency; the complete replay corrects the "
+        "test without making new model or sandbox calls.",
         color=_MUTED,
-        fontsize=10.5,
+        fontsize=12,
     )
     figure.text(
         0.07,
         0.835,
-        "Correcting strict tuple/list comparison changed "
+        "Repairing the tuple/list comparison changed "
         f"{closure.changed_execution_outcome_count} of 48 "
         "recorded execution outcomes.",
         color=_ORANGE,
-        fontsize=10.5,
+        fontsize=12,
         fontweight="bold",
     )
     figure.text(
         0.07,
         0.775,
-        "After correction, adding the passing probe changed only one net prediction; "
-        "passing unrelated "
-        "evidence produced the same decisions as relevant evidence.",
+        "After correction, the relevant probe changed one net prediction; unrelated passing "
+        "evidence produced the same decisions.",
         color=_INK,
-        fontsize=10.5,
+        fontsize=12,
         fontweight="bold",
     )
     _plot_accuracy(accuracy_axis, closure)
@@ -402,12 +401,11 @@ def _build_figure(
     figure.text(
         0.07,
         0.115,
-        "Reading the result: the corrected benchmark does not support a probe-based "
-        "prediction advantage. The large contrast with deliberately inverted evidence "
-        "is descriptive, not proof that the tracker "
-        "recognises relevance.",
+        "Reading the result: the corrected benchmark does not show a prediction advantage "
+        "from the probe. The contrast with deliberately inverted evidence is descriptive; "
+        "it does not show that the tracker recognises relevance.",
         color=_INK,
-        fontsize=9.4,
+        fontsize=10.5,
         fontweight="bold",
     )
     figure.text(
@@ -417,7 +415,7 @@ def _build_figure(
         "run per case. This does not show human learning, tutoring effectiveness, or "
         "reduced dependence on a tutor.",
         color=_MUTED,
-        fontsize=9.2,
+        fontsize=10,
     )
     return figure
 

@@ -42,11 +42,11 @@ _LIGHT_GREY = "#D7DDE2"
 _PALE_GREY = "#F5F7F8"
 _INK = "#17212B"
 _MUTED = "#56616B"
-_TITLE = "How were predictions kept separate from the later outcome?"
+_TITLE = "How did the study keep predictions separate from the outcome?"
 _STYLE: dict[str, object] = {
-    "figure.facecolor": "white",
-    "font.family": ["DejaVu Sans", "sans-serif"],
-    "font.size": 9,
+    "figure.facecolor": "#FAFAF7",
+    "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.size": 11,
     "pdf.fonttype": 42,
     "savefig.bbox": "tight",
     "savefig.facecolor": "white",
@@ -305,19 +305,19 @@ def _build_figure(
     decision_report: ExternalDecisionSealReport,
     criterion_report: ExternalCriterionReport,
 ) -> Figure:
-    figure = Figure(figsize=(12.4, 9.3))
+    figure = Figure(figsize=(12.4, 9.3), facecolor="#FAFAF7")
     axis = figure.add_axes((0, 0, 1, 1))
     axis.set_xlim(0, 1)
     axis.set_ylim(0, 1)
     axis.axis("off")
 
-    figure.text(0.07, 0.955, _TITLE, fontsize=19, fontweight="bold", color=_INK)
+    figure.text(0.07, 0.955, _TITLE, fontsize=22, fontweight="bold", color=_INK)
     figure.text(
         0.07,
         0.912,
-        "For each authored case, the system committed every condition prediction before it "
-        "requested the separate criterion task used as the outcome.",
-        fontsize=10.5,
+        "For each case, predictions were fixed first; the later coding task was requested "
+        "only afterwards.",
+        fontsize=12,
         color=_MUTED,
     )
     figure.text(
@@ -325,7 +325,7 @@ def _build_figure(
         0.858,
         f"No human learner took part. {decision_plan.model_route.model} was an evaluation model, "
         "not a validated student simulator.",
-        fontsize=10.3,
+        fontsize=11.5,
         fontweight="bold",
         color=_ORANGE,
     )
@@ -333,45 +333,45 @@ def _build_figure(
     misconception_count = sum(len(concept.misconception_ids) for concept in design.concepts)
     stages = (
         (
-            "Freeze the cases",
-            f"{len(design.held_out_cases)} held-out cases",
+            "Fix the cases",
+            f"{len(design.held_out_cases)} fixed cases",
             f"{len(design.concepts)} concepts; {misconception_count} misconceptions",
-            "Public, evidence, and criterion tasks use different contexts",
+            "Each step uses its own context",
             _GREY,
         ),
         (
-            "Generate responses before reveal",
+            "Collect responses before the outcome",
             "One public response and one separate evidence response per case",
             (
-                f"{decision_report.evidence_execution_count} evidence programs run in an "
-                "isolated sandbox"
+                f"{decision_report.evidence_execution_count} probe programmes run in a "
+                "separate sandbox"
             ),
-            "Criterion prompts remain inaccessible",
+            "The outcome task is still hidden",
             _BLUE,
         ),
         (
-            "Commit four predictions per case",
-            "Dialogue only; valid evidence; unrelated control; corrupted control",
-            f"{decision_report.prediction_count} predictions written to an immutable global seal",
-            "Simple tracker and fixed threshold; no outcome is visible",
+            "Fix four predictions per case",
+            "Dialogue only; relevant evidence; unrelated control; inverted control",
+            f"{decision_report.prediction_count} predictions saved in a permanent record",
+            "The outcome is still hidden",
             _PURPLE,
         ),
         (
             "Reveal the later outcome",
-            "Only after the global seal, request the separate criterion response",
+            "Only then request the separate outcome response",
             f"{criterion_report.completed_execution_count} completed; "
             f"{criterion_report.sandbox_missing_count} missing after sandbox execution",
-            "The recorded predictions cannot be changed",
+            "The saved predictions cannot be changed",
             _GREEN,
         ),
         (
             "Compare conditions within each case",
-            "Judge each prediction against the same criterion outcome",
+            "Compare each prediction with the same coding outcome",
             (
                 f"{criterion_report.completed_execution_count} eligible paired cases; "
                 "one model run per case"
             ),
-            "Report effect, uncertainty, missingness, controls, and failures",
+            "Report the difference, uncertainty, missing cases, controls, and failures",
             _INK,
         ),
     )
@@ -389,18 +389,18 @@ def _build_figure(
     figure.text(
         0.12,
         0.071,
-        "Commit-before-reveal boundary: the criterion request began after the decision seal. "
-        "No post-reveal prediction call was permitted.",
-        fontsize=9.2,
+        "Before the outcome was revealed, the predictions were fixed. No prediction request "
+        "was allowed afterwards.",
+        fontsize=10.5,
         fontweight="bold",
         color=_GREEN,
     )
     figure.text(
         0.12,
         0.033,
-        "Scope: this design evaluates whether executable evidence improves prediction on fixed "
-        "authored cases. It does not measure human learning or tutoring efficacy.",
-        fontsize=8.8,
+        "Scope: this study asks whether executable evidence improves prediction on fixed cases. "
+        "It does not measure learning or tutoring effectiveness.",
+        fontsize=10,
         color=_MUTED,
     )
     return figure
@@ -442,7 +442,7 @@ def _draw_stage(
         str(number),
         ha="center",
         va="center",
-        fontsize=11,
+        fontsize=12,
         fontweight="bold",
         color="white",
         bbox={"boxstyle": "circle,pad=0.35", "facecolor": colour, "edgecolor": colour},
@@ -464,7 +464,7 @@ def _draw_stage(
             x_position,
             y_position + 0.034,
             textwrap.fill(value, width=37),
-            fontsize=7.7,
+            fontsize=9.2,
             color=_MUTED,
             va="center",
             linespacing=1.25,

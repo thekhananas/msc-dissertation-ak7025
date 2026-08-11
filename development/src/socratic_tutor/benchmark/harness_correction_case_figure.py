@@ -42,7 +42,7 @@ _GREY = "#8A949E"
 _LIGHT_GREY = "#D7DDE2"
 _INK = "#17212B"
 _MUTED = "#56616B"
-_TITLE = "Corrected decisions for every authored case"
+_TITLE = "What changed in each benchmark case?"
 _CONDITION_LABELS = {
     BenchmarkCondition.DIALOGUE_ONLY: "Dialogue\nonly",
     BenchmarkCondition.PROBE_INFORMED: "Relevant\nprobe",
@@ -50,9 +50,9 @@ _CONDITION_LABELS = {
     BenchmarkCondition.CORRUPTED_PROBE: "Inverted\nprobe",
 }
 _STYLE: dict[str, object] = {
-    "figure.facecolor": "white",
-    "font.family": ["DejaVu Sans", "sans-serif"],
-    "font.size": 9,
+    "figure.facecolor": "#FAFAF7",
+    "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.size": 11,
     "pdf.fonttype": 42,
     "savefig.bbox": "tight",
     "savefig.facecolor": "white",
@@ -303,13 +303,13 @@ def _build_figure(
     )
     matrix_axis = figure.add_subplot(grid[0, 0])
     effect_axis = figure.add_subplot(grid[0, 1], sharey=matrix_axis)
-    figure.suptitle(_TITLE, x=0.08, y=0.965, ha="left", fontsize=19, fontweight="bold")
+    figure.suptitle(_TITLE, x=0.08, y=0.965, ha="left", fontsize=22, fontweight="bold")
     figure.text(
         0.08,
         0.91,
-        "Each cell asks whether the tracker prediction matched the later executable task.",
+        "Each cell shows whether the prediction matched the later coding task.",
         color=_MUTED,
-        fontsize=10.5,
+        fontsize=12,
     )
     figure.text(
         0.08,
@@ -317,39 +317,38 @@ def _build_figure(
         "Only one of 23 eligible cases changed from wrong to right after adding the "
         "relevant probe; no case became worse.",
         color=_INK,
-        fontsize=10.5,
+        fontsize=12,
         fontweight="bold",
     )
     figure.text(
         0.08,
         0.805,
-        "Relevant and unrelated passing evidence led to identical decisions on every "
-        "eligible case.",
+        "Relevant and unrelated evidence led to the same decision in every eligible case.",
         color=_ORANGE,
-        fontsize=10.5,
+        fontsize=12,
         fontweight="bold",
     )
     figure.text(
         0.08,
         0.755,
-        "Cell key:  R = right prediction     W = wrong prediction     - = criterion not scored",
+        "Cell key: R = correct prediction; W = wrong prediction; - = outcome not scored",
         color=_MUTED,
-        fontsize=9.5,
+        fontsize=10,
     )
     figure.text(
         0.19,
         0.695,
-        "A. Corrected outcome by condition",
+        "A. Result for each condition",
         color=_INK,
-        fontsize=11,
+        fontsize=12,
         fontweight="bold",
     )
     figure.text(
         0.69,
         0.695,
-        "B. Effect of relevant probe",
+        "B. Change after the relevant probe",
         color=_INK,
-        fontsize=11,
+        fontsize=12,
         fontweight="bold",
     )
     colour_map = ListedColormap((_GREY, _ORANGE, _GREEN))
@@ -370,7 +369,7 @@ def _build_figure(
                 ha="center",
                 va="center",
                 color="white",
-                fontsize=8.5,
+                fontsize=9.2,
                 fontweight="bold",
             )
     matrix_axis.set_xticks(
@@ -379,7 +378,7 @@ def _build_figure(
     )
     matrix_axis.xaxis.tick_top()
     matrix_axis.tick_params(axis="x", length=0, pad=7)
-    matrix_axis.set_yticks(range(len(cases)), tuple(case.case_id for case in cases), fontsize=7.5)
+    matrix_axis.set_yticks(range(len(cases)), tuple(case.case_id for case in cases), fontsize=8.5)
     matrix_axis.tick_params(axis="y", length=0, pad=6)
     for boundary in (2.5, 5.5, 8.5, 11.5, 14.5, 17.5, 20.5):
         matrix_axis.axhline(boundary, color="white", linewidth=2.0)

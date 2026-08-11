@@ -38,7 +38,7 @@ _GREY = "#8A949E"
 _LIGHT_GREY = "#D7DDE2"
 _INK = "#17212B"
 _MUTED = "#56616B"
-_TITLE = "Bounded evidence updating under unreliable observations"
+_TITLE = "Can bounded evidence updates withstand noisy observations?"
 _STYLE: dict[str, object] = {
     "axes.edgecolor": _LIGHT_GREY,
     "axes.labelcolor": _INK,
@@ -46,9 +46,9 @@ _STYLE: dict[str, object] = {
     "axes.titlecolor": _INK,
     "axes.titlesize": 11,
     "axes.titleweight": "bold",
-    "figure.facecolor": "white",
-    "font.family": ["DejaVu Sans", "sans-serif"],
-    "font.size": 9,
+    "figure.facecolor": "#FAFAF7",
+    "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.size": 11,
     "pdf.fonttype": 42,
     "savefig.bbox": "tight",
     "savefig.facecolor": "white",
@@ -353,31 +353,31 @@ def _render_figure(
 
 
 def _build_figure(report: TrackerCanonicalAnalysisReport) -> Figure:
-    figure = Figure(figsize=(13.4, 7.6))
+    figure = Figure(figsize=(13.4, 7.6), facecolor="#FAFAF7")
     condition_axis = figure.add_subplot(1, 2, 1)
     comparison_axis = figure.add_subplot(1, 2, 2)
     figure.subplots_adjust(left=0.07, right=0.98, top=0.72, bottom=0.20, wspace=0.30)
-    figure.suptitle(_TITLE, x=0.07, y=0.96, ha="left", fontsize=19, fontweight="bold")
+    figure.suptitle(_TITLE, x=0.07, y=0.96, ha="left", fontsize=22, fontweight="bold")
     figure.text(
         0.07,
         0.89,
-        "Held-out glass-box simulation; lower Brier error means more accurate "
-        "mastery probabilities.",
+        "Held-out simulation; lower Brier error means the tracker estimates mastery more "
+        "accurately.",
         color=_MUTED,
-        fontsize=10.5,
+        fontsize=12,
     )
     figure.text(
         0.07,
         0.845,
         f"Each condition contains {report.primary_adverse_brier.episode_count} matched episodes; "
-        "both trackers saw the same latent paths and observations.",
+        "both trackers saw the same hidden states and observations.",
         color=_MUTED,
-        fontsize=10.5,
+        fontsize=12,
     )
     decision_text = (
-        "Decision: passed the prespecified simulator rule."
+        "Decision: passed the rule set before the test."
         if report.primary_decision_status == "robust_under_declared_simulator"
-        else "Decision: did not pass the prespecified simulator rule."
+        else "Decision: did not pass the rule set before the test."
     )
     figure.text(
         0.07,
@@ -388,7 +388,7 @@ def _build_figure(report: TrackerCanonicalAnalysisReport) -> Figure:
             if report.primary_decision_status == "robust_under_declared_simulator"
             else _ORANGE
         ),
-        fontsize=10.5,
+        fontsize=12,
         fontweight="bold",
     )
     _plot_condition_brier(condition_axis, report)
@@ -396,19 +396,19 @@ def _build_figure(report: TrackerCanonicalAnalysisReport) -> Figure:
     figure.text(
         0.07,
         0.075,
-        "Scope: this result concerns robustness inside the declared simulator. It is not evidence "
-        "of student learning, tutoring effectiveness, or reduced cognitive offloading.",
+        "Scope: this result concerns robustness inside the stated simulator. It is not evidence "
+        "of student learning, tutoring effectiveness, or reduced dependence on a tutor.",
         color=_MUTED,
-        fontsize=9.5,
+        fontsize=10.5,
         fontweight="bold",
     )
     figure.text(
         0.07,
         0.035,
-        "The ordinary and bounded trackers were fixed before this one canonical test run; no "
-        "parameters were selected from these results.",
+        "The two trackers were fixed before this test run; no parameters were chosen from these "
+        "results.",
         color=_MUTED,
-        fontsize=9,
+        fontsize=10,
     )
     return figure
 
@@ -430,14 +430,14 @@ def _plot_condition_brier(axis: Axes, report: TrackerCanonicalAnalysisReport) ->
         ordinary,
         width=width,
         color=_BLUE,
-        label="Ordinary channel-aware Bayes",
+        label="Ordinary Bayes update",
     )
     axis.bar(
         [position + width / 2 for position in positions],
         bounded,
         width=width,
         color=_ORANGE,
-        label="Bounded channel-aware update",
+        label="Bounded Bayes update",
     )
     labels = {
         StressCondition.CLEAN: "Clean",
@@ -448,11 +448,11 @@ def _plot_condition_brier(axis: Axes, report: TrackerCanonicalAnalysisReport) ->
         StressCondition.CONTRADICTORY: "Conflicting\nchannels",
     }
     axis.set_title("A. Probability error by evidence condition", loc="left", pad=10)
-    axis.set_ylabel("Brier score (lower is better)")
-    axis.set_xticks(positions, [labels[condition] for condition in conditions], fontsize=8)
+    axis.set_ylabel("Probability error (lower is better)")
+    axis.set_xticks(positions, [labels[condition] for condition in conditions], fontsize=9)
     maximum = max((*ordinary, *bounded))
     axis.set_ylim(0.0, min(1.0, maximum * 1.22))
-    axis.legend(frameon=False, fontsize=8.5, loc="upper left")
+    axis.legend(frameon=False, fontsize=9.5, loc="upper left")
     _style_axis(axis)
 
 

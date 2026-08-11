@@ -4,19 +4,19 @@ specification_version: v1
 status: frozen
 frozen_at_utc: 2026-09-03T13:45:00Z
 
-title: What runs in the demo, the benchmark, and the offline analysis?
-subtitle: The project has separate execution paths that share typed contracts and immutable records, not live hidden state.
+title: Which parts of the project run where?
+subtitle: The demo, benchmark, and analysis use separate steps; they exchange saved records, not hidden live state.
 
 boundaries:
   - boundary_id: interactive_demo
     title: Interactive proof-of-concept demo
-    statement: A person can complete a local tutoring turn and inspect the simple state update.
+    statement: A person completes a local tutoring turn and can inspect the state update.
   - boundary_id: external_benchmark
     title: Sealed external-model benchmark
-    statement: A pinned evaluation model supplies responses; predictions are sealed before the later outcome is requested.
+    statement: A fixed evaluation model supplies responses; predictions are saved before the later outcome is requested.
   - boundary_id: offline_analysis
     title: Offline analysis and tracker study
-    statement: Analysis reads frozen records; it makes no provider or sandbox calls.
+    statement: Analysis reads frozen records; it makes no new model or sandbox calls.
 
 nodes:
   - node_id: demo_user
@@ -24,35 +24,35 @@ nodes:
     lane: 0
     order: 1
     title: Person using demo
-    detail: Submits a visible answer to one authored practice task.
+    detail: Sends an answer to one prepared practice task.
     kind: actor
   - node_id: web_api
     boundary_id: interactive_demo
     lane: 0
     order: 2
     title: React + FastAPI
-    detail: Displays the session and validates each request.
+    detail: Shows the session and checks each request.
     kind: interface
   - node_id: langgraph_turn
     boundary_id: interactive_demo
     lane: 0
     order: 3
     title: LangGraph turn
-    detail: Classifies evidence, updates the simple tracker, and chooses a heuristic action.
+    detail: Reads the evidence, updates the simple tracker, and chooses the next action.
     kind: orchestration
   - node_id: template_tutor
     boundary_id: interactive_demo
     lane: 0
     order: 4
     title: Reviewed prompt template
-    detail: Returns the next Socratic prompt; no live LLM is called.
+    detail: Returns the next Socratic prompt; no live model is called.
     kind: generation
   - node_id: local_log
     boundary_id: interactive_demo
     lane: 0
     order: 5
     title: Hash-chained JSONL
-    detail: Preserves local turn events for replay and inspection.
+    detail: Saves each turn so it can be replayed and inspected.
     kind: storage
 
   - node_id: frozen_cases
@@ -60,42 +60,42 @@ nodes:
     lane: 0
     order: 1
     title: Frozen authored cases
-    detail: Public, evidence, and criterion contexts remain separate.
+    detail: The public, evidence, and outcome tasks use separate contexts.
     kind: data
   - node_id: evaluation_model
     boundary_id: external_benchmark
     lane: 0
     order: 2
     title: Pinned evaluation model
-    detail: Cerebras gpt-oss-120b; not a human learner or validated student simulator.
+    detail: Cerebras gpt-oss-120b; an evaluation model, not a learner simulator.
     kind: model
   - node_id: evidence_path
     boundary_id: external_benchmark
     lane: 0
     order: 3
     title: Evidence sandbox + tracker
-    detail: Modal executes probe code; simple-v1 converts visible evidence into a prediction.
+    detail: Modal runs probe code; simple-v1 turns results into predictions.
     kind: execution
   - node_id: decision_seal
     boundary_id: external_benchmark
     lane: 0
     order: 4
     title: Immutable decision seal
-    detail: Locks four condition predictions per case before outcome access.
+    detail: Saves four predictions before the outcome can be seen.
     kind: storage
   - node_id: criterion_gate
     boundary_id: external_benchmark
     lane: 0
     order: 5
     title: Post-seal criterion gate
-    detail: Releases the separate criterion request only after the global seal.
+    detail: Allows the outcome request only after predictions are saved.
     kind: control
   - node_id: criterion_outcomes
     boundary_id: external_benchmark
     lane: 0
     order: 6
     title: Sandbox outcome records
-    detail: Executes criterion code and stores completed or missing outcomes.
+    detail: Runs the outcome code and records whether it completed.
     kind: storage
 
   - node_id: immutable_records
@@ -103,21 +103,21 @@ nodes:
     lane: 0
     order: 1
     title: Immutable benchmark records
-    detail: Predictions, outcomes, reviews, hashes, and execution accounting.
+    detail: Stores predictions, outcomes, reviews, hashes, and run details.
     kind: data
   - node_id: paired_analysis
     boundary_id: offline_analysis
     lane: 0
     order: 2
     title: Paired statistical analysis
-    detail: Computes effects, uncertainty, controls, missingness, and failures.
+    detail: Reports differences, uncertainty, controls, and failures.
     kind: analysis
   - node_id: report_outputs
     boundary_id: offline_analysis
     lane: 0
     order: 3
     title: Report and demo figures
-    detail: Reproducible PDF, SVG, CSV, and manifest outputs.
+    detail: Creates PDF, SVG, CSV, and manifest files.
     kind: publication
 
   - node_id: glass_box_simulator
@@ -125,21 +125,21 @@ nodes:
     lane: 1
     order: 1
     title: Glass-box simulator
-    detail: Generates known latent states and controlled observation stress.
+    detail: Generates known hidden states and controlled noisy observations.
     kind: simulation
   - node_id: bayesian_trackers
     boundary_id: offline_analysis
     lane: 1
     order: 2
     title: Five Bayesian trackers
-    detail: Includes ordinary and bounded channel-aware updates.
+    detail: Compares ordinary updates with bounded updates.
     kind: model
   - node_id: robustness_outputs
     boundary_id: offline_analysis
     lane: 1
     order: 3
     title: Simulator robustness result
-    detail: Reports estimation quality and update cost, not teaching outcomes.
+    detail: Reports tracking accuracy and update cost.
     kind: publication
 
 edges:

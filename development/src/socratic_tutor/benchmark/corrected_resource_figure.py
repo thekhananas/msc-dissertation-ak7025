@@ -53,7 +53,7 @@ _GREY = GREY
 _LIGHT_GREY = LIGHT_GREY
 _INK = INK
 _MUTED = MUTED
-_TITLE = "The corrected probe result required more work for one changed decision"
+_TITLE = "The corrected probe changed one decision and required more work"
 _STYLE: dict[str, object] = {
     "axes.edgecolor": _LIGHT_GREY,
     "axes.labelcolor": _INK,
@@ -61,9 +61,9 @@ _STYLE: dict[str, object] = {
     "axes.titlecolor": _INK,
     "axes.titlesize": 11,
     "axes.titleweight": "bold",
-    "figure.facecolor": "white",
-    "font.family": ["DejaVu Sans", "sans-serif"],
-    "font.size": 9,
+    "figure.facecolor": "#FAFAF7",
+    "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.size": 11,
     "pdf.fonttype": 42,
     "savefig.bbox": "tight",
     "savefig.facecolor": "white",
@@ -339,7 +339,7 @@ def _build_figure(
     resource: ResourceReconciliationReport,
     closure: HarnessCorrectionClosureReport,
 ) -> Figure:
-    figure = Figure(figsize=(12.8, 7.6))
+    figure = Figure(figsize=(12.8, 7.6), facecolor="#FAFAF7")
     grid = figure.add_gridspec(
         1,
         3,
@@ -357,37 +357,36 @@ def _build_figure(
     _plot_per_prediction_work(burden_axis)
     _plot_run_totals(totals_axis, resource)
 
-    figure.text(0.07, 0.95, _TITLE, fontsize=18, fontweight="bold", color=_INK)
+    figure.text(0.07, 0.95, _TITLE, fontsize=22, fontweight="bold", color=_INK)
     figure.text(
         0.07,
         0.895,
-        "The same recorded model responses were rescored after a systematic test-harness "
-        "fault was repaired; no model or sandbox call was repeated for this analysis.",
-        fontsize=10.2,
+        "The recorded responses were checked again after repairing a test-harness error; no "
+        "model or sandbox call was repeated.",
+        fontsize=12,
         color=_MUTED,
     )
     figure.text(
         0.07,
         0.81,
         "The relevant probe changed one of 23 eligible decisions from wrong to right.",
-        fontsize=13,
+        fontsize=15,
         fontweight="bold",
         color=_GREEN,
     )
     figure.text(
         0.07,
         0.765,
-        "That condition used one additional model response and one isolated code execution "
-        "for each case.",
-        fontsize=10.2,
+        "The probe condition used one extra model response and one code execution for each case.",
+        fontsize=11.5,
         color=_INK,
     )
     figure.text(
         0.07,
         0.115,
-        "Post-hoc result: the corrected comparison explains sensitivity to the test harness; "
-        "it does not replace the original sealed analysis.",
-        fontsize=9.2,
+        "Post-hoc result: the correction shows that the original result depended on the test "
+        "harness; it does not replace the sealed analysis.",
+        fontsize=10.5,
         fontweight="bold",
         color=_ORANGE,
     )
@@ -396,15 +395,15 @@ def _build_figure(
         0.065,
         "Scope: one pinned evaluation model, one run per authored case. Provider cost and "
         "sandbox CPU, memory, and execution time were not recorded.",
-        fontsize=8.8,
+        fontsize=10,
         color=_MUTED,
     )
     figure.text(
         0.07,
         0.025,
         "These measurements describe this experiment's workload; they do not show deployment "
-        "cost, human learning, or tutoring effectiveness.",
-        fontsize=8.8,
+        "cost, learning, or tutoring effectiveness.",
+        fontsize=10,
         fontweight="bold",
         color=_MUTED,
     )

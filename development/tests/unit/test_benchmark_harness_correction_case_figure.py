@@ -41,9 +41,9 @@ def test_case_figure_keeps_each_condition_and_missing_case_visible() -> None:
     table = _case_table_csv(analysis).decode("utf-8")
 
     assert pdf.startswith(b"%PDF")
-    assert "Corrected decisions for every authored case" in svg
+    assert "What changed in each benchmark case?" in svg
     assert "Only one of 23 eligible cases" in svg
-    assert "Relevant and unrelated passing evidence led to identical decisions" in svg
+    assert "Relevant and unrelated evidence led to the same decision" in svg
     assert "h-c2m2-03" in svg
     assert "h-c1m1-01,eligible,wrong,right,right,wrong,1.0" in table
     assert "h-c2m2-03,missing_criterion,not_scored" in table

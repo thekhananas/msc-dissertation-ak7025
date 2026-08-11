@@ -32,15 +32,15 @@ _GREEN = "#009E73"
 _PURPLE = "#7A5195"
 _GREY = "#8A949E"
 _LIGHT_GREY = "#D7DDE2"
-_PALE_BLUE = "#EEF6FA"
-_PALE_ORANGE = "#FFF4ED"
-_PALE_GREY = "#F5F7F8"
+_PALE_BLUE = "#EEF2F3"
+_PALE_ORANGE = "#F3EEE8"
+_PALE_GREY = "#F0F0EC"
 _INK = "#17212B"
 _MUTED = "#56616B"
 _STYLE: dict[str, object] = {
-    "figure.facecolor": "white",
-    "font.family": ["DejaVu Sans", "sans-serif"],
-    "font.size": 9,
+    "figure.facecolor": "#FAFAF7",
+    "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
+    "font.size": 11,
     "pdf.fonttype": 42,
     "savefig.bbox": "tight",
     "savefig.facecolor": "white",
@@ -339,28 +339,31 @@ def _render_vector_files(
 
 
 def _build_figure(specification: SystemBoundarySpecification) -> Figure:
-    figure = Figure(figsize=(14.0, 12.0))
+    figure = Figure(figsize=(14.0, 12.0), facecolor="#FAFAF7")
     axis = figure.add_axes((0, 0, 1, 1))
     axis.set_xlim(0, 1)
     axis.set_ylim(0, 1)
     axis.axis("off")
 
-    figure.text(0.055, 0.958, specification.title, fontsize=19, fontweight="bold", color=_INK)
-    figure.text(0.055, 0.918, specification.subtitle, fontsize=10.3, color=_MUTED)
+    figure.text(0.055, 0.958, specification.title, fontsize=22, fontweight="bold", color=_INK)
+    figure.text(0.055, 0.918, specification.subtitle, fontsize=12, color=_MUTED)
     figure.text(
         0.055,
         0.875,
         "The local demo is deterministic. The external model is used only in the sealed "
         "benchmark, and offline analysis does not call it again.",
-        fontsize=10.2,
+        fontsize=12,
         fontweight="bold",
         color=_ORANGE,
     )
 
     layouts = {
-        BoundaryId.INTERACTIVE_DEMO: (0.625, 0.205, _PALE_BLUE, _BLUE),
-        BoundaryId.EXTERNAL_BENCHMARK: (0.345, 0.235, _PALE_ORANGE, _ORANGE),
-        BoundaryId.OFFLINE_ANALYSIS: (0.075, 0.225, _PALE_GREY, _PURPLE),
+        # Keep a uniform 0.040 vertical gap between the three sections.
+        BoundaryId.INTERACTIVE_DEMO: (0.620, 0.205, _PALE_BLUE, _BLUE),
+        BoundaryId.EXTERNAL_BENCHMARK: (0.355, 0.225, _PALE_ORANGE, _ORANGE),
+        # The tracker study has two rows; its boundary is taller so the
+        # larger descriptions retain a clear bottom margin.
+        BoundaryId.OFFLINE_ANALYSIS: (0.045, 0.270, _PALE_GREY, _PURPLE),
     }
     coordinates: dict[str, tuple[float, float, float, float]] = {}
     for boundary in specification.boundaries:
@@ -385,13 +388,14 @@ def _build_figure(specification: SystemBoundarySpecification) -> Figure:
 
     figure.text(
         0.055,
-        0.035,
+        0.006,
         "Claim boundary: the benchmark tests prediction on authored cases; the tracker study "
-        "tests estimation under simulation. Neither result demonstrates human learning or "
-        "tutoring efficacy.",
-        fontsize=8.8,
+        "tests estimation under simulation.\n"
+        "Neither result demonstrates human learning or tutoring efficacy.",
+        fontsize=9.5,
         fontweight="bold",
         color=_MUTED,
+        va="bottom",
     )
     return figure
 
@@ -409,26 +413,31 @@ def _draw_boundary(
             (0.055, y_position),
             0.89,
             height,
-            boxstyle="round,pad=0.006,rounding_size=0.009",
+            boxstyle="square,pad=0.006",
             facecolor=background,
             edgecolor=accent,
             linewidth=1.1,
         )
     )
+    # Align the two header strings by baseline, not by their bounding-box top.
+    # This matters because the title and statement use different font sizes.
+    header_y = y_position + height - 0.047
     axis.text(
         0.073,
-        y_position + height - 0.028,
+        header_y,
         boundary.title,
-        fontsize=11.5,
+        fontsize=13,
         fontweight="bold",
         color=accent,
+        va="baseline",
     )
     axis.text(
         0.35,
-        y_position + height - 0.028,
+        header_y,
         boundary.statement,
-        fontsize=8.4,
+        fontsize=9.8,
         color=_MUTED,
+        va="baseline",
     )
 
 
@@ -439,22 +448,24 @@ def _draw_lane(
     height: float,
     accent: str,
 ) -> dict[str, tuple[float, float, float, float]]:
-    left = 0.075
-    right = 0.925
-    gap = 0.023
+    left = 0.06
+    right = 0.94
+    gap = 0.06
     width = (right - left - gap * (len(nodes) - 1)) / len(nodes)
     coordinates: dict[str, tuple[float, float, float, float]] = {}
     for index, node in enumerate(nodes):
         x_position = left + index * (width + gap)
-        wrapped_title = textwrap.fill(node.title, width=max(16, int(width * 120)))
-        wrapped_detail = textwrap.fill(node.detail, width=max(19, int(width * 145)))
+        wrapped_title = textwrap.fill(node.title, width=max(14, int(width * 112)))
+        wrapped_detail = textwrap.fill(node.detail, width=max(17, int(width * 132)))
         title_top = y_position + height - 0.021
-        detail_top = title_top - 0.0125 * len(wrapped_title.splitlines()) - 0.009
+        # Leave a visible gap below the heading and above the description;
+        # this keeps the last line clear of the lower box edge.
+        detail_top = title_top - 0.0125 * len(wrapped_title.splitlines()) - 0.015
         box = FancyBboxPatch(
             (x_position, y_position),
             width,
             height,
-            boxstyle="round,pad=0.004,rounding_size=0.006",
+            boxstyle="square,pad=0.004",
             facecolor="white",
             edgecolor=_LIGHT_GREY,
             linewidth=0.9,
@@ -464,7 +475,7 @@ def _draw_lane(
             x_position + 0.009,
             title_top,
             wrapped_title,
-            fontsize=8.7,
+            fontsize=10.0,
             fontweight="bold",
             color=_INK,
             va="top",
@@ -473,10 +484,10 @@ def _draw_lane(
             x_position + 0.009,
             detail_top,
             wrapped_detail,
-            fontsize=7.2,
+            fontsize=9.0,
             color=_MUTED,
             va="top",
-            linespacing=1.15,
+            linespacing=1.10,
         )
         axis.plot(
             (x_position + 0.006, x_position + width - 0.006),
@@ -500,12 +511,17 @@ def _draw_edge(
         start = (source_x + source_width + 0.003, source_y + source_height / 2)
         end = (target_x - 0.003, target_y + target_height / 2)
         label_x = (start[0] + end[0]) / 2
-        label_y = start[1] + 0.014
+        # Place the label in the horizontal gap, centred on the arrow.
+        label_y = start[1]
+        label_ha = "center"
+        label_va = "center"
     else:
         start = (source_x + source_width / 2, source_y)
         end = (target_x + _target_width / 2, target_y + target_height)
-        label_x = (start[0] + end[0]) / 2
+        label_x = (start[0] + end[0]) / 2 + 0.014
         label_y = (start[1] + end[1]) / 2
+        label_ha = "left"
+        label_va = "center"
     axis.annotate(
         "",
         xy=end,
@@ -515,11 +531,14 @@ def _draw_edge(
     axis.text(
         label_x,
         label_y,
-        textwrap.fill(edge.label, width=16),
-        ha="center",
-        va="bottom",
-        fontsize=6.3,
+        textwrap.fill(edge.label, width=12),
+        ha=label_ha,
+        va=label_va,
+        fontsize=9.0,
         color=_MUTED,
+        # Keep the label readable when an arrow passes through its gap.
+        # Transparent labels would expose the line through the letters.
+        bbox={"facecolor": "white", "edgecolor": "none", "pad": 2.0},
     )
 
 

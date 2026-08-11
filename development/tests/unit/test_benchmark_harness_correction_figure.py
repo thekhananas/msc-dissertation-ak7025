@@ -38,7 +38,7 @@ def test_figure_explains_the_material_correction_in_pdf_svg_and_csv() -> None:
     summary = _summary_csv(analysis, closure).decode("utf-8")
 
     assert pdf.startswith(b"%PDF")
-    assert "A test-harness fault changed the benchmark conclusion" in svg
+    assert "A test-harness error changed the benchmark result" in svg
     assert "Corrected: 1 net case" in svg
     assert "Relevant vs unrelated" in svg
     assert "This does not show human learning" in svg

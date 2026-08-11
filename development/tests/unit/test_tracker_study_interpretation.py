@@ -112,7 +112,7 @@ def test_interpretation_reconciles_sources_and_limits_claims(
     assert not publication.tutoring_efficacy_claim_supported
     assert (publication_root / "tracker_study_canonical.pdf").read_bytes().startswith(b"%PDF")
     svg = (publication_root / "tracker_study_canonical.svg").read_text(encoding="utf-8")
-    assert "Held-out glass-box simulation" in svg
+    assert "Held-out simulation" in svg
     assert "not evidence of student learning" in svg
     claims = (publication_root / "canonical_claim_boundaries.csv").read_text(encoding="utf-8")
     assert "human_learning_improvement,False" in claims
