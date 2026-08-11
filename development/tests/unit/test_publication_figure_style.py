@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import yaml
+
 from socratic_tutor.benchmark.artifacts import artifact_locations
 from socratic_tutor.publication.figure_style import (
     BLUE,
@@ -28,3 +30,14 @@ def test_artifact_locations_reports_files_relative_to_working_directory(tmp_path
 
     assert locations["output_root"] == str(output_root.resolve())
     assert locations["files"] == [str(output_root / "figure.pdf"), str(output_root / "figure.svg")]
+
+
+def test_visual_register_has_unique_ids_and_both_output_profiles() -> None:
+    register_path = Path(__file__).parents[2] / "configs/publication/v1-figure-register.yaml"
+    register = yaml.safe_load(register_path.read_text(encoding="utf-8"))
+    figures = register["figures"]
+
+    assert len({figure["figure_id"] for figure in figures}) == len(figures)
+    assert {figure["status"] for figure in figures} == {"primary", "supporting"}
+    assert set(register["profiles"]) == {"report", "presentation"}
+    assert all(figure["question"] and figure["claim_boundary"] for figure in figures)

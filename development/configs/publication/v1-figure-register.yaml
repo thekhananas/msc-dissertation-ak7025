@@ -1,0 +1,109 @@
+schema_id: publication.figure_register.v1
+schema_version: 1
+register_id: dissertation-results-v1
+purpose: >-
+  Freeze the small set of visuals used to explain the implemented system,
+  benchmark evidence, and Bayesian tracker study.
+format_rule: >-
+  PDF and SVG are vector export formats. Report and presentation profiles may
+  change dimensions and type scale, but colour semantics and reported values
+  must remain identical.
+
+figures:
+  - figure_id: FIG-01
+    title: System boundaries and evidence paths
+    question: What ran in the demo, external benchmark, and tracker study?
+    source: configs/publication/v1-system-boundary.yaml
+    command: pixi run python scripts/benchmark_cli.py system-boundary-figure
+    outputs: system_boundaries.pdf, system_boundaries.svg, system_boundary_components.csv
+    destination: report-methods-and-presentation-overview
+    status: primary
+    claim_boundary: >-
+      Describes implemented paths and ownership; does not establish tutoring
+      effectiveness or human learning.
+
+  - figure_id: FIG-02
+    title: Benchmark design and commit-reveal sequence
+    question: How were public responses, evidence, and criterion outcomes kept separate?
+    source: configs/benchmark/v1-analysis-spec.yaml
+    command: pixi run python scripts/benchmark_cli.py study-design-figure
+    outputs: external_study_design.pdf, external_study_design.svg, study_design_stages.csv
+    destination: report-methods-and-presentation-method
+    status: primary
+    claim_boundary: >-
+      Explains the measurement procedure; it is not evidence that the procedure
+      improves learning.
+
+  - figure_id: FIG-03
+    title: Original and corrected benchmark result
+    question: How did the harness correction change the primary comparison?
+    source: artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json
+    command: pixi run harness-correction-figure
+    outputs: harness_correction_result.pdf, harness_correction_result.svg, harness_correction_summary.csv
+    destination: report-results-and-presentation-main-result
+    status: primary
+    claim_boundary: >-
+      Reports one pinned evaluation-model run over the authored cases; the
+      corrected result is post-hoc and does not support human-learning claims.
+
+  - figure_id: FIG-04
+    title: Corrected result for every authored case
+    question: How are the corrected decisions distributed across cases and controls?
+    source: artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json
+    command: pixi run harness-correction-case-figure
+    outputs: harness_correction_cases.pdf, harness_correction_cases.svg, harness_correction_cases.csv
+    destination: report-results-and-presentation-supporting-result
+    status: primary
+    claim_boundary: >-
+      Shows case-level benchmark decisions and missingness; repeated cases are
+      not independent learners.
+
+  - figure_id: FIG-05
+    title: Corrected quality beside measured workload
+    question: What additional model and sandbox work accompanied executable evidence?
+    source: artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/resource-reconciliation-v1/resource_reconciliation_report.json
+    command: pixi run corrected-resource-figure
+    outputs: corrected_quality_and_resource_burden.pdf, corrected_quality_and_resource_burden.svg, corrected_resource_figure_data.csv
+    destination: report-results-and-presentation-resource-trade-off
+    status: primary
+    claim_boundary: >-
+      Describes measured workload for this run, not deployment cost, latency
+      guarantees, or tutoring benefit.
+
+  - figure_id: FIG-06
+    title: Bounded evidence updating under stress
+    question: Does the bounded tracker remain stable when observations are noisy or misleading?
+    source: artifacts/tracker-study/canonical-v1
+    command: pixi run tracker-study-publish-canonical
+    outputs: tracker_study_canonical.pdf, tracker_study_canonical.svg, canonical_condition_metrics.csv
+    destination: report-tracker-study-and-presentation-technical-result
+    status: primary
+    claim_boundary: >-
+      Reports a glass-box simulator study of tracker robustness; it is not a
+      human-learning or tutoring-efficacy result.
+
+  - figure_id: FIG-07
+    title: Failure taxonomy and review outcomes
+    question: What kinds of failures remained after the benchmark review?
+    source: configs/benchmark/v1-failure-taxonomy.yaml
+    command: pixi run python scripts/benchmark_cli.py failure-figure
+    outputs: failure_analysis.pdf, failure_analysis.svg, failure_review_rows.csv
+    destination: report-limitations-and-presentation-limitations
+    status: supporting
+    claim_boundary: >-
+      Summarises observable failure records; hidden model reasoning is neither
+      inferred nor treated as a measured cause.
+
+profiles:
+  report:
+    intended_use: A4 dissertation PDF
+    width_in: 6.5
+    height_in: 4.5
+    font_size_pt: 8.5
+    rule: Prefer complete captions, visible denominators, and readable labels.
+  presentation:
+    intended_use: 16:9 presentation slide
+    width_in: 12.8
+    height_in: 7.2
+    font_size_pt: 14
+    rule: Use fewer panels or split the figure when labels cannot be read at distance.
