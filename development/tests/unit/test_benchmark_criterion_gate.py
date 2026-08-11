@@ -114,6 +114,11 @@ def _complete_gate(
     )
 
 
+complete_gate_fixture = _complete_gate
+evaluator_manifest_fixture = _evaluator_manifest
+generation_spec_fixture = _generation_spec
+
+
 def test_private_loader_runs_only_after_complete_capability_is_consumed(
     tmp_path: Path,
 ) -> None:

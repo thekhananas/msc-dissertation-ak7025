@@ -78,6 +78,7 @@ from socratic_tutor.benchmark.public.runner import (
     PairedConditionRun,
     PairedConditionRunner,
     condition_input_hash,
+    evidence_from_test_counts,
 )
 from socratic_tutor.benchmark.public.safety import (
     assert_public_payload_safe,
@@ -142,6 +143,7 @@ __all__ = [
     "create_decision_run_plan",
     "decision_record_root_hash",
     "decision_run_plan_hash",
+    "evidence_from_test_counts",
     "find_public_payload_violations",
     "global_decision_seal_hash",
     "prediction_arrow_row",
