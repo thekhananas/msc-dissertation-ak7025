@@ -110,7 +110,7 @@ def render_resource_figure(
         pixi_lock_hash = file_sha256(pixi_lock_path.read_bytes())
     except OSError as error:
         raise ResourceFigureError(f"Could not read Pixi lock: {pixi_lock_path}") from error
-    _validate_sources(plan=plan, report=report, pixi_lock_hash=pixi_lock_hash)
+    validate_resource_sources(plan=plan, report=report, pixi_lock_hash=pixi_lock_hash)
     generated_at = _resolve_generated_at(
         generated_at_utc,
         output_root / "resource_figure_manifest.json",
@@ -499,7 +499,7 @@ def _condition_from(
         raise ResourceFigureError(f"Resource report is missing condition: {name}") from error
 
 
-def _validate_sources(
+def validate_resource_sources(
     *,
     plan: ResourceReconciliationPlan,
     report: ResourceReconciliationReport,

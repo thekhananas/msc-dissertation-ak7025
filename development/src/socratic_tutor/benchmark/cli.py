@@ -28,6 +28,9 @@ from socratic_tutor.benchmark.calibration import (
     record_uncalibrated_decision,
 )
 from socratic_tutor.benchmark.common import Sha256
+from socratic_tutor.benchmark.corrected_resource_figure import (
+    render_corrected_resource_figure,
+)
 from socratic_tutor.benchmark.dependence_figure import render_dependence_figure
 from socratic_tutor.benchmark.dependence_sensitivity import run_dependence_sensitivity
 from socratic_tutor.benchmark.design import load_design
@@ -733,6 +736,21 @@ def build_parser() -> argparse.ArgumentParser:
     resource_figure.add_argument("--output-root", type=Path, required=True)
     resource_figure.add_argument("--code-revision", required=True)
     resource_figure.add_argument("--generated-at-utc", type=_utc_datetime)
+
+    corrected_resource_figure = commands.add_parser(
+        "corrected-resource-figure",
+        help="Render corrected benchmark quality beside observed execution burden",
+    )
+    corrected_resource_figure.add_argument("--resource-plan", type=Path, required=True)
+    corrected_resource_figure.add_argument("--resource-report", type=Path, required=True)
+    corrected_resource_figure.add_argument("--correction-analysis-plan", type=Path, required=True)
+    corrected_resource_figure.add_argument("--correction-analysis-report", type=Path, required=True)
+    corrected_resource_figure.add_argument("--correction-closure-plan", type=Path, required=True)
+    corrected_resource_figure.add_argument("--correction-closure-report", type=Path, required=True)
+    corrected_resource_figure.add_argument("--pixi-lock", type=Path, required=True)
+    corrected_resource_figure.add_argument("--output-root", type=Path, required=True)
+    corrected_resource_figure.add_argument("--code-revision", required=True)
+    corrected_resource_figure.add_argument("--generated-at-utc", type=_utc_datetime)
 
     study_design_figure = commands.add_parser(
         "external-study-design-figure",
@@ -1442,6 +1460,20 @@ def _dispatch(args: argparse.Namespace) -> tuple[BaseModel | dict[str, object], 
         manifest = render_resource_figure(
             resource_plan_path=cast(Path, args.resource_plan),
             resource_report_path=cast(Path, args.resource_report),
+            pixi_lock_path=cast(Path, args.pixi_lock),
+            output_root=cast(Path, args.output_root),
+            publication_code_revision=cast(str, args.code_revision),
+            generated_at_utc=cast(datetime | None, args.generated_at_utc),
+        )
+        return manifest, True
+    if command == "corrected-resource-figure":
+        manifest = render_corrected_resource_figure(
+            resource_plan_path=cast(Path, args.resource_plan),
+            resource_report_path=cast(Path, args.resource_report),
+            correction_analysis_plan_path=cast(Path, args.correction_analysis_plan),
+            correction_analysis_report_path=cast(Path, args.correction_analysis_report),
+            correction_closure_plan_path=cast(Path, args.correction_closure_plan),
+            correction_closure_report_path=cast(Path, args.correction_closure_report),
             pixi_lock_path=cast(Path, args.pixi_lock),
             output_root=cast(Path, args.output_root),
             publication_code_revision=cast(str, args.code_revision),
