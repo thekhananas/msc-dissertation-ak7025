@@ -16,11 +16,15 @@ from socratic_tutor.acquisition_study.contracts import (
     AcquisitionPolicy,
     PolicyId,
 )
+from socratic_tutor.acquisition_study.oracle import TrueReliabilityOraclePolicy
 from socratic_tutor.acquisition_study.plan import (
     AcquisitionAnalysisSpecification,
+    AcquisitionEnvironmentSpecification,
     EvaluationEnvironmentId,
 )
 from socratic_tutor.acquisition_study.policies import (
+    AlwaysProbePolicy,
+    NeverProbePolicy,
     PlugInEVSIPolicy,
     ReliabilityAwareEVSIPolicy,
     SeededRandomPolicy,
@@ -139,6 +143,47 @@ def build_primary_non_oracle_policies(
     if tuple(policy.policy_id for policy in policies) != expected_ids:
         raise AcquisitionEvaluationError("Constructed policies differ from the frozen comparison")
     return policies
+
+
+def build_endpoint_policies(
+    analysis: AcquisitionAnalysisSpecification,
+) -> tuple[AcquisitionPolicy, ...]:
+    """Construct the frozen zero-probe and all-probe references."""
+
+    policies: tuple[AcquisitionPolicy, ...] = (NeverProbePolicy(), AlwaysProbePolicy())
+    if tuple(policy.policy_id for policy in policies) != analysis.policies.endpoints:
+        raise AcquisitionEvaluationError("Constructed endpoints differ from the frozen comparison")
+    return policies
+
+
+def build_oracle_reference_policy(
+    specification: AcquisitionEnvironmentSpecification,
+    analysis: AcquisitionAnalysisSpecification,
+    *,
+    environment_id: EvaluationEnvironmentId,
+) -> TrueReliabilityOraclePolicy:
+    """Construct the declared oracle without exposing realised outcomes."""
+
+    if specification.specification_hash != analysis.environment_specification_hash:
+        raise AcquisitionEvaluationError("Analysis and environment specifications do not match")
+    environment = next(
+        (
+            item
+            for item in specification.evaluation_environments
+            if item.environment_id is environment_id
+        ),
+        None,
+    )
+    if environment is None:
+        raise AcquisitionEvaluationError(f"Unknown oracle environment: {environment_id}")
+    policy = TrueReliabilityOraclePolicy(
+        environment=environment,
+        calibration=specification.calibration,
+        kappa=analysis.policies.bounded_log_likelihood_kappa,
+    )
+    if policy.policy_id is not analysis.policies.oracle_reference:
+        raise AcquisitionEvaluationError("Constructed oracle differs from the frozen comparison")
+    return policy
 
 
 def evaluate_policy_episode(

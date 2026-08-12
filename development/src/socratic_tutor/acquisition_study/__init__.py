@@ -29,8 +29,14 @@ from socratic_tutor.acquisition_study.evaluation import (
     AcquisitionEvaluationError,
     CasePredictionResult,
     PolicyEpisodeResult,
+    build_endpoint_policies,
+    build_oracle_reference_policy,
     build_primary_non_oracle_policies,
     evaluate_policy_episode,
+)
+from socratic_tutor.acquisition_study.oracle import (
+    TrueReliabilityOraclePolicy,
+    oracle_expected_risk_reduction,
 )
 from socratic_tutor.acquisition_study.plan import (
     AcquisitionAnalysisSpecification,
@@ -95,8 +101,11 @@ __all__ = [
     "SeededRandomPolicy",
     "SimulatedCaseTruth",
     "SimulatedProbeOutcome",
+    "TrueReliabilityOraclePolicy",
     "UncertaintyOnlyPolicy",
     "bounded_posterior",
+    "build_endpoint_policies",
+    "build_oracle_reference_policy",
     "build_primary_non_oracle_policies",
     "classification_risk",
     "estimate_probe_reliability",
@@ -104,6 +113,7 @@ __all__ = [
     "generate_acquisition_episode",
     "glass_box_burden_record",
     "load_acquisition_study_plan",
+    "oracle_expected_risk_reduction",
     "plug_in_evsi",
     "reliability_aware_evsi_scores",
 ]
