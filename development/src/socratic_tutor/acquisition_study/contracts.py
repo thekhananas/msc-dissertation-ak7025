@@ -105,6 +105,7 @@ class AcquisitionDecision(ContractModel):
 class AcquisitionPolicy(Protocol):
     """Common interface for non-oracle acquisition policies."""
 
-    policy_id: PolicyId
+    @property
+    def policy_id(self) -> PolicyId: ...
 
     def select(self, request: AcquisitionRequest) -> AcquisitionDecision: ...

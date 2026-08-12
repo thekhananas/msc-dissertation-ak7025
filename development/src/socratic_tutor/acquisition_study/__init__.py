@@ -25,6 +25,13 @@ from socratic_tutor.acquisition_study.contracts import (
     PolicyId,
     ProbeClassId,
 )
+from socratic_tutor.acquisition_study.evaluation import (
+    AcquisitionEvaluationError,
+    CasePredictionResult,
+    PolicyEpisodeResult,
+    build_primary_non_oracle_policies,
+    evaluate_policy_episode,
+)
 from socratic_tutor.acquisition_study.plan import (
     AcquisitionAnalysisSpecification,
     AcquisitionEnvironmentSpecification,
@@ -60,6 +67,7 @@ __all__ = [
     "AcquisitionContractError",
     "AcquisitionDecision",
     "AcquisitionEnvironmentSpecification",
+    "AcquisitionEvaluationError",
     "AcquisitionPolicy",
     "AcquisitionRequest",
     "AcquisitionSimulationError",
@@ -69,6 +77,7 @@ __all__ = [
     "BetaPosterior",
     "CalibrationBetaPosterior",
     "CalibrationError",
+    "CasePredictionResult",
     "CurrencyCostRecord",
     "EvaluationEnvironmentId",
     "ExternalWorkload",
@@ -76,6 +85,7 @@ __all__ = [
     "NeverProbePolicy",
     "PlugInEVSIPolicy",
     "PolicyEpisodeRecord",
+    "PolicyEpisodeResult",
     "PolicyId",
     "PrivilegedEpisodeRecord",
     "ProbeClassCalibrationEstimate",
@@ -87,8 +97,10 @@ __all__ = [
     "SimulatedProbeOutcome",
     "UncertaintyOnlyPolicy",
     "bounded_posterior",
+    "build_primary_non_oracle_policies",
     "classification_risk",
     "estimate_probe_reliability",
+    "evaluate_policy_episode",
     "generate_acquisition_episode",
     "glass_box_burden_record",
     "load_acquisition_study_plan",
