@@ -1,10 +1,13 @@
-"""Transparent baseline policies for fixed-budget probe selection."""
+"""Transparent policies for fixed-budget probe selection."""
 
 from __future__ import annotations
 
 import hashlib
 import math
 from dataclasses import dataclass, field
+from functools import lru_cache
+
+import numpy as np
 
 from socratic_tutor.acquisition_study.contracts import (
     AcquisitionCandidate,
@@ -12,6 +15,7 @@ from socratic_tutor.acquisition_study.contracts import (
     AcquisitionDecision,
     AcquisitionRequest,
     PolicyId,
+    ProbeClassId,
 )
 
 
@@ -80,6 +84,120 @@ def plug_in_evsi(candidate: AcquisitionCandidate, *, kappa: float) -> float:
         1.0 - pass_probability
     ) * classification_risk(posterior_if_fail)
     return classification_risk(prior) - expected_posterior_risk
+
+
+def _stream_entropy(seed: int, probe_class: ProbeClassId, parameter: str) -> list[int]:
+    payload = f"{probe_class.value}:{parameter}".encode()
+    digest = hashlib.sha256(payload).digest()
+    return [
+        seed,
+        *(int.from_bytes(digest[offset : offset + 4], "big") for offset in range(0, 16, 4)),
+    ]
+
+
+@lru_cache(maxsize=256)
+def _reliability_draws(
+    probe_class: ProbeClassId,
+    sensitivity_alpha: float,
+    sensitivity_beta: float,
+    specificity_alpha: float,
+    specificity_beta: float,
+    draw_count: int,
+    seed: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    sensitivity_rng = np.random.Generator(
+        np.random.PCG64(np.random.SeedSequence(_stream_entropy(seed, probe_class, "sensitivity")))
+    )
+    specificity_rng = np.random.Generator(
+        np.random.PCG64(np.random.SeedSequence(_stream_entropy(seed, probe_class, "specificity")))
+    )
+    sensitivity = sensitivity_rng.beta(sensitivity_alpha, sensitivity_beta, size=draw_count)
+    specificity = specificity_rng.beta(specificity_alpha, specificity_beta, size=draw_count)
+    sensitivity.flags.writeable = False
+    specificity.flags.writeable = False
+    return sensitivity, specificity
+
+
+def _sampled_evsi(
+    candidate: AcquisitionCandidate,
+    *,
+    kappa: float,
+    draw_count: int,
+    seed: int,
+) -> np.ndarray:
+    posterior = candidate.calibration_beta_posterior
+    sensitivity, specificity = _reliability_draws(
+        candidate.probe_class,
+        posterior.sensitivity.alpha,
+        posterior.sensitivity.beta,
+        posterior.specificity.alpha,
+        posterior.specificity.beta,
+        draw_count,
+        seed,
+    )
+    epsilon = np.finfo(np.float64).eps
+    sensitivity = np.clip(sensitivity, epsilon, 1.0 - epsilon)
+    specificity = np.clip(specificity, epsilon, 1.0 - epsilon)
+
+    prior = candidate.prior_success_probability
+    prior_log_odds = math.log(prior / (1.0 - prior))
+    pass_probability = prior * sensitivity + (1.0 - prior) * (1.0 - specificity)
+    pass_delta = np.clip(np.log(sensitivity / (1.0 - specificity)), -kappa, kappa)
+    fail_delta = np.clip(np.log((1.0 - sensitivity) / specificity), -kappa, kappa)
+
+    posterior_if_pass = _stable_expit(prior_log_odds + pass_delta)
+    posterior_if_fail = _stable_expit(prior_log_odds + fail_delta)
+    risk_if_pass = np.minimum(posterior_if_pass, 1.0 - posterior_if_pass)
+    risk_if_fail = np.minimum(posterior_if_fail, 1.0 - posterior_if_fail)
+    expected_posterior_risk = (
+        pass_probability * risk_if_pass + (1.0 - pass_probability) * risk_if_fail
+    )
+    return classification_risk(prior) - expected_posterior_risk
+
+
+def _stable_expit(log_odds: np.ndarray) -> np.ndarray:
+    result = np.empty_like(log_odds)
+    non_negative = log_odds >= 0.0
+    result[non_negative] = 1.0 / (1.0 + np.exp(-log_odds[non_negative]))
+    odds = np.exp(log_odds[~non_negative])
+    result[~non_negative] = odds / (1.0 + odds)
+    return result
+
+
+def reliability_aware_evsi_scores(
+    candidates: tuple[AcquisitionCandidate, ...],
+    *,
+    lower_quantile: float,
+    kappa: float,
+    draw_count: int,
+    seed: int,
+) -> dict[str, float]:
+    """Return a cautious risk-reduction estimate for each candidate probe."""
+
+    if not 0.0 < lower_quantile < 0.5 or not math.isfinite(lower_quantile):
+        raise ValueError("Lower quantile must be finite and lie in (0, 0.5)")
+    if kappa <= 0.0 or not math.isfinite(kappa):
+        raise ValueError("Kappa must be finite and positive")
+    if draw_count < 4_096:
+        raise ValueError("Reliability draw count must be at least 4096")
+    if seed < 0:
+        raise ValueError("Reliability draw seed must be non-negative")
+
+    return {
+        candidate.case_id: float(
+            np.quantile(
+                _sampled_evsi(
+                    candidate,
+                    kappa=kappa,
+                    draw_count=draw_count,
+                    seed=seed,
+                ),
+                lower_quantile,
+                method="linear",
+            )
+        )
+        for candidate in sorted(candidates, key=lambda item: item.case_id)
+    }
 
 
 def _ranked_decision(
@@ -175,5 +293,39 @@ class PlugInEVSIPolicy:
         ranked = sorted(
             request.candidates,
             key=lambda candidate: (-plug_in_evsi(candidate, kappa=self.kappa), candidate.case_id),
+        )
+        return _ranked_decision(self.policy_id, request, ranked)
+
+
+@dataclass(frozen=True)
+class ReliabilityAwareEVSIPolicy:
+    """Rank probes by a lower quantile of uncertain expected risk reduction."""
+
+    lower_quantile: float
+    kappa: float
+    draw_count: int
+    seed: int
+    policy_id: PolicyId = field(default=PolicyId.RELIABILITY_AWARE_BOUNDED, init=False)
+
+    def __post_init__(self) -> None:
+        reliability_aware_evsi_scores(
+            (),
+            lower_quantile=self.lower_quantile,
+            kappa=self.kappa,
+            draw_count=self.draw_count,
+            seed=self.seed,
+        )
+
+    def select(self, request: AcquisitionRequest) -> AcquisitionDecision:
+        scores = reliability_aware_evsi_scores(
+            request.candidates,
+            lower_quantile=self.lower_quantile,
+            kappa=self.kappa,
+            draw_count=self.draw_count,
+            seed=self.seed,
+        )
+        ranked = sorted(
+            request.candidates,
+            key=lambda candidate: (-scores[candidate.case_id], candidate.case_id),
         )
         return _ranked_decision(self.policy_id, request, ranked)

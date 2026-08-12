@@ -14,6 +14,7 @@ from socratic_tutor.acquisition_study import (
     NeverProbePolicy,
     PlugInEVSIPolicy,
     ProbeClassId,
+    ReliabilityAwareEVSIPolicy,
     SeededRandomPolicy,
     UncertaintyOnlyPolicy,
 )
@@ -27,11 +28,12 @@ def _candidate(
     sensitivity_beta: float = 10.0,
     specificity_alpha: float = 90.0,
     specificity_beta: float = 10.0,
+    probe_class: ProbeClassId = ProbeClassId.HIGH_RELIABILITY_DENSE,
 ) -> AcquisitionCandidate:
     return AcquisitionCandidate(
         case_id=case_id,
         prior_success_probability=prior,
-        probe_class=ProbeClassId.HIGH_RELIABILITY_DENSE,
+        probe_class=probe_class,
         calibration_beta_posterior=CalibrationBetaPosterior(
             sensitivity=BetaPosterior(alpha=sensitivity_alpha, beta=sensitivity_beta),
             specificity=BetaPosterior(alpha=specificity_alpha, beta=specificity_beta),
@@ -112,3 +114,36 @@ def test_plugin_evsi_prefers_more_informative_evidence_at_the_same_prior() -> No
     decision = PlugInEVSIPolicy(kappa=2.0).select(request)
 
     assert decision.selected_case_ids == ("strong-evidence",)
+
+
+def test_reliability_aware_evsi_penalises_sparse_calibration_evidence() -> None:
+    request = AcquisitionRequest(
+        candidates=(
+            _candidate(
+                "a-sparse",
+                0.5,
+                sensitivity_alpha=9.0,
+                sensitivity_beta=1.0,
+                specificity_alpha=9.0,
+                specificity_beta=1.0,
+                probe_class=ProbeClassId.HIGH_RELIABILITY_SPARSE,
+            ),
+            _candidate("z-dense", 0.5),
+        ),
+        remaining_probe_budget=1,
+    )
+    reversed_request = AcquisitionRequest(
+        candidates=tuple(reversed(request.candidates)),
+        remaining_probe_budget=1,
+    )
+
+    assert PlugInEVSIPolicy(kappa=2.0).select(request).selected_case_ids == ("a-sparse",)
+
+    policy = ReliabilityAwareEVSIPolicy(
+        lower_quantile=0.10,
+        kappa=2.0,
+        draw_count=8_192,
+        seed=9_052_808,
+    )
+    assert policy.select(request).selected_case_ids == ("z-dense",)
+    assert policy.select(reversed_request) == policy.select(request)

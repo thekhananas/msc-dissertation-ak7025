@@ -29,11 +29,13 @@ from socratic_tutor.acquisition_study.policies import (
     AlwaysProbePolicy,
     NeverProbePolicy,
     PlugInEVSIPolicy,
+    ReliabilityAwareEVSIPolicy,
     SeededRandomPolicy,
     UncertaintyOnlyPolicy,
     bounded_posterior,
     classification_risk,
     plug_in_evsi,
+    reliability_aware_evsi_scores,
 )
 
 __all__ = [
@@ -56,6 +58,7 @@ __all__ = [
     "PolicyId",
     "ProbeClassCalibrationEstimate",
     "ProbeClassId",
+    "ReliabilityAwareEVSIPolicy",
     "ReliabilityCalibrationRun",
     "SeededRandomPolicy",
     "UncertaintyOnlyPolicy",
@@ -64,4 +67,5 @@ __all__ = [
     "estimate_probe_reliability",
     "load_acquisition_study_plan",
     "plug_in_evsi",
+    "reliability_aware_evsi_scores",
 ]
