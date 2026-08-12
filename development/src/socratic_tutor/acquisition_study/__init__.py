@@ -1,5 +1,12 @@
 """Reliability-aware acquisition study for executable programming evidence."""
 
+from socratic_tutor.acquisition_study.burden import (
+    AcquisitionBurdenRecord,
+    CurrencyCostRecord,
+    ExternalWorkload,
+    ExternalWorkloadSource,
+    glass_box_burden_record,
+)
 from socratic_tutor.acquisition_study.calibration import (
     BernoulliCalibrationCount,
     CalibrationError,
@@ -40,6 +47,7 @@ from socratic_tutor.acquisition_study.policies import (
 
 __all__ = [
     "AcquisitionAnalysisSpecification",
+    "AcquisitionBurdenRecord",
     "AcquisitionCandidate",
     "AcquisitionContractError",
     "AcquisitionDecision",
@@ -52,7 +60,10 @@ __all__ = [
     "BetaPosterior",
     "CalibrationBetaPosterior",
     "CalibrationError",
+    "CurrencyCostRecord",
     "EvaluationEnvironmentId",
+    "ExternalWorkload",
+    "ExternalWorkloadSource",
     "NeverProbePolicy",
     "PlugInEVSIPolicy",
     "PolicyId",
@@ -65,6 +76,7 @@ __all__ = [
     "bounded_posterior",
     "classification_risk",
     "estimate_probe_reliability",
+    "glass_box_burden_record",
     "load_acquisition_study_plan",
     "plug_in_evsi",
     "reliability_aware_evsi_scores",
