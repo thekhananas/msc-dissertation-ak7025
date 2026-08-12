@@ -1,5 +1,12 @@
 """Reliability-aware acquisition study for executable programming evidence."""
 
+from socratic_tutor.acquisition_study.calibration import (
+    BernoulliCalibrationCount,
+    CalibrationError,
+    ProbeClassCalibrationEstimate,
+    ReliabilityCalibrationRun,
+    estimate_probe_reliability,
+)
 from socratic_tutor.acquisition_study.contracts import (
     AcquisitionCandidate,
     AcquisitionContractError,
@@ -39,17 +46,22 @@ __all__ = [
     "AcquisitionRequest",
     "AcquisitionStudyPlanError",
     "AlwaysProbePolicy",
+    "BernoulliCalibrationCount",
     "BetaPosterior",
     "CalibrationBetaPosterior",
+    "CalibrationError",
     "EvaluationEnvironmentId",
     "NeverProbePolicy",
     "PlugInEVSIPolicy",
     "PolicyId",
+    "ProbeClassCalibrationEstimate",
     "ProbeClassId",
+    "ReliabilityCalibrationRun",
     "SeededRandomPolicy",
     "UncertaintyOnlyPolicy",
     "bounded_posterior",
     "classification_risk",
+    "estimate_probe_reliability",
     "load_acquisition_study_plan",
     "plug_in_evsi",
 ]
