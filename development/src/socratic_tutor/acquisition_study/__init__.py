@@ -57,6 +57,12 @@ from socratic_tutor.acquisition_study.policies import (
     plug_in_evsi,
     reliability_aware_evsi_scores,
 )
+from socratic_tutor.acquisition_study.runner import (
+    DevelopmentPolicyMatrix,
+    EpisodePolicyComparison,
+    run_development_policy_matrix,
+    run_verified_development_policy_matrix,
+)
 from socratic_tutor.acquisition_study.simulation import (
     AcquisitionSimulationError,
     PolicyEpisodeRecord,
@@ -85,6 +91,8 @@ __all__ = [
     "CalibrationError",
     "CasePredictionResult",
     "CurrencyCostRecord",
+    "DevelopmentPolicyMatrix",
+    "EpisodePolicyComparison",
     "EvaluationEnvironmentId",
     "ExternalWorkload",
     "ExternalWorkloadSource",
@@ -116,4 +124,6 @@ __all__ = [
     "oracle_expected_risk_reduction",
     "plug_in_evsi",
     "reliability_aware_evsi_scores",
+    "run_development_policy_matrix",
+    "run_verified_development_policy_matrix",
 ]
