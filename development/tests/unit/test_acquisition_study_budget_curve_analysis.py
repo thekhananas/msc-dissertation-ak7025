@@ -5,11 +5,10 @@ from pathlib import Path
 
 from socratic_tutor.acquisition_study import (
     PolicyId,
-    analyse_development_budget_curve,
     load_acquisition_study_plan,
-    load_verified_development_budget_curve,
     publish_development_budget_curve,
     publish_development_policy_matrix,
+    run_development_budget_curve_analysis,
     run_verified_development_budget_curve,
     run_verified_development_policy_matrix,
 )
@@ -52,31 +51,37 @@ def test_budget_analysis_preserves_pairing_and_descriptive_claim_boundary(
         code_revision="12028af",
         pixi_lock_path=ROOT / "pixi.lock",
     )
-    loaded_manifest, loaded_curve = load_verified_development_budget_curve(
-        curve_root / "development_budget_curve_manifest.json",
+    output_root = tmp_path / "analysis"
+    report = run_development_budget_curve_analysis(
+        source_manifest_path=curve_root / "development_budget_curve_manifest.json",
         specification=SPECIFICATION,
         analysis=ANALYSIS,
+        pixi_lock_path=ROOT / "pixi.lock",
+        output_root=output_root,
+        run_id="acquisition-budget-analysis-test",
+        analysis_code_revision="1234567",
     )
-
-    report = analyse_development_budget_curve(
-        loaded_curve,
+    retry = run_development_budget_curve_analysis(
+        source_manifest_path=curve_root / "development_budget_curve_manifest.json",
+        specification=SPECIFICATION,
         analysis=ANALYSIS,
-        source_manifest=loaded_manifest,
-    )
-    retry = analyse_development_budget_curve(
-        loaded_curve,
-        analysis=ANALYSIS,
-        source_manifest=loaded_manifest,
+        pixi_lock_path=ROOT / "pixi.lock",
+        output_root=output_root,
+        run_id="acquisition-budget-analysis-test",
+        analysis_code_revision="1234567",
     )
 
     assert report == retry
     assert report.source_budget_curve_manifest_hash == curve_manifest.manifest_hash
+    assert report.analysis_execution_plan_hash
     assert len(report.environment_summaries) == 7 * 5 * 5
     assert len(report.held_out_macro_summaries) == 5 * 5
     assert len(report.held_out_paired_differences) == 5 * 4
     assert report.analysis_status == "descriptive_not_confirmatory"
     assert not report.canonical_claim_allowed
     assert not report.human_learning_claim_supported
+    assert (output_root / "development_budget_curve_analysis_plan.json").is_file()
+    assert (output_root / "development_budget_curve_analysis_report.json").is_file()
 
     endpoint_differences = tuple(
         row for row in report.held_out_paired_differences if row.budget_fraction in (0.0, 1.0)

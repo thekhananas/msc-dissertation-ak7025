@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from pathlib import Path
 from statistics import fmean
 from typing import Literal, Self
 
@@ -13,15 +14,22 @@ from socratic_tutor.acquisition_study.budget_curve_runner import (
     BudgetCurveEpisodeMetric,
     DevelopmentBudgetCurveManifest,
     DevelopmentBudgetCurveMatrix,
+    load_verified_development_budget_curve,
 )
 from socratic_tutor.acquisition_study.contracts import PolicyId
 from socratic_tutor.acquisition_study.plan import (
     AcquisitionAnalysisSpecification,
+    AcquisitionEnvironmentSpecification,
     EnvironmentRole,
     EvaluationEnvironmentId,
 )
+from socratic_tutor.benchmark.artifacts import write_immutable_json
 from socratic_tutor.benchmark.common import Sha256
-from socratic_tutor.benchmark.hashing import canonical_sha256, model_content_hash
+from socratic_tutor.benchmark.hashing import (
+    canonical_sha256,
+    file_sha256,
+    model_content_hash,
+)
 from socratic_tutor.contracts import ContractModel
 
 _CANDIDATE = PolicyId.RELIABILITY_AWARE_BOUNDED
@@ -31,6 +39,47 @@ _BUDGET_REFERENCES = BUDGET_CURVE_POLICY_ORDER[1:]
 
 class BudgetCurveAnalysisError(ValueError):
     """Budget rows cannot support the frozen descriptive analysis."""
+
+
+class DevelopmentBudgetCurveAnalysisPlan(ContractModel):
+    """Provenance for one development budget-curve analysis."""
+
+    schema_version: Literal[1] = 1
+    schema_id: Literal["acquisition_study.development_budget_curve_analysis_plan.v1"] = (
+        "acquisition_study.development_budget_curve_analysis_plan.v1"
+    )
+    study_id: Literal["reliability-aware-probing-v1"] = "reliability-aware-probing-v1"
+    run_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{2,99}$")
+    split: Literal["development"] = "development"
+    source_run_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{2,99}$")
+    source_code_revision: str = Field(pattern=r"^[0-9a-f]{7,40}$")
+    source_budget_curve_manifest_hash: Sha256
+    source_budget_curve_file_sha256: Sha256
+    source_budget_curve_matrix_hash: Sha256
+    environment_specification_hash: Sha256
+    frozen_analysis_specification_hash: Sha256
+    analysis_code_revision: str = Field(pattern=r"^[0-9a-f]{7,40}$")
+    pixi_lock_sha256: Sha256
+    budget_fractions: tuple[float, ...] = Field(min_length=5, max_length=5)
+    metrics: tuple[str, ...] = Field(min_length=4, max_length=4)
+    analysis_status: Literal["descriptive_not_confirmatory"] = "descriptive_not_confirmatory"
+    canonical_claim_allowed: Literal[False] = False
+    plan_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_plan(self) -> Self:
+        if self.budget_fractions != (0.0, 0.25, 0.5, 0.75, 1.0):
+            raise ValueError("Budget analysis plan differs from the frozen fractions")
+        if self.metrics != (
+            "classification_error",
+            "brier_score",
+            "negative_log_likelihood",
+            "expected_calibration_error",
+        ):
+            raise ValueError("Budget analysis plan differs from the frozen metrics")
+        if self.plan_hash != model_content_hash(self, exclude={"plan_hash"}):
+            raise ValueError("Budget analysis plan hash does not match its content")
+        return self
 
 
 class EnvironmentBudgetSummary(ContractModel):
@@ -183,6 +232,8 @@ class DevelopmentBudgetCurveAnalysisReport(ContractModel):
     result_status: Literal["development_diagnostic_not_canonical"] = (
         "development_diagnostic_not_canonical"
     )
+    run_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{2,99}$")
+    analysis_execution_plan_hash: Sha256
     source_budget_curve_manifest_hash: Sha256
     source_budget_curve_matrix_hash: Sha256
     frozen_analysis_specification_hash: Sha256
@@ -269,6 +320,7 @@ def analyse_development_budget_curve(
     *,
     analysis: AcquisitionAnalysisSpecification,
     source_manifest: DevelopmentBudgetCurveManifest,
+    plan: DevelopmentBudgetCurveAnalysisPlan,
 ) -> DevelopmentBudgetCurveAnalysisReport:
     """Summarise the frozen development curve without inferential claims."""
 
@@ -279,6 +331,12 @@ def analyse_development_budget_curve(
         or source_manifest.analysis_plan_hash != analysis.plan_hash
     ):
         raise BudgetCurveAnalysisError("Budget matrix does not match its source manifest")
+    if (
+        plan.source_budget_curve_manifest_hash != source_manifest.manifest_hash
+        or plan.source_budget_curve_matrix_hash != matrix.content_hash
+        or plan.frozen_analysis_specification_hash != analysis.plan_hash
+    ):
+        raise BudgetCurveAnalysisError("Budget analysis plan does not match its sources")
     grouped: dict[
         tuple[EvaluationEnvironmentId, float, PolicyId],
         list[BudgetCurveEpisodeMetric],
@@ -338,6 +396,8 @@ def analyse_development_budget_curve(
         "study_id": matrix.study_id,
         "split": matrix.split,
         "result_status": matrix.result_scope,
+        "run_id": plan.run_id,
+        "analysis_execution_plan_hash": plan.plan_hash,
         "source_budget_curve_manifest_hash": source_manifest.manifest_hash,
         "source_budget_curve_matrix_hash": matrix.content_hash,
         "frozen_analysis_specification_hash": analysis.plan_hash,
@@ -358,6 +418,61 @@ def analyse_development_budget_curve(
     return DevelopmentBudgetCurveAnalysisReport.model_validate(
         {**content, "report_hash": canonical_sha256(content)}
     )
+
+
+def run_development_budget_curve_analysis(
+    *,
+    source_manifest_path: Path,
+    specification: AcquisitionEnvironmentSpecification,
+    analysis: AcquisitionAnalysisSpecification,
+    pixi_lock_path: Path,
+    output_root: Path,
+    run_id: str,
+    analysis_code_revision: str,
+) -> DevelopmentBudgetCurveAnalysisReport:
+    """Verify, analyse, and immutably publish the development budget curve."""
+
+    source_manifest, matrix = load_verified_development_budget_curve(
+        source_manifest_path,
+        specification=specification,
+        analysis=analysis,
+    )
+    try:
+        pixi_lock_hash = file_sha256(pixi_lock_path.read_bytes())
+    except OSError as error:
+        raise BudgetCurveAnalysisError(f"Could not read Pixi lock: {pixi_lock_path}") from error
+    plan_content = {
+        "schema_version": 1,
+        "schema_id": "acquisition_study.development_budget_curve_analysis_plan.v1",
+        "study_id": matrix.study_id,
+        "run_id": run_id,
+        "split": matrix.split,
+        "source_run_id": source_manifest.run_id,
+        "source_code_revision": source_manifest.code_revision,
+        "source_budget_curve_manifest_hash": source_manifest.manifest_hash,
+        "source_budget_curve_file_sha256": source_manifest.budget_curve_file_sha256,
+        "source_budget_curve_matrix_hash": matrix.content_hash,
+        "environment_specification_hash": specification.specification_hash,
+        "frozen_analysis_specification_hash": analysis.plan_hash,
+        "analysis_code_revision": analysis_code_revision,
+        "pixi_lock_sha256": pixi_lock_hash,
+        "budget_fractions": analysis.secondary.budget_fractions,
+        "metrics": analysis.secondary.metrics,
+        "analysis_status": analysis.secondary.status,
+        "canonical_claim_allowed": False,
+    }
+    plan = DevelopmentBudgetCurveAnalysisPlan.model_validate(
+        {**plan_content, "plan_hash": canonical_sha256(plan_content)}
+    )
+    report = analyse_development_budget_curve(
+        matrix,
+        analysis=analysis,
+        source_manifest=source_manifest,
+        plan=plan,
+    )
+    write_immutable_json(output_root / "development_budget_curve_analysis_plan.json", plan)
+    write_immutable_json(output_root / "development_budget_curve_analysis_report.json", report)
+    return report
 
 
 def _summarise_environment_budget(

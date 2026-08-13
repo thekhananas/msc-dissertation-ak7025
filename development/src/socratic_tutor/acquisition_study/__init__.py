@@ -8,11 +8,13 @@ from socratic_tutor.acquisition_study.budget_curve import (
 )
 from socratic_tutor.acquisition_study.budget_curve_analysis import (
     BudgetCurveAnalysisError,
+    DevelopmentBudgetCurveAnalysisPlan,
     DevelopmentBudgetCurveAnalysisReport,
     EnvironmentBudgetSummary,
     HeldOutBudgetPairedDifference,
     HeldOutBudgetSummary,
     analyse_development_budget_curve,
+    run_development_budget_curve_analysis,
 )
 from socratic_tutor.acquisition_study.budget_curve_runner import (
     BudgetCurveEpisodeMetric,
@@ -134,6 +136,7 @@ __all__ = [
     "CasePredictionResult",
     "ComparatorPrimaryInterval",
     "CurrencyCostRecord",
+    "DevelopmentBudgetCurveAnalysisPlan",
     "DevelopmentBudgetCurveAnalysisReport",
     "DevelopmentBudgetCurveError",
     "DevelopmentBudgetCurveManifest",
@@ -186,6 +189,7 @@ __all__ = [
     "publish_development_policy_matrix",
     "reliability_aware_evsi_scores",
     "run_development_budget_curve",
+    "run_development_budget_curve_analysis",
     "run_development_policy_matrix",
     "run_development_primary_analysis",
     "run_episode_budget_curve",
