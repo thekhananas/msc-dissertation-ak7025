@@ -1,9 +1,19 @@
 """Reliability-aware acquisition study for executable programming evidence."""
 
 from socratic_tutor.acquisition_study.budget_curve import (
+    BUDGET_CURVE_POLICY_ORDER,
     BudgetPolicyResult,
     EpisodeBudgetCurve,
     run_episode_budget_curve,
+)
+from socratic_tutor.acquisition_study.budget_curve_runner import (
+    BudgetCurveEpisodeMetric,
+    DevelopmentBudgetCurveError,
+    DevelopmentBudgetCurveManifest,
+    DevelopmentBudgetCurveMatrix,
+    publish_development_budget_curve,
+    run_development_budget_curve,
+    run_verified_development_budget_curve,
 )
 from socratic_tutor.acquisition_study.burden import (
     AcquisitionBurdenRecord,
@@ -91,6 +101,7 @@ from socratic_tutor.acquisition_study.simulation import (
 )
 
 __all__ = [
+    "BUDGET_CURVE_POLICY_ORDER",
     "AcquisitionAnalysisSpecification",
     "AcquisitionBurdenRecord",
     "AcquisitionCandidate",
@@ -106,12 +117,16 @@ __all__ = [
     "AlwaysProbePolicy",
     "BernoulliCalibrationCount",
     "BetaPosterior",
+    "BudgetCurveEpisodeMetric",
     "BudgetPolicyResult",
     "CalibrationBetaPosterior",
     "CalibrationError",
     "CasePredictionResult",
     "ComparatorPrimaryInterval",
     "CurrencyCostRecord",
+    "DevelopmentBudgetCurveError",
+    "DevelopmentBudgetCurveManifest",
+    "DevelopmentBudgetCurveMatrix",
     "DevelopmentPolicyMatrix",
     "DevelopmentPolicyMatrixManifest",
     "DevelopmentPrimaryAnalysisPlan",
@@ -151,11 +166,14 @@ __all__ = [
     "load_verified_development_policy_matrix",
     "oracle_expected_risk_reduction",
     "plug_in_evsi",
+    "publish_development_budget_curve",
     "publish_development_policy_matrix",
     "reliability_aware_evsi_scores",
+    "run_development_budget_curve",
     "run_development_policy_matrix",
     "run_development_primary_analysis",
     "run_episode_budget_curve",
+    "run_verified_development_budget_curve",
     "run_verified_development_policy_matrix",
     "stratified_paired_bootstrap_distributions",
 ]

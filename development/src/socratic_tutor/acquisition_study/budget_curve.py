@@ -32,7 +32,7 @@ from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
 
-_CURVE_POLICY_ORDER = (
+BUDGET_CURVE_POLICY_ORDER = (
     PolicyId.RELIABILITY_AWARE_BOUNDED,
     PolicyId.SEEDED_RANDOM_BOUNDED,
     PolicyId.UNCERTAINTY_ONLY_BOUNDED,
@@ -83,7 +83,7 @@ class EpisodeBudgetCurve(ContractModel):
             raise ValueError("Budget curve episode identifier does not match its index")
         if self.budget_fractions != (0.0, 0.25, 0.5, 0.75, 1.0):
             raise ValueError("Budget curve differs from the frozen fractions")
-        if self.policy_ids != _CURVE_POLICY_ORDER:
+        if self.policy_ids != BUDGET_CURVE_POLICY_ORDER:
             raise ValueError("Budget curve policy order differs from the frozen design")
         expected_keys = tuple(
             (fraction, policy_id)
@@ -178,7 +178,7 @@ def run_episode_budget_curve(
             environment_id=environment_id,
         ),
     )
-    if tuple(policy.policy_id for policy in policies) != _CURVE_POLICY_ORDER:
+    if tuple(policy.policy_id for policy in policies) != BUDGET_CURVE_POLICY_ORDER:
         raise ValueError("Constructed budget-curve policies differ from the frozen design")
 
     candidate_count = len(policy_episode.request.candidates)
@@ -222,6 +222,6 @@ def run_episode_budget_curve(
         privileged_episode_hash=model_content_hash(privileged_episode),
         candidate_count=candidate_count,
         budget_fractions=analysis.secondary.budget_fractions,
-        policy_ids=_CURVE_POLICY_ORDER,
+        policy_ids=BUDGET_CURVE_POLICY_ORDER,
         results=tuple(results),
     )
