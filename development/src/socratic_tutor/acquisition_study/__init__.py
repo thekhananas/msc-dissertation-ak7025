@@ -59,7 +59,9 @@ from socratic_tutor.acquisition_study.policies import (
 )
 from socratic_tutor.acquisition_study.runner import (
     DevelopmentPolicyMatrix,
+    DevelopmentPolicyMatrixManifest,
     EpisodePolicyComparison,
+    publish_development_policy_matrix,
     run_development_policy_matrix,
     run_verified_development_policy_matrix,
 )
@@ -92,6 +94,7 @@ __all__ = [
     "CasePredictionResult",
     "CurrencyCostRecord",
     "DevelopmentPolicyMatrix",
+    "DevelopmentPolicyMatrixManifest",
     "EpisodePolicyComparison",
     "EvaluationEnvironmentId",
     "ExternalWorkload",
@@ -123,6 +126,7 @@ __all__ = [
     "load_acquisition_study_plan",
     "oracle_expected_risk_reduction",
     "plug_in_evsi",
+    "publish_development_policy_matrix",
     "reliability_aware_evsi_scores",
     "run_development_policy_matrix",
     "run_verified_development_policy_matrix",

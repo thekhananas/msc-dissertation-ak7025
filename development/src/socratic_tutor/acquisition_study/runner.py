@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Literal, Self
 
 from pydantic import Field, model_validator
@@ -32,8 +33,14 @@ from socratic_tutor.acquisition_study.simulation import (
     PrivilegedEpisodeRecord,
     generate_acquisition_episode,
 )
+from socratic_tutor.benchmark.artifacts import write_immutable_bytes, write_immutable_json
 from socratic_tutor.benchmark.common import Sha256
-from socratic_tutor.benchmark.hashing import canonical_sha256, model_content_hash
+from socratic_tutor.benchmark.hashing import (
+    canonical_json_bytes,
+    canonical_sha256,
+    file_sha256,
+    model_content_hash,
+)
 from socratic_tutor.contracts import ContractModel
 
 _POLICY_ORDER = (
@@ -182,6 +189,63 @@ class DevelopmentPolicyMatrix(ContractModel):
         return canonical_sha256(self)
 
 
+class DevelopmentPolicyMatrixManifest(ContractModel):
+    """Self-verifying record of one published development rehearsal."""
+
+    schema_version: Literal[1] = 1
+    schema_id: Literal["acquisition_study.development_policy_matrix_manifest.v1"] = (
+        "acquisition_study.development_policy_matrix_manifest.v1"
+    )
+    study_id: Literal["reliability-aware-probing-v1"] = "reliability-aware-probing-v1"
+    run_id: str = Field(pattern=r"^[a-z0-9][a-z0-9._-]{2,99}$")
+    code_revision: str = Field(pattern=r"^[0-9a-f]{7,40}$")
+    split: Literal["development"] = "development"
+    result_scope: Literal["development_diagnostic_not_canonical"] = (
+        "development_diagnostic_not_canonical"
+    )
+    access_scope: Literal["simulator_restricted"] = "simulator_restricted"
+    environment_specification_hash: Sha256
+    analysis_plan_hash: Sha256
+    calibration_hash: Sha256
+    pixi_lock_sha256: Sha256
+    comparison_file: Literal["development_comparisons.jsonl"] = "development_comparisons.jsonl"
+    comparison_file_sha256: Sha256
+    matrix_content_hash: Sha256
+    replay_content_hash: Sha256
+    deterministic_replay_verified: Literal[True] = True
+    environment_count: int = Field(ge=1)
+    episodes_per_environment: int = Field(ge=1)
+    comparison_count: int = Field(ge=1)
+    policy_count: int = Field(ge=1)
+    policy_result_count: int = Field(ge=1)
+    case_prediction_count: int = Field(ge=1)
+    selected_probe_count: int = Field(ge=0)
+    missing_probe_result_count: int = Field(ge=0)
+    external_model_call_count: Literal[0] = 0
+    sandbox_call_count: Literal[0] = 0
+    human_record_count: Literal[0] = 0
+    human_learning_claim_supported: Literal[False] = False
+    tutoring_efficacy_claim_supported: Literal[False] = False
+    manifest_hash: Sha256
+
+    @model_validator(mode="after")
+    def validate_manifest(self) -> Self:
+        if self.matrix_content_hash != self.replay_content_hash:
+            raise ValueError("Development replay hash differs from the first run")
+        if self.environment_count != len(EvaluationEnvironmentId):
+            raise ValueError("Development manifest does not contain every environment")
+        if self.policy_count != len(_POLICY_ORDER):
+            raise ValueError("Development manifest does not contain every policy")
+        if self.comparison_count != self.environment_count * self.episodes_per_environment:
+            raise ValueError("Development manifest comparison count is inconsistent")
+        if self.policy_result_count != self.comparison_count * self.policy_count:
+            raise ValueError("Development manifest policy-result count is inconsistent")
+        expected_hash = model_content_hash(self, exclude={"manifest_hash"})
+        if self.manifest_hash != expected_hash:
+            raise ValueError("Development policy manifest hash does not match its content")
+        return self
+
+
 def run_verified_development_policy_matrix(
     specification: AcquisitionEnvironmentSpecification,
     analysis: AcquisitionAnalysisSpecification,
@@ -203,6 +267,69 @@ def run_verified_development_policy_matrix(
     if first.content_hash != replay.content_hash:
         raise RuntimeError("Development policy replay produced different content")
     return first, replay.content_hash
+
+
+def publish_development_policy_matrix(
+    matrix: DevelopmentPolicyMatrix,
+    *,
+    replay_content_hash: Sha256,
+    output_root: Path,
+    run_id: str,
+    code_revision: str,
+    pixi_lock_path: Path,
+) -> DevelopmentPolicyMatrixManifest:
+    """Write restricted development comparisons and an immutable manifest."""
+
+    if matrix.content_hash != replay_content_hash:
+        raise ValueError("Development matrix and replay hashes differ")
+    comparison_bytes = b"".join(
+        canonical_json_bytes(comparison) + b"\n" for comparison in matrix.comparisons
+    )
+    policy_results = tuple(
+        result for comparison in matrix.comparisons for result in comparison.results
+    )
+    content = {
+        "schema_version": 1,
+        "schema_id": "acquisition_study.development_policy_matrix_manifest.v1",
+        "study_id": matrix.study_id,
+        "run_id": run_id,
+        "code_revision": code_revision,
+        "split": matrix.split,
+        "result_scope": matrix.result_scope,
+        "access_scope": matrix.access_scope,
+        "environment_specification_hash": matrix.environment_specification_hash,
+        "analysis_plan_hash": matrix.analysis_plan_hash,
+        "calibration_hash": matrix.calibration_hash,
+        "pixi_lock_sha256": file_sha256(pixi_lock_path.read_bytes()),
+        "comparison_file": "development_comparisons.jsonl",
+        "comparison_file_sha256": file_sha256(comparison_bytes),
+        "matrix_content_hash": matrix.content_hash,
+        "replay_content_hash": replay_content_hash,
+        "deterministic_replay_verified": True,
+        "environment_count": matrix.environment_count,
+        "episodes_per_environment": matrix.episodes_per_environment,
+        "comparison_count": matrix.comparison_count,
+        "policy_count": matrix.policy_count,
+        "policy_result_count": len(policy_results),
+        "case_prediction_count": sum(len(result.case_results) for result in policy_results),
+        "selected_probe_count": sum(
+            result.burden.selected_probe_count for result in policy_results
+        ),
+        "missing_probe_result_count": sum(
+            result.burden.missing_probe_result_count for result in policy_results
+        ),
+        "external_model_call_count": matrix.external_model_call_count,
+        "sandbox_call_count": matrix.sandbox_call_count,
+        "human_record_count": matrix.human_record_count,
+        "human_learning_claim_supported": matrix.human_learning_claim_supported,
+        "tutoring_efficacy_claim_supported": matrix.tutoring_efficacy_claim_supported,
+    }
+    manifest = DevelopmentPolicyMatrixManifest.model_validate(
+        {**content, "manifest_hash": canonical_sha256(content)}
+    )
+    write_immutable_bytes(output_root / manifest.comparison_file, comparison_bytes)
+    write_immutable_json(output_root / "development_policy_matrix_manifest.json", manifest)
+    return manifest
 
 
 def run_development_policy_matrix(
