@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import math
 from pathlib import Path
 from typing import Literal, Self
 
-from pydantic import Field, model_validator
+from pydantic import Field, ValidationError, model_validator
 
 from socratic_tutor.acquisition_study.budget_curve import (
     BUDGET_CURVE_POLICY_ORDER,
@@ -276,6 +277,54 @@ def run_verified_development_budget_curve(
     if first.content_hash != replay.content_hash:
         raise DevelopmentBudgetCurveError("Development budget-curve replay differs")
     return first, replay.content_hash
+
+
+def load_verified_development_budget_curve(
+    manifest_path: Path,
+    *,
+    specification: AcquisitionEnvironmentSpecification,
+    analysis: AcquisitionAnalysisSpecification,
+) -> tuple[DevelopmentBudgetCurveManifest, DevelopmentBudgetCurveMatrix]:
+    """Load compact budget rows only after checking their complete manifest."""
+
+    try:
+        manifest = DevelopmentBudgetCurveManifest.model_validate_json(
+            manifest_path.read_text(encoding="utf-8")
+        )
+        curve_path = manifest_path.parent / manifest.budget_curve_file
+        curve_bytes = curve_path.read_bytes()
+        if file_sha256(curve_bytes) != manifest.budget_curve_file_sha256:
+            raise DevelopmentBudgetCurveError("Development budget-curve file hash differs")
+        lines = curve_bytes.decode("utf-8").splitlines()
+        if len(lines) != manifest.row_count or any(not line for line in lines):
+            raise DevelopmentBudgetCurveError("Development budget-curve row count differs")
+        rows = tuple(BudgetCurveEpisodeMetric.model_validate(json.loads(line)) for line in lines)
+        matrix = DevelopmentBudgetCurveMatrix(
+            source_manifest_hash=manifest.source_manifest_hash,
+            environment_specification_hash=manifest.environment_specification_hash,
+            analysis_plan_hash=manifest.analysis_plan_hash,
+            calibration_hash=manifest.calibration_hash,
+            episodes_per_environment=manifest.episodes_per_environment,
+            candidates_per_episode=manifest.candidates_per_episode,
+            environment_count=manifest.environment_count,
+            budget_fractions=analysis.secondary.budget_fractions,
+            policy_ids=BUDGET_CURVE_POLICY_ORDER,
+            row_count=manifest.row_count,
+            rows=rows,
+        )
+    except DevelopmentBudgetCurveError:
+        raise
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValidationError) as error:
+        raise DevelopmentBudgetCurveError(
+            f"Could not verify development budget curve: {manifest_path}"
+        ) from error
+    if manifest.environment_specification_hash != specification.specification_hash:
+        raise DevelopmentBudgetCurveError("Budget curve uses another environment specification")
+    if manifest.analysis_plan_hash != analysis.plan_hash:
+        raise DevelopmentBudgetCurveError("Budget curve uses another frozen analysis plan")
+    if matrix.content_hash != manifest.matrix_content_hash:
+        raise DevelopmentBudgetCurveError("Development budget-curve content hash differs")
+    return manifest, matrix
 
 
 def run_development_budget_curve(
