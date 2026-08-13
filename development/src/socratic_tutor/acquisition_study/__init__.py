@@ -1,5 +1,10 @@
 """Reliability-aware acquisition study for executable programming evidence."""
 
+from socratic_tutor.acquisition_study.budget_curve import (
+    BudgetPolicyResult,
+    EpisodeBudgetCurve,
+    run_episode_budget_curve,
+)
 from socratic_tutor.acquisition_study.burden import (
     AcquisitionBurdenRecord,
     CurrencyCostRecord,
@@ -101,6 +106,7 @@ __all__ = [
     "AlwaysProbePolicy",
     "BernoulliCalibrationCount",
     "BetaPosterior",
+    "BudgetPolicyResult",
     "CalibrationBetaPosterior",
     "CalibrationError",
     "CasePredictionResult",
@@ -111,6 +117,7 @@ __all__ = [
     "DevelopmentPrimaryAnalysisPlan",
     "DevelopmentPrimaryAnalysisReport",
     "EnvironmentPairedEffect",
+    "EpisodeBudgetCurve",
     "EpisodePolicyComparison",
     "EvaluationEnvironmentId",
     "ExternalWorkload",
@@ -148,6 +155,7 @@ __all__ = [
     "reliability_aware_evsi_scores",
     "run_development_policy_matrix",
     "run_development_primary_analysis",
+    "run_episode_budget_curve",
     "run_verified_development_policy_matrix",
     "stratified_paired_bootstrap_distributions",
 ]
