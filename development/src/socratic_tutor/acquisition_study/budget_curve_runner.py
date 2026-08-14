@@ -359,7 +359,10 @@ def run_development_budget_curve(
         ):
             raise DevelopmentBudgetCurveError("Regenerated budget episode differs from its source")
         _verify_primary_budget(curve.results, source_comparison.results)
-        rows.extend(_compact_metric(row, analysis.secondary.ece_bin_count) for row in curve.results)
+        rows.extend(
+            compact_budget_policy_result(row, analysis.secondary.ece_bin_count)
+            for row in curve.results
+        )
 
     return DevelopmentBudgetCurveMatrix(
         source_manifest_hash=source_manifest.manifest_hash,
@@ -445,7 +448,12 @@ def _verify_primary_budget(
         raise DevelopmentBudgetCurveError("Primary budget does not reproduce the source matrix")
 
 
-def _compact_metric(row: BudgetPolicyResult, ece_bin_count: int) -> BudgetCurveEpisodeMetric:
+def compact_budget_policy_result(
+    row: BudgetPolicyResult,
+    ece_bin_count: int,
+) -> BudgetCurveEpisodeMetric:
+    """Retain the sufficient statistics needed for later paired analysis."""
+
     if ece_bin_count != 10:
         raise DevelopmentBudgetCurveError("Development budget records require ten ECE bins")
     result = row.result

@@ -1,5 +1,15 @@
 """Reliability-aware acquisition study for executable programming evidence."""
 
+from socratic_tutor.acquisition_study.ablation_runner import (
+    AblationEpisodeMetric,
+    DevelopmentAblationError,
+    DevelopmentAblationManifest,
+    DevelopmentAblationMatrix,
+    load_verified_development_ablation_matrix,
+    publish_development_ablation_matrix,
+    run_development_ablation_matrix,
+    run_verified_development_ablation_matrix,
+)
 from socratic_tutor.acquisition_study.ablations import (
     AblationPolicyCellId,
     AblationPolicyResult,
@@ -126,6 +136,7 @@ from socratic_tutor.acquisition_study.simulation import (
 
 __all__ = [
     "BUDGET_CURVE_POLICY_ORDER",
+    "AblationEpisodeMetric",
     "AblationId",
     "AblationPolicyCellId",
     "AblationPolicyResult",
@@ -152,6 +163,9 @@ __all__ = [
     "CasePredictionResult",
     "ComparatorPrimaryInterval",
     "CurrencyCostRecord",
+    "DevelopmentAblationError",
+    "DevelopmentAblationManifest",
+    "DevelopmentAblationMatrix",
     "DevelopmentBudgetCurveAnalysisPlan",
     "DevelopmentBudgetCurveAnalysisReport",
     "DevelopmentBudgetCurveError",
@@ -201,19 +215,23 @@ __all__ = [
     "generate_acquisition_episode",
     "glass_box_burden_record",
     "load_acquisition_study_plan",
+    "load_verified_development_ablation_matrix",
     "load_verified_development_budget_curve",
     "load_verified_development_policy_matrix",
     "oracle_expected_risk_reduction",
     "plug_in_evsi",
+    "publish_development_ablation_matrix",
     "publish_development_budget_curve",
     "publish_development_policy_matrix",
     "reliability_aware_evsi_scores",
+    "run_development_ablation_matrix",
     "run_development_budget_curve",
     "run_development_budget_curve_analysis",
     "run_development_policy_matrix",
     "run_development_primary_analysis",
     "run_episode_ablation_comparison",
     "run_episode_budget_curve",
+    "run_verified_development_ablation_matrix",
     "run_verified_development_budget_curve",
     "run_verified_development_policy_matrix",
     "stratified_paired_bootstrap_distributions",
