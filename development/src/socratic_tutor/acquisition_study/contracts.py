@@ -29,6 +29,8 @@ class PolicyId(StrEnum):
     NEVER_PROBE = "never_probe"
     ALWAYS_PROBE_BOUNDED = "always_probe_bounded"
     ORACLE_TRUE_RELIABILITY_BOUNDED = "oracle_true_reliability_bounded"
+    ABLATION_QUANTILE_UNBOUNDED = "ablation_quantile_unbounded"
+    ABLATION_MEAN_UNBOUNDED = "ablation_mean_unbounded"
 
 
 class BetaPosterior(ContractModel):

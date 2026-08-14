@@ -5,13 +5,17 @@ from __future__ import annotations
 import math
 from pathlib import Path
 
+import pytest
+
 from socratic_tutor.acquisition_study import (
+    AcquisitionEvaluationError,
     AcquisitionPolicy,
     AlwaysProbePolicy,
     EvaluationEnvironmentId,
     PolicyEpisodeRecord,
     PolicyEpisodeResult,
     PrivilegedEpisodeRecord,
+    ReliabilityAwareUnboundedPolicy,
     SimulatedProbeOutcome,
     UncertaintyOnlyPolicy,
     bounded_posterior,
@@ -125,3 +129,33 @@ def test_unselected_probe_outcome_cannot_change_a_policy_result() -> None:
     changed_truth = privileged_episode.model_copy(update={"cases": tuple(changed_cases)})
 
     assert _evaluate(policy, policy_episode, changed_truth) == original
+
+
+def test_uncapped_ablation_requires_and_applies_the_uncapped_update() -> None:
+    policy_episode, privileged_episode = _episode(EvaluationEnvironmentId.MATCHED, budget=40)
+    policy = ReliabilityAwareUnboundedPolicy(
+        lower_quantile=ANALYSIS_PLAN.policies.conservative_reliability_quantile,
+        draw_count=ANALYSIS_PLAN.policies.reliability_draw_count,
+        seed=ANALYSIS_PLAN.policies.reliability_draw_seed,
+    )
+
+    result = evaluate_policy_episode(
+        policy,
+        policy_episode,
+        privileged_episode,
+        kappa=None,
+        classification_threshold=ANALYSIS_PLAN.primary.classification_threshold,
+        probability_floor=ANALYSIS_PLAN.secondary.probability_floor,
+    )
+
+    assert result.policy_id is policy.policy_id
+    assert result.burden.selected_probe_count == 40
+    with pytest.raises(AcquisitionEvaluationError, match="update rule"):
+        evaluate_policy_episode(
+            policy,
+            policy_episode,
+            privileged_episode,
+            kappa=ANALYSIS_PLAN.policies.bounded_log_likelihood_kappa,
+            classification_threshold=ANALYSIS_PLAN.primary.classification_threshold,
+            probability_floor=ANALYSIS_PLAN.secondary.probability_floor,
+        )

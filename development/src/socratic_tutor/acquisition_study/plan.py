@@ -36,6 +36,17 @@ class EnvironmentRole(StrEnum):
     HELD_OUT_MISMATCH = "held_out_mismatch"
 
 
+class AblationId(StrEnum):
+    REPLACE_LOWER_QUANTILE_WITH_POSTERIOR_MEAN = "replace_lower_quantile_with_posterior_mean"
+    REMOVE_BOUNDED_UPDATE_FROM_CANDIDATE = "remove_bounded_update_from_candidate"
+    REMOVE_BOTH_RELIABILITY_CONSERVATISM_AND_BOUNDED_UPDATE = (
+        "remove_both_reliability_conservatism_and_bounded_update"
+    )
+    COMPARE_DENSE_AND_SPARSE_EQUAL_EXPECTED_RELIABILITY = (
+        "compare_dense_and_sparse_classes_with_equal_expected_reliability"
+    )
+
+
 class ProbeClassCalibration(ContractModel):
     probe_class: ProbeClassId
     sensitivity: float = Field(gt=0.5, lt=1.0)
@@ -360,7 +371,7 @@ class AcquisitionAnalysisSpecification(ContractModel):
     policies: PolicyComparison
     primary: PrimaryAnalysis
     secondary: SecondaryAnalysis
-    ablations: tuple[str, ...] = Field(min_length=4)
+    ablations: tuple[AblationId, ...] = Field(min_length=4, max_length=4)
     negative_control: Literal["shuffle_probe_class_reliability_summaries"] = (
         "shuffle_probe_class_reliability_summaries"
     )
@@ -371,6 +382,8 @@ class AcquisitionAnalysisSpecification(ContractModel):
 
     @model_validator(mode="after")
     def validate_plan(self) -> AcquisitionAnalysisSpecification:
+        if self.ablations != tuple(AblationId):
+            raise ValueError("Ablation order or coverage differs from the frozen design")
         if self.plan_hash != model_content_hash(self, exclude={"plan_hash"}):
             raise ValueError("Analysis plan hash does not match its content")
         return self

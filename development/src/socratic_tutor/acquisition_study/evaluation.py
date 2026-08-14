@@ -30,6 +30,7 @@ from socratic_tutor.acquisition_study.policies import (
     SeededRandomPolicy,
     UncertaintyOnlyPolicy,
     bounded_posterior,
+    unbounded_posterior,
 )
 from socratic_tutor.acquisition_study.simulation import (
     PolicyEpisodeRecord,
@@ -191,7 +192,7 @@ def evaluate_policy_episode(
     policy_episode: PolicyEpisodeRecord,
     privileged_episode: PrivilegedEpisodeRecord,
     *,
-    kappa: float,
+    kappa: float | None,
     classification_threshold: float,
     probability_floor: float,
 ) -> PolicyEpisodeResult:
@@ -201,6 +202,12 @@ def evaluate_policy_episode(
         raise AcquisitionEvaluationError("The frozen classification threshold is 0.5")
     if not 0.0 < probability_floor < 0.5 or not math.isfinite(probability_floor):
         raise AcquisitionEvaluationError("Probability floor must be finite and lie in (0, 0.5)")
+    unbounded_policy_ids = {
+        PolicyId.ABLATION_QUANTILE_UNBOUNDED,
+        PolicyId.ABLATION_MEAN_UNBOUNDED,
+    }
+    if (policy.policy_id in unbounded_policy_ids) is not (kappa is None):
+        raise AcquisitionEvaluationError("Policy and evidence-update rule do not match")
     if policy_episode.episode_id != privileged_episode.episode_id:
         raise AcquisitionEvaluationError("Safe and privileged records describe different episodes")
     if (
@@ -237,13 +244,21 @@ def evaluate_policy_episode(
             missing_count += 1
         elif selected and observed_outcome is not None:
             posterior = candidate.calibration_beta_posterior
-            final_probability = bounded_posterior(
-                candidate.prior_success_probability,
-                evidence_passed=observed_outcome is SimulatedProbeOutcome.PASS,
-                sensitivity=posterior.sensitivity.mean,
-                specificity=posterior.specificity.mean,
-                kappa=kappa,
-            )
+            if kappa is None:
+                final_probability = unbounded_posterior(
+                    candidate.prior_success_probability,
+                    evidence_passed=observed_outcome is SimulatedProbeOutcome.PASS,
+                    sensitivity=posterior.sensitivity.mean,
+                    specificity=posterior.specificity.mean,
+                )
+            else:
+                final_probability = bounded_posterior(
+                    candidate.prior_success_probability,
+                    evidence_passed=observed_outcome is SimulatedProbeOutcome.PASS,
+                    sensitivity=posterior.sensitivity.mean,
+                    specificity=posterior.specificity.mean,
+                    kappa=kappa,
+                )
 
         predicted_success = final_probability >= classification_threshold
         target = float(truth.latent_success)

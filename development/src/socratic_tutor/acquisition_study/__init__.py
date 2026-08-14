@@ -65,6 +65,7 @@ from socratic_tutor.acquisition_study.oracle import (
     oracle_expected_risk_reduction,
 )
 from socratic_tutor.acquisition_study.plan import (
+    AblationId,
     AcquisitionAnalysisSpecification,
     AcquisitionEnvironmentSpecification,
     AcquisitionStudyPlanError,
@@ -75,13 +76,18 @@ from socratic_tutor.acquisition_study.policies import (
     AlwaysProbePolicy,
     NeverProbePolicy,
     PlugInEVSIPolicy,
+    PlugInEVSIUnboundedPolicy,
     ReliabilityAwareEVSIPolicy,
+    ReliabilityAwareUnboundedPolicy,
     SeededRandomPolicy,
     UncertaintyOnlyPolicy,
     bounded_posterior,
     classification_risk,
     plug_in_evsi,
     reliability_aware_evsi_scores,
+    unbounded_plug_in_evsi,
+    unbounded_posterior,
+    unbounded_reliability_aware_evsi_scores,
 )
 from socratic_tutor.acquisition_study.primary_analysis import (
     AcquisitionPrimaryAnalysisError,
@@ -113,6 +119,7 @@ from socratic_tutor.acquisition_study.simulation import (
 
 __all__ = [
     "BUDGET_CURVE_POLICY_ORDER",
+    "AblationId",
     "AcquisitionAnalysisSpecification",
     "AcquisitionBurdenRecord",
     "AcquisitionCandidate",
@@ -156,6 +163,7 @@ __all__ = [
     "HeldOutBudgetSummary",
     "NeverProbePolicy",
     "PlugInEVSIPolicy",
+    "PlugInEVSIUnboundedPolicy",
     "PolicyEpisodeRecord",
     "PolicyEpisodeResult",
     "PolicyId",
@@ -163,6 +171,7 @@ __all__ = [
     "ProbeClassCalibrationEstimate",
     "ProbeClassId",
     "ReliabilityAwareEVSIPolicy",
+    "ReliabilityAwareUnboundedPolicy",
     "ReliabilityCalibrationRun",
     "SeededRandomPolicy",
     "SimulatedCaseTruth",
@@ -196,4 +205,7 @@ __all__ = [
     "run_verified_development_budget_curve",
     "run_verified_development_policy_matrix",
     "stratified_paired_bootstrap_distributions",
+    "unbounded_plug_in_evsi",
+    "unbounded_posterior",
+    "unbounded_reliability_aware_evsi_scores",
 ]

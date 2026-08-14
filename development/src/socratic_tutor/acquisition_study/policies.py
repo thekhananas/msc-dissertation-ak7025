@@ -59,6 +59,33 @@ def bounded_posterior(
     return odds / (1.0 + odds)
 
 
+def unbounded_posterior(
+    prior: float,
+    *,
+    evidence_passed: bool,
+    sensitivity: float,
+    specificity: float,
+) -> float:
+    """Apply the ordinary Bayesian update used by the uncapped ablations."""
+
+    values = (prior, sensitivity, specificity)
+    if any(not 0.0 < value < 1.0 or not math.isfinite(value) for value in values):
+        raise ValueError("Prior, sensitivity, and specificity must be finite and lie in (0, 1)")
+    if evidence_passed:
+        true_likelihood = sensitivity
+        false_likelihood = 1.0 - specificity
+    else:
+        true_likelihood = 1.0 - sensitivity
+        false_likelihood = specificity
+    updated_log_odds = math.log(prior / (1.0 - prior)) + math.log(
+        true_likelihood / false_likelihood
+    )
+    if updated_log_odds >= 0.0:
+        return 1.0 / (1.0 + math.exp(-updated_log_odds))
+    odds = math.exp(updated_log_odds)
+    return odds / (1.0 + odds)
+
+
 def plug_in_evsi(candidate: AcquisitionCandidate, *, kappa: float) -> float:
     """Estimate risk reduction using mean calibrated sensitivity and specificity."""
 
@@ -79,6 +106,31 @@ def plug_in_evsi(candidate: AcquisitionCandidate, *, kappa: float) -> float:
         sensitivity=sensitivity,
         specificity=specificity,
         kappa=kappa,
+    )
+    expected_posterior_risk = pass_probability * classification_risk(posterior_if_pass) + (
+        1.0 - pass_probability
+    ) * classification_risk(posterior_if_fail)
+    return classification_risk(prior) - expected_posterior_risk
+
+
+def unbounded_plug_in_evsi(candidate: AcquisitionCandidate) -> float:
+    """Estimate risk reduction at mean reliability without capping the update."""
+
+    prior = candidate.prior_success_probability
+    sensitivity = candidate.calibration_beta_posterior.sensitivity.mean
+    specificity = candidate.calibration_beta_posterior.specificity.mean
+    pass_probability = prior * sensitivity + (1.0 - prior) * (1.0 - specificity)
+    posterior_if_pass = unbounded_posterior(
+        prior,
+        evidence_passed=True,
+        sensitivity=sensitivity,
+        specificity=specificity,
+    )
+    posterior_if_fail = unbounded_posterior(
+        prior,
+        evidence_passed=False,
+        sensitivity=sensitivity,
+        specificity=specificity,
     )
     expected_posterior_risk = pass_probability * classification_risk(posterior_if_pass) + (
         1.0 - pass_probability
@@ -121,7 +173,7 @@ def _reliability_draws(
 def _sampled_evsi(
     candidate: AcquisitionCandidate,
     *,
-    kappa: float,
+    kappa: float | None,
     draw_count: int,
     seed: int,
 ) -> np.ndarray:
@@ -142,8 +194,11 @@ def _sampled_evsi(
     prior = candidate.prior_success_probability
     prior_log_odds = math.log(prior / (1.0 - prior))
     pass_probability = prior * sensitivity + (1.0 - prior) * (1.0 - specificity)
-    pass_delta = np.clip(np.log(sensitivity / (1.0 - specificity)), -kappa, kappa)
-    fail_delta = np.clip(np.log((1.0 - sensitivity) / specificity), -kappa, kappa)
+    pass_delta = np.log(sensitivity / (1.0 - specificity))
+    fail_delta = np.log((1.0 - sensitivity) / specificity)
+    if kappa is not None:
+        pass_delta = np.clip(pass_delta, -kappa, kappa)
+        fail_delta = np.clip(fail_delta, -kappa, kappa)
 
     posterior_if_pass = _stable_expit(prior_log_odds + pass_delta)
     posterior_if_fail = _stable_expit(prior_log_odds + fail_delta)
@@ -189,6 +244,38 @@ def reliability_aware_evsi_scores(
                 _sampled_evsi(
                     candidate,
                     kappa=kappa,
+                    draw_count=draw_count,
+                    seed=seed,
+                ),
+                lower_quantile,
+                method="linear",
+            )
+        )
+        for candidate in sorted(candidates, key=lambda item: item.case_id)
+    }
+
+
+def unbounded_reliability_aware_evsi_scores(
+    candidates: tuple[AcquisitionCandidate, ...],
+    *,
+    lower_quantile: float,
+    draw_count: int,
+    seed: int,
+) -> dict[str, float]:
+    """Return cautious risk-reduction scores without capping evidence updates."""
+
+    if not 0.0 < lower_quantile < 0.5 or not math.isfinite(lower_quantile):
+        raise ValueError("Lower quantile must be finite and lie in (0, 0.5)")
+    if draw_count < 4_096:
+        raise ValueError("Reliability draw count must be at least 4096")
+    if seed < 0:
+        raise ValueError("Reliability draw seed must be non-negative")
+    return {
+        candidate.case_id: float(
+            np.quantile(
+                _sampled_evsi(
+                    candidate,
+                    kappa=None,
                     draw_count=draw_count,
                     seed=seed,
                 ),
@@ -327,5 +414,50 @@ class ReliabilityAwareEVSIPolicy:
         ranked = sorted(
             request.candidates,
             key=lambda candidate: (-scores[candidate.case_id], candidate.case_id),
+        )
+        return _ranked_decision(self.policy_id, request, ranked)
+
+
+@dataclass(frozen=True)
+class ReliabilityAwareUnboundedPolicy:
+    """Ablation using cautious reliability but uncapped evidence updates."""
+
+    lower_quantile: float
+    draw_count: int
+    seed: int
+    policy_id: PolicyId = field(default=PolicyId.ABLATION_QUANTILE_UNBOUNDED, init=False)
+
+    def __post_init__(self) -> None:
+        unbounded_reliability_aware_evsi_scores(
+            (),
+            lower_quantile=self.lower_quantile,
+            draw_count=self.draw_count,
+            seed=self.seed,
+        )
+
+    def select(self, request: AcquisitionRequest) -> AcquisitionDecision:
+        scores = unbounded_reliability_aware_evsi_scores(
+            request.candidates,
+            lower_quantile=self.lower_quantile,
+            draw_count=self.draw_count,
+            seed=self.seed,
+        )
+        ranked = sorted(
+            request.candidates,
+            key=lambda candidate: (-scores[candidate.case_id], candidate.case_id),
+        )
+        return _ranked_decision(self.policy_id, request, ranked)
+
+
+@dataclass(frozen=True)
+class PlugInEVSIUnboundedPolicy:
+    """Ablation using mean reliability and uncapped evidence updates."""
+
+    policy_id: PolicyId = field(default=PolicyId.ABLATION_MEAN_UNBOUNDED, init=False)
+
+    def select(self, request: AcquisitionRequest) -> AcquisitionDecision:
+        ranked = sorted(
+            request.candidates,
+            key=lambda candidate: (-unbounded_plug_in_evsi(candidate), candidate.case_id),
         )
         return _ranked_decision(self.policy_id, request, ranked)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from socratic_tutor.acquisition_study import (
@@ -13,10 +15,14 @@ from socratic_tutor.acquisition_study import (
     CalibrationBetaPosterior,
     NeverProbePolicy,
     PlugInEVSIPolicy,
+    PlugInEVSIUnboundedPolicy,
     ProbeClassId,
     ReliabilityAwareEVSIPolicy,
+    ReliabilityAwareUnboundedPolicy,
     SeededRandomPolicy,
     UncertaintyOnlyPolicy,
+    bounded_posterior,
+    unbounded_posterior,
 )
 
 
@@ -147,3 +153,41 @@ def test_reliability_aware_evsi_penalises_sparse_calibration_evidence() -> None:
     )
     assert policy.select(request).selected_case_ids == ("z-dense",)
     assert policy.select(reversed_request) == policy.select(request)
+
+
+def test_uncapped_ablation_removes_the_declared_log_odds_limit() -> None:
+    prior = 0.5
+    bounded = bounded_posterior(
+        prior,
+        evidence_passed=True,
+        sensitivity=0.99,
+        specificity=0.99,
+        kappa=2.0,
+    )
+    unbounded = unbounded_posterior(
+        prior,
+        evidence_passed=True,
+        sensitivity=0.99,
+        specificity=0.99,
+    )
+
+    assert math.isclose(math.log(bounded / (1.0 - bounded)), 2.0, abs_tol=1e-12)
+    assert math.log(unbounded / (1.0 - unbounded)) > 2.0
+
+
+def test_uncapped_ablation_policies_obey_the_same_fixed_budget() -> None:
+    request = _request()
+    policies = (
+        ReliabilityAwareUnboundedPolicy(
+            lower_quantile=0.10,
+            draw_count=8_192,
+            seed=9_052_808,
+        ),
+        PlugInEVSIUnboundedPolicy(),
+    )
+
+    decisions = tuple(policy.select(request) for policy in policies)
+
+    assert all(
+        len(decision.selected_case_ids) == request.remaining_probe_budget for decision in decisions
+    )
