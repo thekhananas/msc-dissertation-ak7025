@@ -1,5 +1,12 @@
 """Reliability-aware acquisition study for executable programming evidence."""
 
+from socratic_tutor.acquisition_study.ablations import (
+    AblationPolicyCellId,
+    AblationPolicyResult,
+    EpisodeAblationComparison,
+    ProbeClassSelectionCount,
+    run_episode_ablation_comparison,
+)
 from socratic_tutor.acquisition_study.budget_curve import (
     BUDGET_CURVE_POLICY_ORDER,
     BudgetPolicyResult,
@@ -120,6 +127,8 @@ from socratic_tutor.acquisition_study.simulation import (
 __all__ = [
     "BUDGET_CURVE_POLICY_ORDER",
     "AblationId",
+    "AblationPolicyCellId",
+    "AblationPolicyResult",
     "AcquisitionAnalysisSpecification",
     "AcquisitionBurdenRecord",
     "AcquisitionCandidate",
@@ -154,6 +163,7 @@ __all__ = [
     "DevelopmentPrimaryAnalysisReport",
     "EnvironmentBudgetSummary",
     "EnvironmentPairedEffect",
+    "EpisodeAblationComparison",
     "EpisodeBudgetCurve",
     "EpisodePolicyComparison",
     "EvaluationEnvironmentId",
@@ -170,6 +180,7 @@ __all__ = [
     "PrivilegedEpisodeRecord",
     "ProbeClassCalibrationEstimate",
     "ProbeClassId",
+    "ProbeClassSelectionCount",
     "ReliabilityAwareEVSIPolicy",
     "ReliabilityAwareUnboundedPolicy",
     "ReliabilityCalibrationRun",
@@ -201,6 +212,7 @@ __all__ = [
     "run_development_budget_curve_analysis",
     "run_development_policy_matrix",
     "run_development_primary_analysis",
+    "run_episode_ablation_comparison",
     "run_episode_budget_curve",
     "run_verified_development_budget_curve",
     "run_verified_development_policy_matrix",
