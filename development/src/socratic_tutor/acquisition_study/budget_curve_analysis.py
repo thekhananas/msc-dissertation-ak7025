@@ -349,7 +349,7 @@ def analyse_development_budget_curve(
     for row in matrix.rows:
         grouped[(row.environment_id, row.budget_fraction, row.policy_id)].append(row)
     summaries = tuple(
-        _summarise_environment_budget(
+        summarise_environment_budget(
             grouped[(environment_id, fraction, policy_id)],
             environment_id=environment_id,
             budget_fraction=fraction,
@@ -475,7 +475,7 @@ def run_development_budget_curve_analysis(
     return report
 
 
-def _summarise_environment_budget(
+def summarise_environment_budget(
     rows: list[BudgetCurveEpisodeMetric],
     *,
     environment_id: EvaluationEnvironmentId,
@@ -483,6 +483,8 @@ def _summarise_environment_budget(
     policy_id: PolicyId,
     candidates_per_episode: int,
 ) -> EnvironmentBudgetSummary:
+    """Pool compact episode metrics without discarding calibration counts."""
+
     if not rows:
         raise BudgetCurveAnalysisError("Budget summary has no source episodes")
     rows = sorted(rows, key=lambda row: row.episode_index)
