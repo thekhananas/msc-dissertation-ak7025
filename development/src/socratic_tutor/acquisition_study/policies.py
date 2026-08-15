@@ -14,8 +14,16 @@ from socratic_tutor.acquisition_study.contracts import (
     AcquisitionContractError,
     AcquisitionDecision,
     AcquisitionRequest,
+    CalibrationBetaPosterior,
     PolicyId,
     ProbeClassId,
+)
+
+FIXED_RELIABILITY_SHUFFLE: tuple[tuple[ProbeClassId, ProbeClassId], ...] = (
+    (ProbeClassId.HIGH_RELIABILITY_DENSE, ProbeClassId.HIGH_RELIABILITY_SPARSE),
+    (ProbeClassId.HIGH_RELIABILITY_SPARSE, ProbeClassId.MODERATE_RELIABILITY_DENSE),
+    (ProbeClassId.MODERATE_RELIABILITY_DENSE, ProbeClassId.ASYMMETRIC_RELIABILITY_DENSE),
+    (ProbeClassId.ASYMMETRIC_RELIABILITY_DENSE, ProbeClassId.HIGH_RELIABILITY_DENSE),
 )
 
 
@@ -406,6 +414,73 @@ class ReliabilityAwareEVSIPolicy:
     def select(self, request: AcquisitionRequest) -> AcquisitionDecision:
         scores = reliability_aware_evsi_scores(
             request.candidates,
+            lower_quantile=self.lower_quantile,
+            kappa=self.kappa,
+            draw_count=self.draw_count,
+            seed=self.seed,
+        )
+        ranked = sorted(
+            request.candidates,
+            key=lambda candidate: (-scores[candidate.case_id], candidate.case_id),
+        )
+        return _ranked_decision(self.policy_id, request, ranked)
+
+
+def shuffle_probe_class_reliability_summaries(
+    candidates: tuple[AcquisitionCandidate, ...],
+) -> tuple[AcquisitionCandidate, ...]:
+    """Reassign each class's calibration summary using the frozen cyclic mapping."""
+
+    posterior_by_class: dict[ProbeClassId, CalibrationBetaPosterior] = {}
+    for candidate in candidates:
+        previous = posterior_by_class.setdefault(
+            candidate.probe_class,
+            candidate.calibration_beta_posterior,
+        )
+        if previous != candidate.calibration_beta_posterior:
+            raise AcquisitionContractError(
+                "Candidates in one probe class must share one calibration summary"
+            )
+    if set(posterior_by_class) != set(ProbeClassId):
+        raise AcquisitionContractError(
+            "The shuffled-reliability control requires every probe class"
+        )
+
+    source_by_target = dict(FIXED_RELIABILITY_SHUFFLE)
+    return tuple(
+        AcquisitionCandidate(
+            case_id=candidate.case_id,
+            prior_success_probability=candidate.prior_success_probability,
+            probe_class=candidate.probe_class,
+            calibration_beta_posterior=posterior_by_class[source_by_target[candidate.probe_class]],
+        )
+        for candidate in candidates
+    )
+
+
+@dataclass(frozen=True)
+class ShuffledReliabilityEVSIPolicy:
+    """Negative control that ranks cases using reassigned reliability summaries."""
+
+    lower_quantile: float
+    kappa: float
+    draw_count: int
+    seed: int
+    policy_id: PolicyId = field(default=PolicyId.SHUFFLED_RELIABILITY_BOUNDED, init=False)
+
+    def __post_init__(self) -> None:
+        reliability_aware_evsi_scores(
+            (),
+            lower_quantile=self.lower_quantile,
+            kappa=self.kappa,
+            draw_count=self.draw_count,
+            seed=self.seed,
+        )
+
+    def select(self, request: AcquisitionRequest) -> AcquisitionDecision:
+        shuffled = shuffle_probe_class_reliability_summaries(request.candidates)
+        scores = reliability_aware_evsi_scores(
+            shuffled,
             lower_quantile=self.lower_quantile,
             kappa=self.kappa,
             draw_count=self.draw_count,

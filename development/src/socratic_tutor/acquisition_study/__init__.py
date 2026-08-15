@@ -104,6 +104,7 @@ from socratic_tutor.acquisition_study.plan import (
     load_acquisition_study_plan,
 )
 from socratic_tutor.acquisition_study.policies import (
+    FIXED_RELIABILITY_SHUFFLE,
     AlwaysProbePolicy,
     NeverProbePolicy,
     PlugInEVSIPolicy,
@@ -111,11 +112,13 @@ from socratic_tutor.acquisition_study.policies import (
     ReliabilityAwareEVSIPolicy,
     ReliabilityAwareUnboundedPolicy,
     SeededRandomPolicy,
+    ShuffledReliabilityEVSIPolicy,
     UncertaintyOnlyPolicy,
     bounded_posterior,
     classification_risk,
     plug_in_evsi,
     reliability_aware_evsi_scores,
+    shuffle_probe_class_reliability_summaries,
     unbounded_plug_in_evsi,
     unbounded_posterior,
     unbounded_reliability_aware_evsi_scores,
@@ -150,6 +153,7 @@ from socratic_tutor.acquisition_study.simulation import (
 
 __all__ = [
     "BUDGET_CURVE_POLICY_ORDER",
+    "FIXED_RELIABILITY_SHUFFLE",
     "AblationAnalysisError",
     "AblationEnvironmentSummary",
     "AblationEpisodeMetric",
@@ -223,6 +227,7 @@ __all__ = [
     "ReliabilityAwareUnboundedPolicy",
     "ReliabilityCalibrationRun",
     "SeededRandomPolicy",
+    "ShuffledReliabilityEVSIPolicy",
     "SimulatedCaseTruth",
     "SimulatedProbeOutcome",
     "TrueReliabilityOraclePolicy",
@@ -260,6 +265,7 @@ __all__ = [
     "run_verified_development_ablation_matrix",
     "run_verified_development_budget_curve",
     "run_verified_development_policy_matrix",
+    "shuffle_probe_class_reliability_summaries",
     "stratified_paired_bootstrap_distributions",
     "unbounded_plug_in_evsi",
     "unbounded_posterior",

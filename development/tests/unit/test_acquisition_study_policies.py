@@ -7,6 +7,7 @@ import math
 import pytest
 
 from socratic_tutor.acquisition_study import (
+    FIXED_RELIABILITY_SHUFFLE,
     AcquisitionCandidate,
     AcquisitionContractError,
     AcquisitionRequest,
@@ -16,12 +17,15 @@ from socratic_tutor.acquisition_study import (
     NeverProbePolicy,
     PlugInEVSIPolicy,
     PlugInEVSIUnboundedPolicy,
+    PolicyId,
     ProbeClassId,
     ReliabilityAwareEVSIPolicy,
     ReliabilityAwareUnboundedPolicy,
     SeededRandomPolicy,
+    ShuffledReliabilityEVSIPolicy,
     UncertaintyOnlyPolicy,
     bounded_posterior,
+    shuffle_probe_class_reliability_summaries,
     unbounded_posterior,
 )
 
@@ -153,6 +157,56 @@ def test_reliability_aware_evsi_penalises_sparse_calibration_evidence() -> None:
     )
     assert policy.select(request).selected_case_ids == ("z-dense",)
     assert policy.select(reversed_request) == policy.select(request)
+
+
+def test_shuffled_reliability_control_reassigns_only_calibration_summaries() -> None:
+    candidates = tuple(
+        _candidate(
+            f"case-{index}",
+            0.35 + index * 0.1,
+            sensitivity_alpha=70.0 + index,
+            sensitivity_beta=30.0 - index,
+            specificity_alpha=65.0 + index,
+            specificity_beta=35.0 - index,
+            probe_class=probe_class,
+        )
+        for index, probe_class in enumerate(ProbeClassId)
+    )
+    shuffled = shuffle_probe_class_reliability_summaries(candidates)
+    original_by_class = {
+        candidate.probe_class: candidate.calibration_beta_posterior for candidate in candidates
+    }
+
+    for original, changed in zip(candidates, shuffled, strict=True):
+        assert (
+            changed.case_id,
+            changed.prior_success_probability,
+            changed.probe_class,
+        ) == (
+            original.case_id,
+            original.prior_success_probability,
+            original.probe_class,
+        )
+    for target_class, source_class in FIXED_RELIABILITY_SHUFFLE:
+        changed = next(item for item in shuffled if item.probe_class is target_class)
+        assert changed.calibration_beta_posterior == original_by_class[source_class]
+
+    request = AcquisitionRequest(candidates=candidates, remaining_probe_budget=2)
+    reversed_request = AcquisitionRequest(
+        candidates=tuple(reversed(candidates)),
+        remaining_probe_budget=2,
+    )
+    policy = ShuffledReliabilityEVSIPolicy(
+        lower_quantile=0.10,
+        kappa=2.0,
+        draw_count=8_192,
+        seed=9_052_808,
+    )
+    decision = policy.select(request)
+
+    assert decision.policy_id is PolicyId.SHUFFLED_RELIABILITY_BOUNDED
+    assert len(decision.selected_case_ids) == 2
+    assert policy.select(reversed_request) == decision
 
 
 def test_uncapped_ablation_removes_the_declared_log_odds_limit() -> None:
