@@ -351,7 +351,7 @@ def run_development_policy_matrix(
 
     calibration = estimate_probe_reliability(specification)
     comparisons = tuple(
-        _run_episode_comparison(
+        run_episode_policy_comparison(
             specification,
             analysis,
             calibration,
@@ -373,7 +373,7 @@ def run_development_policy_matrix(
     )
 
 
-def _run_episode_comparison(
+def run_episode_policy_comparison(
     specification: AcquisitionEnvironmentSpecification,
     analysis: AcquisitionAnalysisSpecification,
     calibration: ReliabilityCalibrationRun,
@@ -381,6 +381,8 @@ def _run_episode_comparison(
     environment_id: EvaluationEnvironmentId,
     episode_index: int,
 ) -> EpisodePolicyComparison:
+    """Evaluate every frozen policy against one shared hidden episode."""
+
     matched_budget = analysis.primary.exact_selected_probes_per_episode
     policy_episode, privileged_episode = generate_acquisition_episode(
         specification,
