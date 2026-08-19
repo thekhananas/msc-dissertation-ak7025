@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Self
 
@@ -52,6 +53,15 @@ _POLICY_ORDER = (
     PolicyId.ALWAYS_PROBE_BOUNDED,
     PolicyId.ORACLE_TRUE_RELIABILITY_BOUNDED,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class EpisodePolicyRun:
+    """Safe inputs, simulator truth, and policy results for one episode."""
+
+    policy_episode: PolicyEpisodeRecord
+    privileged_episode: PrivilegedEpisodeRecord
+    comparison: EpisodePolicyComparison
 
 
 class EpisodePolicyComparison(ContractModel):
@@ -383,6 +393,25 @@ def run_episode_policy_comparison(
 ) -> EpisodePolicyComparison:
     """Evaluate every frozen policy against one shared hidden episode."""
 
+    return run_episode_policy_bundle(
+        specification,
+        analysis,
+        calibration,
+        environment_id=environment_id,
+        episode_index=episode_index,
+    ).comparison
+
+
+def run_episode_policy_bundle(
+    specification: AcquisitionEnvironmentSpecification,
+    analysis: AcquisitionAnalysisSpecification,
+    calibration: ReliabilityCalibrationRun,
+    *,
+    environment_id: EvaluationEnvironmentId,
+    episode_index: int,
+) -> EpisodePolicyRun:
+    """Return all projections produced by one shared simulator episode."""
+
     matched_budget = analysis.primary.exact_selected_probes_per_episode
     policy_episode, privileged_episode = generate_acquisition_episode(
         specification,
@@ -415,7 +444,7 @@ def run_episode_policy_comparison(
     )
     oracle_result = _evaluate(oracle, policy_episode, privileged_episode, analysis)
     results = (*primary_results, never_result, always_result, oracle_result)
-    return EpisodePolicyComparison(
+    comparison = EpisodePolicyComparison(
         environment_id=environment_id,
         episode_index=episode_index,
         episode_id=policy_episode.episode_id,
@@ -424,6 +453,11 @@ def run_episode_policy_comparison(
         candidate_count=len(policy_episode.request.candidates),
         matched_budget=matched_budget,
         results=results,
+    )
+    return EpisodePolicyRun(
+        policy_episode=policy_episode,
+        privileged_episode=privileged_episode,
+        comparison=comparison,
     )
 
 
