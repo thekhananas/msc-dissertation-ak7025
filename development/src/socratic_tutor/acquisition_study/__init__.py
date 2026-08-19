@@ -93,6 +93,13 @@ from socratic_tutor.acquisition_study.calibration_sensitivity_analysis import (
     analyse_development_calibration_sensitivity,
     run_development_calibration_sensitivity_analysis,
 )
+from socratic_tutor.acquisition_study.compact_runtime_forecast import (
+    CompactRuntimeForecastError,
+    CompactRuntimeSample,
+    DevelopmentCompactRuntimeForecastPlan,
+    DevelopmentCompactRuntimeForecastReport,
+    run_development_compact_runtime_forecast,
+)
 from socratic_tutor.acquisition_study.compact_stream import (
     AcquisitionStudyPartition,
     CompactPolicyEpisodeRecord,
@@ -254,6 +261,8 @@ __all__ = [
     "CasePredictionResult",
     "CompactPolicyEpisodeRecord",
     "CompactPolicyStreamError",
+    "CompactRuntimeForecastError",
+    "CompactRuntimeSample",
     "ComparatorCalibrationSensitivitySummary",
     "ComparatorPrimaryInterval",
     "CurrencyCostRecord",
@@ -274,6 +283,8 @@ __all__ = [
     "DevelopmentCalibrationSensitivityMatrix",
     "DevelopmentCompactParityPlan",
     "DevelopmentCompactParityReport",
+    "DevelopmentCompactRuntimeForecastPlan",
+    "DevelopmentCompactRuntimeForecastReport",
     "DevelopmentNegativeControlAnalysisPlan",
     "DevelopmentNegativeControlAnalysisReport",
     "DevelopmentNegativeControlError",
@@ -361,6 +372,7 @@ __all__ = [
     "run_development_calibration_sensitivity",
     "run_development_calibration_sensitivity_analysis",
     "run_development_compact_parity",
+    "run_development_compact_runtime_forecast",
     "run_development_negative_control",
     "run_development_negative_control_analysis",
     "run_development_policy_matrix",
