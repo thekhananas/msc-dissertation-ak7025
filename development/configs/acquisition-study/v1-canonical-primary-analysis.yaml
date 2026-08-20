@@ -1,0 +1,76 @@
+schema_version: 1
+schema_id: acquisition_study.canonical_primary_source_plan.v1
+study_id: reliability-aware-probing-v1
+plan_status: frozen_before_canonical_outcome_inspection
+frozen_date: "2026-09-07"
+raw_policy_outcomes_inspected_before_freeze: false
+
+canonical_execution_plan_path: configs/acquisition-study/v1-canonical.yaml
+canonical_execution_plan_hash: 9ef0d0fd96dc6443bcde7e3c539390db0f2866f754df6a0be32b776838183618
+analysis_specification_path: configs/acquisition-study/v1-analysis.yaml
+analysis_specification_hash: 6dcfcb630f5f33d14b4f8d8eb64019505a803d6350b9b8d2ffed82afc3350919
+pixi_lock_path: pixi.lock
+pixi_lock_sha256: 7d68ee21e33528dc9f3423311f461736f0151ef71f9990607e641876526c7b83
+
+pre_run_manifest_path: artifacts/acquisition-study/canonical-v1-pre-run/canonical_pre_run_manifest.json
+pre_run_manifest_hash: bca4f78f1f233fc9a17fa1a72371c5b24da093a03f96b806ba0b8f04739bb1a0
+pre_run_manifest_file_sha256: 2f42b404890735bc9c94af24fbf57b23a57771f7a9b80c2a02b05575ff33d3a7
+pre_run_gate_path: artifacts/acquisition-study/canonical-v1-pre-run/canonical_pre_run_gate_report.json
+pre_run_gate_hash: 48cd591407b70ca6521aaa9011d17ed2966defd9064c6d870694da61eb2e39c7
+pre_run_gate_file_sha256: 5b96bd4f973162e15ae2949ff09f6c6a72d566863a743a3e9260cb9c0558267d
+canonical_run_manifest_path: artifacts/acquisition-study/canonical-v1/canonical_run_manifest.json
+canonical_run_manifest_hash: 90b85f7ddbb93c956ea9e7a6f990d59dabf3691f203038bebe3d71668b9b80bd
+canonical_run_manifest_file_sha256: c79332df4e3c529c29535f06d8dae3837baae7f26282529ff034cc3a12fc17c2
+canonical_stream_report_path: artifacts/acquisition-study/canonical-v1/canonical_stream_report.json
+canonical_stream_report_hash: cb13c0313c91c11a9cf39c79028180367534357fd6eac4394659e3a819851b60
+canonical_stream_report_file_sha256: 545140b7f68d41cb195e015a53e1b21172bdb5101d6e48608e2c0a8183a4ffad
+public_stream_path: artifacts/acquisition-study/canonical-v1/canonical_public_policy_metrics.jsonl
+public_stream_sha256: d7a1831d9b51a71ef4df11e0a509ac543807bf4edc45feac48610607370d34d7
+restricted_stream_sha256: f166f83840416e40beed2ae3bdc4e8808f7f5807676bc7b5960c9e1d4578bb20
+canonical_code_revision: 63b0e523d0edabc3372dfc0c0df8ce02bcb74aeb
+
+candidate_policy_id: reliability_aware_quantile_bounded
+comparator_policy_ids:
+  - seeded_random_bounded
+  - uncertainty_only_bounded
+  - plug_in_evsi_bounded
+environment_ids:
+  - matched
+  - lower_reliability
+  - asymmetric_errors
+  - irrelevant_evidence
+  - inverted_evidence
+  - difficulty_missingness
+  - correlated_family_failures
+policy_ids:
+  - reliability_aware_quantile_bounded
+  - seeded_random_bounded
+  - uncertainty_only_bounded
+  - plug_in_evsi_bounded
+  - never_probe
+  - always_probe_bounded
+  - oracle_true_reliability_bounded
+evaluation_episode_index_start: 50
+evaluation_episode_index_stop_exclusive: 2050
+episodes_per_environment: 2000
+candidates_per_episode: 40
+matched_probe_budget: 20
+expected_public_row_count: 98000
+interval_method: stratified_paired_episode_percentile_bootstrap
+bootstrap_repetitions: 20000
+bootstrap_seed: 9052505
+simultaneous_confidence_level: 0.9833333333333333
+precision_target_half_width: 0.02
+overall_advantage_rule: comparison_claim_holds_for_all_three_comparators
+robustness_rule: overall_advantage_and_no_held_out_point_regression_against_plug_in_evsi
+
+output_root: artifacts/acquisition-study/canonical-v1/primary-analysis-v1
+restricted_stream_access_allowed: false
+external_calls_allowed: false
+human_learning_claim_allowed: false
+tutoring_efficacy_claim_allowed: false
+cognitive_offloading_claim_allowed: false
+deployed_cost_saving_claim_allowed: false
+state_of_the_art_claim_allowed: false
+
+plan_hash: 6c81c7fabfaa56c626407e900349e49ebc8638f987da1e47404613293d829530
