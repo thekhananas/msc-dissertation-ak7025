@@ -1,0 +1,168 @@
+schema_version: 1
+schema_id: acquisition_study.canonical_execution_plan.v1
+study_id: reliability-aware-probing-v1
+plan_status: frozen_before_canonical_evaluation
+required_git_branch: main
+
+environment_specification_path: configs/acquisition-study/v1-environments.yaml
+environment_specification_hash: 4f72b0944ea61598408910498fb5d017db9ee1f7ac09cc1a2e01edcf42a0191b
+analysis_specification_path: configs/acquisition-study/v1-analysis.yaml
+analysis_specification_hash: 6dcfcb630f5f33d14b4f8d8eb64019505a803d6350b9b8d2ffed82afc3350919
+pixi_lock_path: pixi.lock
+pixi_lock_sha256: 7d68ee21e33528dc9f3423311f461736f0151ef71f9990607e641876526c7b83
+public_schema_hash: 377ac89dc68468934a03e713c8b126af1de49fa57640e6c557512c9ec0e88da2
+restricted_schema_hash: 7d08f174b140c49793ae2c69ae59fef71a16334ef2ec1d2f41a77b9757ab954a
+
+pre_run_output_root: artifacts/acquisition-study/canonical-v1-pre-run
+canonical_output_root: artifacts/acquisition-study/canonical-v1
+run_id: reliability-aware-probing-v1-canonical
+split: evaluation
+
+environment_ids:
+  - matched
+  - lower_reliability
+  - asymmetric_errors
+  - irrelevant_evidence
+  - inverted_evidence
+  - difficulty_missingness
+  - correlated_family_failures
+policy_ids:
+  - reliability_aware_quantile_bounded
+  - seeded_random_bounded
+  - uncertainty_only_bounded
+  - plug_in_evsi_bounded
+  - never_probe
+  - always_probe_bounded
+  - oracle_true_reliability_bounded
+
+development_episodes_per_environment: 50
+evaluation_episodes_per_environment: 2000
+evaluation_episode_index_start: 50
+evaluation_episode_index_stop_exclusive: 2050
+candidates_per_episode: 40
+matched_probe_budget: 20
+expected_environment_count: 7
+expected_policy_count: 7
+expected_episode_count: 14000
+expected_public_row_count: 98000
+expected_restricted_row_count: 14000
+expected_case_prediction_count: 3920000
+expected_selected_probe_count: 1960000
+
+canonical_evaluation_run_limit: 1
+exact_seeded_retry_required: true
+dynamic_policy_loading_allowed: false
+parameter_selection_after_evaluation_allowed: false
+evaluation_outcomes_update_reliability_allowed: false
+external_model_calls_expected: 0
+sandbox_calls_expected: 0
+human_records_expected: 0
+human_learning_claim_allowed: false
+tutoring_efficacy_claim_allowed: false
+cognitive_offloading_claim_allowed: false
+deployed_cost_saving_claim_allowed: false
+known_blocking_defect_ids: []
+
+development_evidence:
+  - evidence_id: development_policy_matrix
+    path: artifacts/acquisition-study/development-aede5af/development_policy_matrix_manifest.json
+    schema_id: acquisition_study.development_policy_matrix_manifest.v1
+    content_hash_field: manifest_hash
+    expected_content_hash: 5bae573a9f0b5e3ed70eea417a8c31b6f1ec6e6aeb0a39870f80d3b6d7b18ebb
+    required_true_fields:
+      - deterministic_replay_verified
+
+  - evidence_id: primary_analysis
+    path: artifacts/acquisition-study/development-aede5af/primary-analysis-bfdf385/development_primary_analysis_report.json
+    schema_id: acquisition_study.development_primary_analysis_report.v1
+    content_hash_field: report_hash
+    expected_content_hash: e3cc9b19225d28ac295f3f424798b18ec82ea097fd6d4b24a6eaf933fd3a005c
+    required_result_status: development_diagnostic_not_canonical
+    required_false_fields:
+      - canonical_claim_allowed
+
+  - evidence_id: budget_curve_analysis
+    path: artifacts/acquisition-study/development-aede5af/budget-curve-bfdf385/analysis-bfdf385/development_budget_curve_analysis_report.json
+    schema_id: acquisition_study.development_budget_curve_analysis.v1
+    content_hash_field: report_hash
+    expected_content_hash: f8e3d5e115e7e22b0a2394346ad31078f507f6e1c68f28ffb3db7d861ea7aa2a
+    required_result_status: development_diagnostic_not_canonical
+    required_true_fields:
+      - endpoint_agreement_verified
+    required_false_fields:
+      - canonical_claim_allowed
+
+  - evidence_id: ablation_analysis
+    path: artifacts/acquisition-study/development-aede5af/ablations-bfdf385/analysis-bfdf385/development_ablation_analysis_report.json
+    schema_id: acquisition_study.development_ablation_analysis.v1
+    content_hash_field: report_hash
+    expected_content_hash: 1895eb2a8c5aeecb74ec8a4de62eee623ab936f3392d94a82690af6f13d5abc7
+    required_result_status: development_diagnostic_not_canonical
+    required_true_fields:
+      - bounded_source_reproduction_verified
+    required_false_fields:
+      - canonical_claim_allowed
+
+  - evidence_id: negative_control_analysis
+    path: artifacts/acquisition-study/development-aede5af/negative-control-aede5af/analysis-f7851c3/development_negative_control_analysis_report.json
+    schema_id: acquisition_study.development_negative_control_analysis.v1
+    content_hash_field: report_hash
+    expected_content_hash: adff4a4483b33d7e37d3c7fe220cad1dc7fc47300ba2775cb36ea5b13f75479a
+    required_result_status: development_diagnostic_not_canonical
+    required_true_fields:
+      - candidate_source_reproduction_verified
+    required_false_fields:
+      - canonical_claim_allowed
+
+  - evidence_id: calibration_sensitivity_analysis
+    path: artifacts/acquisition-study/development-aede5af/calibration-sensitivity-bec71c5/analysis-a7c0c7e/development_calibration_sensitivity_analysis_report.json
+    schema_id: acquisition_study.development_calibration_sensitivity_analysis.v1
+    content_hash_field: report_hash
+    expected_content_hash: 9b4ad5a16402c8984a5eddf66db8a8c4c5c005512b04b6d4218a5b43bc7c94f1
+    required_result_status: development_diagnostic_not_canonical
+    required_true_fields:
+      - privileged_source_reproduction_verified
+    required_false_fields:
+      - canonical_claim_allowed
+
+  - evidence_id: compact_stream_parity
+    path: artifacts/acquisition-study/development-aede5af/compact-parity-74847e6/development_compact_parity_report.json
+    schema_id: acquisition_study.development_compact_parity_report.v1
+    content_hash_field: report_hash
+    expected_content_hash: bad42438c6f9bb255632e93accf2d5f4618f0c108ab8c8827e5145e8af9c9e05
+    required_result_status: development_streaming_parity_verified
+    required_true_fields:
+      - exact_source_projection_parity_verified
+      - deterministic_replay_verified
+    required_false_fields:
+      - canonical_claim_allowed
+
+  - evidence_id: compact_runtime_forecast
+    path: artifacts/acquisition-study/development-aede5af/compact-parity-74847e6/compact-runtime-088aeb3/development_compact_runtime_report.json
+    schema_id: acquisition_study.development_compact_runtime_report.v1
+    content_hash_field: report_hash
+    expected_content_hash: 47d0441452375510610b4b2a7e8c1b162e30a5d65896f7177cc9f3e425ec87b5
+    required_result_status: development_compact_operational_forecast
+    required_true_fields:
+      - exact_stream_parity_verified
+      - compact_runner_feasible_for_canonical_run
+      - runtime_within_remaining_m7b_time
+      - memory_within_planning_limit
+    required_false_fields:
+      - canonical_claim_allowed
+
+reviewed_files:
+  - file_id: design_review_packet
+    path: data/acquisition-study/v1/design-challenge/review-packet.md
+    expected_file_sha256: 13b7e0e421b72a33ad6b63c3b03b36b4d5cea51efbe153ec8694dcf66a368e0e
+  - file_id: environment_provenance
+    path: data/acquisition-study/v1/design-challenge/environment-provenance.csv
+    expected_file_sha256: a0949f8d221480a5ef31f0371bf904f009a6abbc3e1ed6a40786fb2abd44b878
+  - file_id: independent_review_response
+    path: data/acquisition-study/v1/design-challenge/review-submissions/reviewer-completed.md
+    expected_file_sha256: cb0675bebd9ad9bcdf75573f8c591e1588a28c2a797d6776c6a4b2dbf6985d95
+  - file_id: review_disposition
+    path: data/acquisition-study/v1/design-challenge/review-disposition.md
+    expected_file_sha256: 32fb652c028a288a1876f076923edc6369c5c2baad56e3641f1d5c8b2aba92ba
+
+plan_hash: 9ef0d0fd96dc6443bcde7e3c539390db0f2866f754df6a0be32b776838183618
