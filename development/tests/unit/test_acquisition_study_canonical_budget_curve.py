@@ -8,6 +8,7 @@ from socratic_tutor.acquisition_study.calibration import estimate_probe_reliabil
 from socratic_tutor.acquisition_study.canonical_budget_curve import (
     CanonicalBudgetCurveError,
     CanonicalBudgetCurveRecord,
+    build_canonical_budget_curve_report,
     write_verified_canonical_budget_curve_stream,
 )
 from socratic_tutor.acquisition_study.canonical_stream import (
@@ -72,6 +73,24 @@ def test_budget_stream_reproduces_sealed_primary_rows_without_truth(
     assert first_record.metric.episode_index == 1
     assert b"latent_success" not in output
     assert b"privileged_episode" not in output
+
+    recovered, recovered_replay = write_verified_canonical_budget_curve_stream(
+        SPECIFICATION,
+        ANALYSIS,
+        source_public_path=source_path,
+        expected_source_hash=file_sha256(source),
+        episode_indices=(1,),
+        output_path=tmp_path / "budget.jsonl",
+    )
+    report = build_canonical_budget_curve_report(
+        recovered,
+        recovered_replay,
+        execution_plan_hash="1" * 64,
+        episodes_per_environment=1,
+        candidates_per_episode=40,
+    )
+    assert report.selected_probe_count == 3_500
+    assert report.budget_curve_row_count == 175
 
 
 def test_budget_stream_rejects_a_changed_primary_result(tmp_path: Path) -> None:

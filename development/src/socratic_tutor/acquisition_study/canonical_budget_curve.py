@@ -231,7 +231,11 @@ class CanonicalBudgetCurveReport(ContractModel):
         if self.primary_budget_parity_check_count != self.episode_count * self.policy_count:
             raise ValueError("Budget-curve primary parity count does not reconcile")
         expected_selected = (
-            self.episode_count * self.policy_count * self.candidates_per_episode // 2
+            self.episode_count
+            * self.budget_count
+            * self.policy_count
+            * self.candidates_per_episode
+            // 2
         )
         if self.selected_probe_count != expected_selected:
             raise ValueError("Budget-curve selected-probe count does not reconcile")
@@ -381,44 +385,12 @@ def run_canonical_budget_curve(
     )
     if first != replay:
         raise CanonicalBudgetCurveError("Canonical budget-curve retry differs")
-    report_content = {
-        "schema_version": 1,
-        "schema_id": "acquisition_study.canonical_budget_curve_report.v1",
-        "study_id": source_plan.study_id,
-        "split": "evaluation",
-        "result_status": "canonical_budget_curve_complete_analysis_pending",
-        "execution_plan_hash": plan.plan_hash,
-        "source_public_stream_sha256": first.source_hash,
-        "source_public_replay_sha256": replay.source_hash,
-        "budget_curve_file": _BUDGET_FILE,
-        "budget_curve_file_sha256": first.budget_hash,
-        "budget_curve_replay_sha256": replay.budget_hash,
-        "budget_curve_file_bytes": first.budget_bytes,
-        "environment_count": len(EvaluationEnvironmentId),
-        "episodes_per_environment": len(episode_indices),
-        "episode_count": len(EvaluationEnvironmentId) * len(episode_indices),
-        "candidates_per_episode": specification.episodes.candidates_per_episode,
-        "budget_count": len(analysis.secondary.budget_fractions),
-        "policy_count": len(BUDGET_CURVE_POLICY_ORDER),
-        "source_public_row_count": first.source_rows,
-        "budget_curve_row_count": first.budget_rows,
-        "case_prediction_count": (
-            first.budget_rows * specification.episodes.candidates_per_episode
-        ),
-        "selected_probe_count": first.selected_probe_count,
-        "missing_probe_result_count": first.missing_probe_result_count,
-        "primary_budget_parity_check_count": first.primary_parity_checks,
-        "primary_budget_reproduction_verified": True,
-        "endpoint_agreement_verified": True,
-        "deterministic_replay_verified": True,
-        "primary_claim_rescue_allowed": False,
-        "restricted_stream_accessed": False,
-        "external_model_call_count": 0,
-        "sandbox_call_count": 0,
-        "human_record_count": 0,
-    }
-    report = CanonicalBudgetCurveReport.model_validate(
-        {**report_content, "report_hash": canonical_sha256(report_content)}
+    report = build_canonical_budget_curve_report(
+        first,
+        replay,
+        execution_plan_hash=plan.plan_hash,
+        episodes_per_environment=len(episode_indices),
+        candidates_per_episode=specification.episodes.candidates_per_episode,
     )
     manifest_content = {
         "schema_version": 1,
@@ -444,6 +416,57 @@ def run_canonical_budget_curve(
     return manifest
 
 
+def build_canonical_budget_curve_report(
+    first: _StreamSummary,
+    replay: _StreamSummary,
+    *,
+    execution_plan_hash: Sha256,
+    episodes_per_environment: int,
+    candidates_per_episode: int,
+) -> CanonicalBudgetCurveReport:
+    """Build the reconciled report after the stream and retry agree."""
+
+    if first != replay:
+        raise CanonicalBudgetCurveError("Canonical budget-curve retry differs")
+    report_content = {
+        "schema_version": 1,
+        "schema_id": "acquisition_study.canonical_budget_curve_report.v1",
+        "study_id": "reliability-aware-probing-v1",
+        "split": "evaluation",
+        "result_status": "canonical_budget_curve_complete_analysis_pending",
+        "execution_plan_hash": execution_plan_hash,
+        "source_public_stream_sha256": first.source_hash,
+        "source_public_replay_sha256": replay.source_hash,
+        "budget_curve_file": _BUDGET_FILE,
+        "budget_curve_file_sha256": first.budget_hash,
+        "budget_curve_replay_sha256": replay.budget_hash,
+        "budget_curve_file_bytes": first.budget_bytes,
+        "environment_count": len(EvaluationEnvironmentId),
+        "episodes_per_environment": episodes_per_environment,
+        "episode_count": len(EvaluationEnvironmentId) * episodes_per_environment,
+        "candidates_per_episode": candidates_per_episode,
+        "budget_count": 5,
+        "policy_count": len(BUDGET_CURVE_POLICY_ORDER),
+        "source_public_row_count": first.source_rows,
+        "budget_curve_row_count": first.budget_rows,
+        "case_prediction_count": first.budget_rows * candidates_per_episode,
+        "selected_probe_count": first.selected_probe_count,
+        "missing_probe_result_count": first.missing_probe_result_count,
+        "primary_budget_parity_check_count": first.primary_parity_checks,
+        "primary_budget_reproduction_verified": True,
+        "endpoint_agreement_verified": True,
+        "deterministic_replay_verified": True,
+        "primary_claim_rescue_allowed": False,
+        "restricted_stream_accessed": False,
+        "external_model_call_count": 0,
+        "sandbox_call_count": 0,
+        "human_record_count": 0,
+    }
+    return CanonicalBudgetCurveReport.model_validate(
+        {**report_content, "report_hash": canonical_sha256(report_content)}
+    )
+
+
 def write_verified_canonical_budget_curve_stream(
     specification: AcquisitionEnvironmentSpecification,
     analysis: AcquisitionAnalysisSpecification,
@@ -456,6 +479,18 @@ def write_verified_canonical_budget_curve_stream(
     """Write the canonical curve and require exact source and replay agreement."""
     output_path = output_path.resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    if output_path.exists():
+        replay = _consume_budget_stream(
+            specification,
+            analysis,
+            source_public_path=source_public_path,
+            expected_source_hash=expected_source_hash,
+            episode_indices=episode_indices,
+        )
+        existing_hash, existing_bytes = _hash_file(output_path)
+        if existing_hash != replay.budget_hash or existing_bytes != replay.budget_bytes:
+            raise ArtifactConflictError(f"Immutable artifact already differs: {output_path}")
+        return replay, replay
     temporary = output_path.with_name(f".{output_path.name}.{uuid4().hex}.tmp")
     try:
         with temporary.open("xb") as output_handle:
@@ -710,6 +745,19 @@ def _files_equal(left: Path, right: Path) -> bool:
                 return False
             if not left_chunk:
                 return True
+
+
+def _hash_file(path: Path) -> tuple[Sha256, int]:
+    digest = hashlib.sha256()
+    byte_count = 0
+    try:
+        with path.open("rb") as handle:
+            while chunk := handle.read(1024 * 1024):
+                digest.update(chunk)
+                byte_count += len(chunk)
+    except OSError as error:
+        raise CanonicalBudgetCurveError(f"Could not verify existing output: {path}") from error
+    return digest.hexdigest(), byte_count
 
 
 def _fsync_directory(path: Path) -> None:
