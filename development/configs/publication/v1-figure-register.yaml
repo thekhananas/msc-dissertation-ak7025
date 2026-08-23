@@ -1,23 +1,40 @@
 schema_id: publication.figure_register.v1
 schema_version: 1
 register_id: dissertation-results-v1
+register_status: frozen_for_m8_generation
+frozen_on: 2026-09-07
 purpose: >-
-  Freeze the small set of visuals used to explain the implemented system,
-  benchmark evidence, and Bayesian tracker study.
+  Freeze the small set of visuals and tables used to explain the implemented
+  system, corrected external-model benchmark, Bayesian tracker study, and
+  reliability-aware acquisition study.
+selection_rule: >-
+  Each main-text item must answer a distinct question. Supporting diagnostics
+  belong in an appendix or presentation backup; they must not repeat a primary
+  result without adding a clear explanation.
 format_rule: >-
   PDF and SVG are vector export formats. Report and presentation profiles may
   change dimensions and type scale, but colour semantics and reported values
   must remain identical.
+visible_timestamp_rule: >-
+  Generation dates belong in machine-readable manifests, not in visible figure
+  text.
 
 figures:
   - figure_id: FIG-01
     title: System boundaries and evidence paths
     question: Which parts of the project run in the demo, external benchmark, and tracker study?
     source: configs/publication/v1-system-boundary.yaml
+    output_manifest: artifacts/publication/system-boundary-v14-5a121e6/system_boundary_figure_manifest.json
+    output_manifest_hash: 45fc42fd08c953bb989aa1f90af8050b7c2d4d88fc6d46a1f7756160d2bc3bc6
+    generation_revision: 5a121e6
     command: pixi run python scripts/benchmark_cli.py system-boundary-figure
     outputs: system_boundaries.pdf, system_boundaries.svg, system_boundary_components.csv
     destination: report-methods-and-presentation-overview
     status: primary
+    availability: complete
+    intended_claim: >-
+      The demo, external-model benchmark, and simulator studies are separate
+      evidence paths with different claim limits.
     claim_boundary: >-
       Describes implemented paths and ownership; does not establish tutoring
       effectiveness or human learning.
@@ -26,10 +43,18 @@ figures:
     title: Benchmark design and commit-reveal sequence
     question: How were predictions kept separate from the later coding outcome?
     source: configs/benchmark/v1-analysis-spec.yaml
+    output_manifest: >-
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/study-design-v1/publication-v4-5a121e6/study_design_figure_manifest.json
+    output_manifest_hash: 7d6a44df43eb2ffd301ba15d49678dace3a43728d3ff7ebcdda5a1f19b7c719e
+    generation_revision: 5a121e6
     command: pixi run python scripts/benchmark_cli.py study-design-figure
     outputs: external_study_design.pdf, external_study_design.svg, study_design_stages.csv
     destination: report-methods-and-presentation-method
     status: primary
+    availability: complete
+    intended_claim: >-
+      Condition predictions were committed before the separate criterion task
+      was revealed and scored.
     claim_boundary: >-
       Explains the measurement procedure; it is not evidence that the procedure
       improves learning.
@@ -37,11 +62,20 @@ figures:
   - figure_id: FIG-03
     title: Original and corrected benchmark result
     question: How did the test-harness correction change the primary comparison?
-    source: artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json
+    source: >-
+      artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json
+    output_manifest: >-
+      artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/publication-v4-5a121e6/harness_correction_figure_manifest.json
+    output_manifest_hash: 5d50be020ea5ec2ce4724d1e65cde7a9443d3ad1bee0b64dcdd8fed8dce8553c
+    generation_revision: 5a121e6
     command: pixi run harness-correction-figure
     outputs: harness_correction_result.pdf, harness_correction_result.svg, harness_correction_summary.csv
     destination: report-results-and-presentation-main-result
     status: primary
+    availability: complete
+    intended_claim: >-
+      Correcting the harness reduced the apparent benefit of executable
+      evidence from a large effect to a small, uncertain difference.
     claim_boundary: >-
       Reports one pinned evaluation-model run over the authored cases; the
       corrected result is post-hoc and does not support human-learning claims.
@@ -49,11 +83,20 @@ figures:
   - figure_id: FIG-04
     title: Corrected result for every authored case
     question: How are the corrected decisions distributed across cases and controls?
-    source: artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json
+    source: >-
+      artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json
+    output_manifest: >-
+      artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/publication-cases-v4-5a121e6/harness_correction_case_figure_manifest.json
+    output_manifest_hash: 7ac17ad07dd90dbcf2edaf9e214efadf9b42410ef313c6a745dd0a48d9d1848b
+    generation_revision: 5a121e6
     command: pixi run harness-correction-case-figure
     outputs: harness_correction_cases.pdf, harness_correction_cases.svg, harness_correction_cases.csv
-    destination: report-results-and-presentation-supporting-result
-    status: primary
+    destination: report-results-supporting-and-presentation-backup
+    status: supporting
+    availability: complete
+    intended_claim: >-
+      The aggregate correction is traceable to individual authored cases,
+      including controls and one missing criterion outcome.
     claim_boundary: >-
       Shows case-level benchmark decisions and missingness; repeated cases are
       not independent learners.
@@ -61,11 +104,20 @@ figures:
   - figure_id: FIG-05
     title: Corrected quality beside measured workload
     question: What additional model and sandbox work accompanied executable evidence?
-    source: artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/resource-reconciliation-v1/resource_reconciliation_report.json
+    source: >-
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/resource-reconciliation-v1/resource_reconciliation_report.json
+    output_manifest: >-
+      artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/publication-resources-v4-5a121e6/corrected_resource_figure_manifest.json
+    output_manifest_hash: b4314f8a029eb6c8646a6bac81468b065f7dc68444b62351b2572d04a1258898
+    generation_revision: 5a121e6
     command: pixi run corrected-resource-figure
     outputs: corrected_quality_and_resource_burden.pdf, corrected_quality_and_resource_burden.svg, corrected_resource_figure_data.csv
     destination: report-results-and-presentation-resource-trade-off
     status: primary
+    availability: complete
+    intended_claim: >-
+      Executable evidence added model requests and sandbox executions without a
+      reliable improvement in the corrected v1 result.
     claim_boundary: >-
       Describes measured workload for this run, not deployment cost, latency
       guarantees, or tutoring benefit.
@@ -74,10 +126,18 @@ figures:
     title: Bounded evidence updating under stress
     question: Does the bounded tracker remain stable when observations are noisy or misleading?
     source: artifacts/tracker-study/canonical-v1
+    output_manifest: >-
+      artifacts/tracker-study/canonical-publication-v4-5a121e6/canonical_publication_manifest.json
+    output_manifest_hash: 39ab7c640e39ecaaed3981db2f2ac0dd8140654b27605adbb40ad8f18c48eefc
+    generation_revision: 5a121e6
     command: pixi run tracker-study-publish-canonical
     outputs: tracker_study_canonical.pdf, tracker_study_canonical.svg, canonical_condition_metrics.csv
     destination: report-tracker-study-and-presentation-technical-result
     status: primary
+    availability: complete
+    intended_claim: >-
+      Limiting the influence of one observation reduced damage from misleading
+      evidence in the declared simulator conditions.
     claim_boundary: >-
       Reports a glass-box simulator study of tracker robustness; it is not a
       human-learning or tutoring-efficacy result.
@@ -86,13 +146,132 @@ figures:
     title: Failure taxonomy and review outcomes
     question: What kinds of failures remained after the benchmark review?
     source: configs/benchmark/v1-failure-taxonomy.yaml
+    output_manifest: >-
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/failure-review-reliability-v1/publication-v1-357bdf9/failure_figure_manifest.json
+    output_manifest_hash: 53952fa691482c9fb7d93f8fb03b3927f13885c96913d068c4cf43d6f987f64e
+    generation_revision: 357bdf9
     command: pixi run python scripts/benchmark_cli.py failure-figure
     outputs: failure_analysis.pdf, failure_analysis.svg, failure_review_rows.csv
-    destination: report-limitations-and-presentation-limitations
+    destination: report-limitations-and-presentation-backup
     status: supporting
+    availability: complete
+    intended_claim: >-
+      Independent review found observable failures in evidence quality,
+      execution, and interpretation that aggregate scores alone would hide.
     claim_boundary: >-
       Summarises observable failure records; hidden model reasoning is neither
       inferred nor treated as a measured cause.
+
+  - figure_id: FIG-M7B-01
+    title: Prediction error as executable probes are added
+    question: Does the proposed selector improve prediction at a fixed budget, and what changes across budgets?
+    source: >-
+      artifacts/acquisition-study/canonical-v1/primary-analysis-v1/canonical_primary_analysis_report.json and
+      artifacts/acquisition-study/canonical-v1/secondary-budget-v1/analysis-v1/canonical_budget_curve_analysis_report.json
+    output_manifest: >-
+      artifacts/acquisition-study/canonical-v1/publication-v1/acquisition_result_figure_manifest.json
+    output_manifest_hash: 39075ff1c7d45838176bc2c2fd620cf67db4d806b570a9b6aef86740405e683b
+    generation_revision: f7d70c48f1af63738f98d0cbfb724c18eed449cb
+    command: pixi run python scripts/acquisition_study_result_figure.py
+    outputs: acquisition_result_report.pdf, acquisition_result_report.svg, acquisition_result_presentation.pdf, acquisition_result_presentation.svg
+    destination: report-results-and-presentation-acquisition-main-result
+    status: primary
+    availability: complete
+    intended_claim: >-
+      At the fixed budget, the proposed selector beat random choice but not two
+      simpler targeted selectors; using more probes increased error across the
+      held-out mismatch settings.
+    claim_boundary: >-
+      Reports paired outcomes from hand-specified simulated environments; it
+      does not establish behaviour with people or realised deployment savings.
+
+  - figure_id: FIG-M7B-02
+    title: Acquisition policy effects across evidence failures
+    question: Does the proposed selector remain useful when evidence fails in different ways?
+    source: >-
+      artifacts/acquisition-study/canonical-v1/primary-analysis-v1/canonical_primary_analysis_report.json
+    output_manifest: >-
+      artifacts/acquisition-study/canonical-v1/publication-environments-v1/acquisition_environment_figure_manifest.json
+    output_manifest_hash: 7228c1a2e5c1f5444ab9827886a8960e3a85643c7fb0bfa0286a726d655cb4bb
+    generation_revision: 2595b7e7c4e6f3ee4cf5aea0c8b893964eb9f6e3
+    command: pixi run python scripts/acquisition_study_environment_figure.py
+    outputs: acquisition_environment_effects_report.pdf, acquisition_environment_effects_report.svg, acquisition_environment_effects_presentation.pdf, acquisition_environment_effects_presentation.svg
+    destination: report-results-and-presentation-acquisition-stress-test
+    status: primary
+    availability: complete
+    intended_claim: >-
+      The proposed selector helped when its assumptions matched the simulator,
+      but its advantage did not survive important evidence failures.
+    claim_boundary: >-
+      Environment settings are designed stress tests, not estimates of how
+      often these failures occur in real tutoring.
+
+  - figure_id: FIG-M7B-03
+    title: Development ablation of reliability and bounded updating
+    question: Which parts of the proposed method explain its development result?
+    source: >-
+      artifacts/acquisition-study/development-aede5af/ablations-bfdf385/analysis-bfdf385/development_ablation_analysis_report.json
+    output_manifest: >-
+      artifacts/acquisition-study/development-aede5af/publication-ablation-v1/acquisition_ablation_figure_manifest.json
+    output_manifest_hash: 19f849a5e29156ea04bdc43a11a5ed9f7489277cd5b81110cf251af209586df4
+    generation_revision: 928442f9bdda34c12baad1772ee398f9969582de
+    command: pixi run python scripts/acquisition_study_ablation_figure.py
+    outputs: acquisition_ablation_report.pdf, acquisition_ablation_report.svg, acquisition_ablation_presentation.pdf, acquisition_ablation_presentation.svg
+    destination: report-appendix-and-presentation-backup
+    status: supporting
+    availability: complete
+    intended_claim: >-
+      Development diagnostics found no meaningful interaction advantage from
+      combining conservative reliability with bounded updating.
+    claim_boundary: >-
+      This is a development-only diagnostic; it cannot replace or strengthen
+      the frozen canonical result.
+
+  - figure_id: FIG-08
+    title: One benchmark case from answer to held-out outcome
+    question: How does one visible answer become committed predictions and a later scored outcome?
+    source: >-
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/recorded_responses.jsonl,
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/datasets/condition_predictions.parquet,
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/decision/evidence_executions,
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/criterion/recorded_responses.jsonl,
+      and artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json.
+    output_manifest: planned
+    output_manifest_hash: pending_generation
+    generation_revision: pending_generation
+    command: pixi run python scripts/benchmark_worked_example_figure.py
+    outputs: benchmark_worked_example_report.pdf, benchmark_worked_example_report.svg, benchmark_worked_example_presentation.pdf, benchmark_worked_example_presentation.svg
+    destination: report-methods-and-demo-experiment-walkthrough
+    status: primary
+    availability: planned_m8_2
+    intended_claim: >-
+      One concrete case makes the commit-before-reveal method and its corrected
+      scoring understandable without relying on aggregate statistics alone.
+    claim_boundary: >-
+      The example concerns one authored case and one evaluation-model run; it
+      is not a learner profile, hidden reasoning trace, or tutoring result.
+
+tables:
+  - table_id: TAB-M7B-01
+    title: Fixed-budget primary acquisition comparisons
+    question: How did the proposed selector compare with each declared baseline at the fixed budget?
+    source: >-
+      artifacts/acquisition-study/canonical-v1/primary-analysis-v1/canonical_primary_analysis_report.json
+    output_manifest: >-
+      artifacts/acquisition-study/canonical-v1/publication-table-v1/acquisition_primary_result_table_manifest.json
+    output_manifest_hash: abb728eed55572f330ad7f939c29554391e90e825e1811e3920cb1a14d0092fa
+    generation_revision: 4cb5dfef64abf32f8a5b3d5384487c8097acdd82
+    command: pixi run python scripts/acquisition_study_result_table.py
+    outputs: acquisition_primary_result_table.csv, acquisition_primary_result_table.tex, acquisition_primary_result_table.md
+    destination: report-results-primary-comparison
+    status: primary
+    availability: complete
+    intended_claim: >-
+      The proposed selector improved on random choice, but performed worse than
+      uncertainty-only selection and plug-in value-of-information selection.
+    claim_boundary: >-
+      Estimates apply to the frozen simulated environments and fixed 50% probe
+      budget; they do not measure human learning or deployed cost.
 
 profiles:
   report:
