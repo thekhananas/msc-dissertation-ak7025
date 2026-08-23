@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
+from textwrap import fill
 
 import matplotlib as mpl
 from matplotlib.axes import Axes
@@ -79,7 +80,6 @@ _STYLE: dict[str, object] = {
     "figure.facecolor": "white",
     "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
     "pdf.fonttype": 42,
-    "savefig.bbox": "tight",
     "savefig.facecolor": "white",
     "svg.fonttype": "none",
     "svg.hashsalt": "socratic-tutor-acquisition-ablation-v1",
@@ -127,7 +127,6 @@ def render_acquisition_ablation_figure(
             cells,
             report,
             profile=profile,
-            generated_at_utc=generated_at,
         )
         for file_format, file_content in (("pdf", pdf), ("svg", svg)):
             name = f"acquisition_ablation_{profile}.{file_format}"
@@ -246,17 +245,27 @@ def _render_vector_files(
     report: DevelopmentAblationAnalysisReport,
     *,
     profile: FigureProfile,
-    generated_at_utc: datetime,
 ) -> tuple[bytes, bytes]:
     style = style_for(profile)
+    if profile == "report":
+        matrix_bounds = (0.22, 0.18, 0.46, 0.52)
+        notes_bounds = (0.72, 0.18, 0.25, 0.52)
+        note_line_width = 34
+        footnote_line_width = 112
+    else:
+        matrix_bounds = (0.18, 0.18, 0.50, 0.52)
+        notes_bounds = (0.72, 0.18, 0.25, 0.52)
+        note_line_width = 42
+        footnote_line_width = 158
+
     with mpl.rc_context(_STYLE):
         figure = Figure(figsize=(style.width_in, style.height_in), layout="none")
-        axis = figure.add_axes((0.08, 0.18, 0.58, 0.52))
-        notes = figure.add_axes((0.71, 0.18, 0.26, 0.52))
+        axis = figure.add_axes(matrix_bounds)
+        notes = figure.add_axes(notes_bounds)
         _draw_matrix(axis, cells, profile)
-        _draw_notes(notes, cells, report, profile)
+        _draw_notes(notes, cells, report, profile, line_width=note_line_width)
         figure.text(
-            0.08,
+            0.055,
             0.95,
             _TITLE,
             fontsize=style.title_size,
@@ -265,7 +274,7 @@ def _render_vector_files(
             va="top",
         )
         figure.text(
-            0.08,
+            0.055,
             0.885,
             _SUBTITLE,
             fontsize=style.font_size,
@@ -275,23 +284,13 @@ def _render_vector_files(
             wrap=True,
         )
         figure.text(
-            0.08,
+            0.055,
             0.095,
-            _FOOTNOTE,
+            fill(_FOOTNOTE, width=footnote_line_width, break_on_hyphens=False),
             fontsize=style.font_size * 0.86,
             color=MUTED,
             ha="left",
             va="top",
-            wrap=True,
-        )
-        figure.text(
-            0.97,
-            0.035,
-            f"Generated {generated_at_utc.date().isoformat()}",
-            fontsize=style.font_size * 0.7,
-            color=MUTED,
-            ha="right",
-            va="bottom",
         )
         return _save(figure, "pdf"), _save(figure, "svg")
 
@@ -314,7 +313,6 @@ def _draw_matrix(axis: Axes, cells: tuple[AblationCell, ...], profile: FigurePro
     axis.tick_params(axis="both", length=0, labelsize=style.font_size)
     axis.tick_params(axis="x", pad=8)
     axis.tick_params(axis="y", pad=8)
-    axis.set_ylabel("How probe reliability is estimated", fontsize=style.font_size)
     axis.xaxis.tick_top()
 
     for row_index, reliability in enumerate(rows):
@@ -363,6 +361,8 @@ def _draw_notes(
     cells: tuple[AblationCell, ...],
     report: DevelopmentAblationAnalysisReport,
     profile: FigureProfile,
+    *,
+    line_width: int,
 ) -> None:
     style = style_for(profile)
     lookup = {(cell.reliability_label, cell.update_label): cell for cell in cells}
@@ -415,7 +415,7 @@ def _draw_notes(
             ),
         ),
     )
-    y = 0.74
+    y = 0.77
     for heading, sentence in notes:
         axis.text(
             0.08,
@@ -429,14 +429,13 @@ def _draw_notes(
         axis.text(
             0.08,
             y - 0.075,
-            sentence,
+            fill(sentence, width=line_width),
             fontsize=style.font_size * 0.82,
             color=MUTED,
             transform=axis.transAxes,
             va="top",
-            wrap=True,
         )
-        y -= 0.27
+        y -= 0.255
 
 
 def _difference_label(difference: float) -> str:
