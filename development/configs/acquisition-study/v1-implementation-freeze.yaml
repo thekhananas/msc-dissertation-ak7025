@@ -1,0 +1,87 @@
+schema_version: 1
+schema_id: acquisition_study.implementation_freeze_specification.v1
+study_id: reliability-aware-probing-v1
+closed_on: 2026-09-07
+output_path: artifacts/acquisition-study/canonical-v1/implementation-freeze-v1/m7b_implementation_freeze_manifest.json
+
+source_groups:
+  - group_id: acquisition_code
+    patterns:
+      - src/socratic_tutor/acquisition_study/*.py
+      - scripts/acquisition_study*.py
+      - src/socratic_tutor/publication/figure_style.py
+      - src/socratic_tutor/benchmark/artifacts.py
+      - src/socratic_tutor/benchmark/common.py
+      - src/socratic_tutor/benchmark/hashing.py
+      - src/socratic_tutor/contracts/*.py
+
+  - group_id: frozen_plans_and_review
+    patterns:
+      - configs/acquisition-study/v1-*.yaml
+      - data/acquisition-study/v1/method-properties.md
+      - data/acquisition-study/v1/design-challenge/environment-provenance.csv
+      - data/acquisition-study/v1/design-challenge/review-packet.md
+      - data/acquisition-study/v1/design-challenge/review-disposition.md
+      - data/acquisition-study/v1/design-challenge/review-submissions/reviewer-completed.md
+
+  - group_id: test_sources
+    patterns:
+      - tests/unit/test_acquisition_study_*.py
+      - tests/property/test_acquisition_study_*.py
+
+  - group_id: canonical_evidence
+    patterns:
+      - artifacts/acquisition-study/canonical-v1-pre-run/*.json
+      - artifacts/acquisition-study/canonical-v1/canonical_run_manifest.json
+      - artifacts/acquisition-study/canonical-v1/canonical_stream_report.json
+      - artifacts/acquisition-study/canonical-v1/primary-analysis-v1/*
+      - artifacts/acquisition-study/canonical-v1/secondary-budget-v1/*.json
+      - artifacts/acquisition-study/canonical-v1/secondary-budget-v1/analysis-v1/*
+
+  - group_id: development_diagnostics
+    patterns:
+      - artifacts/acquisition-study/development-aede5af/primary-analysis-bfdf385/development_primary_analysis_report.json
+      - artifacts/acquisition-study/development-aede5af/ablations-bfdf385/analysis-bfdf385/development_ablation_analysis_report.json
+      - artifacts/acquisition-study/development-aede5af/negative-control-aede5af/analysis-f7851c3/development_negative_control_analysis_report.json
+      - artifacts/acquisition-study/development-aede5af/calibration-sensitivity-bec71c5/analysis-a7c0c7e/development_calibration_sensitivity_analysis_report.json
+      - artifacts/acquisition-study/development-aede5af/compact-parity-74847e6/development_compact_parity_report.json
+      - artifacts/acquisition-study/development-aede5af/compact-parity-74847e6/compact-runtime-088aeb3/development_compact_runtime_report.json
+
+  - group_id: publication_evidence
+    patterns:
+      - artifacts/acquisition-study/canonical-v1/publication-v1/*
+      - artifacts/acquisition-study/canonical-v1/publication-environments-v1/*
+      - artifacts/acquisition-study/canonical-v1/publication-table-v1/*
+      - artifacts/acquisition-study/development-aede5af/publication-ablation-v1/*
+
+  - group_id: locked_environment
+    patterns:
+      - pixi.toml
+      - pixi.lock
+      - pyproject.toml
+
+unresolved_limitations:
+  - limitation_id: hand_specified_simulator
+    statement: The evaluation environments are designed stress tests, not a validated model of human learners or classrooms.
+  - limitation_id: failed_robustness_rule
+    statement: The proposed selector beat random selection, but not uncertainty-only or plug-in value-of-information selection across the held-out settings.
+  - limitation_id: failure_set_not_exhaustive
+    statement: The seven environments test declared faults, but cannot cover every way executable evidence may fail.
+  - limitation_id: development_only_ablation
+    statement: The two-by-two component ablation is a development diagnostic and cannot support a canonical claim.
+  - limitation_id: no_valid_v1_policy_replay
+    statement: The retrospective v1 policy replay was dropped because equivalent pre-outcome reliability inputs were unavailable.
+  - limitation_id: no_deployment_cost_measurement
+    statement: Probe counts represent simulated evidence requests, not measured financial or latency savings in a deployed tutor.
+  - limitation_id: test_execution_record_separate
+    statement: This freeze hashes relevant test sources; passing test execution remains evidenced by focused checks and CI rather than by the freeze command itself.
+  - limitation_id: no_human_outcome
+    statement: The study does not measure human learning, tutoring quality, cognitive offloading, or student behaviour.
+
+deferred_work:
+  - expanded authored benchmark v2
+  - CSEDM learner-data study
+  - second external-model replication
+  - reinforcement-learning policy training
+  - human pilot study
+  - production deployment and cost validation
