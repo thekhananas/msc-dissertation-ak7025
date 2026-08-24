@@ -1,0 +1,29 @@
+schema_version: 1
+schema_id: publication.worked_example_plan.v1
+status: frozen
+figure_id: FIG-08
+case_id: h-c2m1-02
+sample_id: "001"
+decision_response_sample_id: cerebras-gpt-oss-120b-v1-decision-20260824-001:h-c2m1-02:001
+selection_reason: >-
+  This was the only eligible v1 case where relevant executable evidence changed
+  an incorrect dialogue-only prediction into a correct prediction. Unrelated
+  evidence caused the same change, so the case also exposes the lack of
+  evidence specificity.
+public_response_markers:
+  - "True 3"
+  - "False 2"
+evidence_response_marker: 'return ["read", "write"]'
+public_summary: >-
+  The response opens with "True 3", then later concludes "False 2".
+evidence_summary: >-
+  The separate permissions-set answer returned ["read", "write"] and passed
+  its authored executable check.
+interpretation: >-
+  Relevant evidence moved this case from a wrong to a correct prediction.
+  Unrelated evidence caused the same change, so the example does not show that
+  relevance caused the improvement.
+claim_boundary: >-
+  This is one authored case from one evaluation-model run. It explains the
+  measurement path; it does not represent a human learner or show that tutoring
+  improved learning.
