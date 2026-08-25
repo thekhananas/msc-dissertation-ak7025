@@ -243,14 +243,15 @@ figures:
       artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/failure-review-reliability-v1,
       artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/analysis-v1/harness_correction_analysis_report.json,
       and artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/attempts.
-    output_manifest: pending_plain_language_generation
-    output_manifest_hash: pending_plain_language_generation
-    generation_revision: pending_plain_language_generation
+    output_manifest: >-
+      artifacts/publication/benchmark-worked-example-v1-ba229b9/benchmark_worked_example_figure_manifest.json
+    output_manifest_hash: 7faf14c9dff4a6c201df3d322fab9e7b299dca7268d077a134aec399bfb4e34e
+    generation_revision: ba229b9c2d7c8b75939c30a1b1dd18210741162e
     command: pixi run python scripts/benchmark_worked_example_figure.py
     outputs: benchmark_worked_example_report.pdf, benchmark_worked_example_report.svg, benchmark_worked_example_presentation.pdf, benchmark_worked_example_presentation.svg, benchmark_worked_example.json, benchmark_worked_example.csv
     destination: report-results-limitations-and-demo-experiment-walkthrough
     status: primary
-    availability: planned_m8_2_revision
+    availability: complete
     intended_claim: >-
       One case shows how a weak comparison task, a fixed scoring rule, and
       incomplete final tests can make a prediction improvement look convincing.
