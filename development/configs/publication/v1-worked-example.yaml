@@ -7,11 +7,11 @@ sample_id: "001"
 decision_response_sample_id: cerebras-gpt-oss-120b-v1-decision-20260824-001:h-c2m1-02:001
 different_concept_case_id: h-c3m1-02
 selection_reason: >-
-  This case was selected after the corrected analysis because it was the only
-  eligible case where a same-concept check changed the prediction. A
-  different-concept check caused the same change, and later review found a
-  weakness in the task tests. It is therefore a cautionary example, rather than
-  evidence that probing worked.
+  This case was chosen after the main analysis. A related coding task changed a
+  predicted failure into a predicted pass. A comparison task produced exactly
+  the same change, and later review found that the final task's tests missed a
+  written requirement. The case therefore shows how an evaluation can
+  overstate a success.
 public_response_markers:
   - "True 3"
   - "False 2"
@@ -24,29 +24,31 @@ criterion_prompt_ref: evaluator/criterion/h-c2m1-02-prompt.md
 criterion_tests_ref: evaluator/criterion/h-c2m1-02-tests.yaml
 criterion_prompt_marker: "The input collection is mutable."
 public_summary: >-
-  The answer began with "True 3" and ended with "False 2". Two blinded raters
-  marked it as conflicting.
+  The model first wrote "True 3", then ended with "False 2". Two reviewers saw
+  only this answer; both called it conflicting.
 same_concept_summary: >-
-  A permissions-alias check returned ["read", "write"] and passed its one
-  authored test.
+  The model returned ["read", "write"]. This was correct because permissions
+  and granted refer to the same set. Its function passed one automatic test.
 different_concept_summary: >-
-  A function-and-set control returned ["checked", "new"] and passed its one
-  authored test. Its declared concept differed, although it still used set
-  mutation.
+  The model returned ["checked", "new"]. Its function also passed one automatic
+  test. The task was meant to cover a different skill, but it still involved
+  changing a shared set.
 tracker_rule_summary: >-
-  The fixed rule started at 0.50, subtracted 0.10 for the conflicting answer,
-  and added 0.20 for any passed check. The decision threshold was 0.60.
+  The rule began at 0.50, removed 0.10 because the first answer conflicted with
+  itself, and added 0.20 when a coding task passed. Scores of 0.60 or more were
+  labelled "pass".
 criterion_summary: >-
-  The later answer returned the expected sorted values and passed 2 of 2
-  authored tests.
+  The final task asked the model to remove a tag from the supplied list, then
+  return the remaining tags in sorted order. Its answer passed both automatic
+  tests.
 criterion_test_warning: >-
-  The prompt required the supplied list to change. The answer created a new
-  list; the tests checked returned values only.
+  The model created a new list, so the supplied list did not change. The tests
+  checked only the returned values; they never checked the supplied list.
 interpretation: >-
-  Both passed checks produced the same 0.60 score. The later pass missed the
-  requested mutation. This case does not establish a benefit from relevant
-  evidence.
+  The related task changed "fail" to "pass". The comparison task did the same,
+  and the final tests accepted an incomplete solution. This case cannot tell us
+  whether the related task helped.
 claim_boundary: >-
-  This post-hoc example comes from one authored case and one evaluation-model
-  run. The tracker scores are hand-set rule values, not calibrated
-  probabilities. It says nothing about human learning or tutoring quality.
+  This example examines one response from one model run after the main
+  analysis. Its scores came from a fixed rule; 0.60 does not mean a 60% chance.
+  The case does not measure student learning or tutoring quality.

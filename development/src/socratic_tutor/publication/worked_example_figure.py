@@ -75,16 +75,20 @@ from socratic_tutor.publication.figure_style import (
 from socratic_tutor.sandbox.python_tests import AuthoredFunctionTestBundle
 
 _CONDITION_LABELS = {
-    BenchmarkCondition.DIALOGUE_ONLY: "Dialogue answer",
-    BenchmarkCondition.PROBE_INFORMED: "Same-concept check",
-    BenchmarkCondition.UNRELATED_PROBE: "Different-concept check",
-    BenchmarkCondition.CORRUPTED_PROBE: "Inverted check result",
+    BenchmarkCondition.DIALOGUE_ONLY: "First answer only",
+    BenchmarkCondition.PROBE_INFORMED: "Related coding task",
+    BenchmarkCondition.UNRELATED_PROBE: "Comparison coding task",
+    BenchmarkCondition.CORRUPTED_PROBE: "Reversed check result",
 }
-_TITLE = "Why one apparent probing success was misleading"
-_SUBTITLE = "Case h-c2m1-02: two different passed checks received the same score."
+_TITLE = "Why did an extra coding task appear to improve the prediction?"
+_SUBTITLE = (
+    "A weak comparison task and incomplete final tests made this case look more convincing "
+    "than it was."
+)
 _FOOTNOTE = (
-    "Scope: one post-hoc case from one evaluation-model run. Tracker values are fixed rule scores, "
-    "not calibrated probabilities; this is not evidence about human learning."
+    "Scope: one response from a 24-case benchmark, examined after the main analysis. "
+    "The scores came from a fixed rule; 0.60 does not mean a 60% chance. This example "
+    "concerns evaluation quality, not student learning or tutoring quality."
 )
 _STYLE: dict[str, object] = {
     "figure.facecolor": "white",
@@ -813,8 +817,8 @@ def _build_figure(data: WorkedExampleData, *, profile: FigureProfile) -> Figure:
         _FOOTNOTE
         if profile == "report"
         else (
-            "Scope: one post-hoc model case. Hand-set scores are not probabilities; "
-            "no human-learning claim."
+            "Scope: one model response, examined after the main analysis. A score of 0.60 is "
+            "not a 60% chance; this does not measure student learning."
         )
     )
     figure.text(
@@ -836,8 +840,8 @@ def _draw_report(axis: Axes, data: WorkedExampleData, *, font_size: float) -> No
         y=0.78,
         width=0.89,
         height=0.11,
-        kicker="1  INITIAL ANSWER",
-        title="The response contradicted itself",
+        kicker="1  FIRST ANSWER",
+        title="The model gave two different answers",
         body=data.public_summary,
         colour=ORANGE,
         font_size=font_size,
@@ -849,8 +853,8 @@ def _draw_report(axis: Axes, data: WorkedExampleData, *, font_size: float) -> No
         y=0.605,
         width=0.425,
         height=0.155,
-        kicker="2A  SAME-CONCEPT CHECK",
-        title="Permissions aliasing",
+        kicker="2  RELATED CODING TASK",
+        title="Two names refer to the same set",
         body=data.same_concept_summary,
         colour=BLUE,
         font_size=font_size,
@@ -862,23 +866,23 @@ def _draw_report(axis: Axes, data: WorkedExampleData, *, font_size: float) -> No
         y=0.605,
         width=0.425,
         height=0.155,
-        kicker="2B  DIFFERENT-CONCEPT CONTROL",
-        title="Function and set mutation",
+        kicker="2  COMPARISON CODING TASK",
+        title="A function changes a shared set",
         body=data.different_concept_summary,
         colour=GREEN,
         font_size=font_size,
         body_width=46,
     )
-    _score_report_card(axis, data, y=0.385, height=0.185, font_size=font_size)
-    _criterion_report_card(axis, data, y=0.205, height=0.15, font_size=font_size)
+    _score_report_card(axis, data, y=0.405, height=0.18, font_size=font_size)
+    _criterion_report_card(axis, data, y=0.215, height=0.17, font_size=font_size)
     _content_card(
         axis,
         x=0.055,
-        y=0.045,
+        y=0.065,
         width=0.89,
-        height=0.13,
-        kicker="5  CONCLUSION",
-        title="What this case can support",
+        height=0.135,
+        kicker="5  WHAT THIS CASE SHOWS",
+        title="This case cannot tell us whether the related task helped",
         body=data.interpretation,
         colour=ORANGE,
         font_size=font_size,
@@ -899,32 +903,50 @@ def _score_report_card(
         axis,
         x=0.08,
         y=y + height - 0.022,
-        kicker="3  FIXED SCORING RULE",
-        title="Both passed checks crossed the same threshold",
+        kicker="3  PREDICTIONS SAVED BEFORE THE FINAL TASK",
+        title='Either passed task changed the prediction to "pass"',
         font_size=font_size,
     )
     axis.text(
         0.08,
         y + height - 0.085,
-        "0.50 start - 0.10 conflict = 0.40\n"
-        "0.40 + 0.20 passed check = 0.60\n"
-        "Decision threshold = 0.60",
+        "The rule started at 0.50, removed 0.10 for the conflicting answer, then added "
+        "0.20 for any coding task that passed.",
         transform=axis.transAxes,
         fontsize=font_size - 0.35,
         color=INK,
         va="top",
-        linespacing=1.35,
     )
+    labels = ("FIRST ANSWER ONLY", "RELATED TASK", "COMPARISON TASK")
+    for x, label, row in zip((0.08, 0.385, 0.69), labels, data.predictions[:3], strict=True):
+        axis.text(
+            x,
+            y + 0.055,
+            label,
+            transform=axis.transAxes,
+            fontsize=font_size - 1.25,
+            fontweight="bold",
+            color=MUTED,
+            va="bottom",
+        )
+        axis.text(
+            x,
+            y + 0.031,
+            _short_prediction(row),
+            transform=axis.transAxes,
+            fontsize=font_size - 0.25,
+            color=INK,
+            va="bottom",
+        )
     axis.text(
         0.08,
-        y + 0.022,
-        "Hand-set tracker scores, not calibrated probabilities",
+        y + 0.006,
+        "These numbers were chosen in advance; they are scores, not probabilities.",
         transform=axis.transAxes,
         fontsize=font_size - 1.0,
         color=MUTED,
         va="bottom",
     )
-    _prediction_table(axis, data, x=0.515, y=y + 0.022, width=0.40, font_size=font_size)
 
 
 def _criterion_report_card(
@@ -940,8 +962,8 @@ def _criterion_report_card(
         axis,
         x=0.08,
         y=y + height - 0.022,
-        kicker="4  LATER TASK",
-        title="The authored tests reported a pass",
+        kicker="4  FINAL TASK, SHOWN AFTER THE PREDICTIONS",
+        title="The final tests missed part of the task",
         font_size=font_size,
     )
     axis.text(
@@ -957,7 +979,7 @@ def _criterion_report_card(
     axis.text(
         0.515,
         y + height - 0.026,
-        "TEST LIMIT",
+        "WHAT THE TESTS MISSED",
         transform=axis.transAxes,
         fontsize=font_size - 1.0,
         fontweight="bold",
@@ -977,7 +999,7 @@ def _criterion_report_card(
     axis.text(
         0.515,
         y + 0.018,
-        "Later review category: item ambiguity or test defect",
+        "Reviewers later agreed: the task or its tests had a problem.",
         transform=axis.transAxes,
         fontsize=font_size - 1.0,
         color=MUTED,
@@ -992,8 +1014,8 @@ def _draw_presentation(axis: Axes, data: WorkedExampleData, *, font_size: float)
         y=0.53,
         width=0.26,
         height=0.27,
-        kicker="1  INITIAL ANSWER",
-        title="The response conflicted",
+        kicker="1  FIRST ANSWER",
+        title="The model contradicted itself",
         body=data.public_summary,
         colour=ORANGE,
         font_size=font_size,
@@ -1005,8 +1027,8 @@ def _draw_presentation(axis: Axes, data: WorkedExampleData, *, font_size: float)
         y=0.53,
         width=0.28,
         height=0.27,
-        kicker="2A  SAME CONCEPT",
-        title="Passed 1 of 1 tests",
+        kicker="2  RELATED CODING TASK",
+        title="Correct: two names, one set",
         body=data.same_concept_summary,
         colour=BLUE,
         font_size=font_size,
@@ -1018,8 +1040,8 @@ def _draw_presentation(axis: Axes, data: WorkedExampleData, *, font_size: float)
         y=0.53,
         width=0.30,
         height=0.27,
-        kicker="2B  CONTROL",
-        title="Also passed 1 of 1 tests",
+        kicker="2  COMPARISON CODING TASK",
+        title="Also correct: changing a shared set",
         body=data.different_concept_summary,
         colour=GREEN,
         font_size=font_size,
@@ -1034,8 +1056,8 @@ def _draw_presentation(axis: Axes, data: WorkedExampleData, *, font_size: float)
         y=0.265,
         width=0.32,
         height=0.23,
-        kicker="4  LATER TASK",
-        title="Tests passed; mutation unchecked",
+        kicker="4  FINAL TASK",
+        title="Tests missed a requirement",
         body=data.criterion_test_warning,
         colour=ORANGE,
         font_size=font_size,
@@ -1047,8 +1069,8 @@ def _draw_presentation(axis: Axes, data: WorkedExampleData, *, font_size: float)
         y=0.065,
         width=0.92,
         height=0.165,
-        kicker="5  CONCLUSION",
-        title="This is a measurement warning",
+        kicker="5  WHAT THIS CASE SHOWS",
+        title="The apparent improvement has no clear cause",
         body=data.interpretation,
         colour=ORANGE,
         font_size=font_size,
@@ -1071,15 +1093,16 @@ def _score_presentation_card(
         axis,
         x=x + 0.022,
         y=y + height - 0.026,
-        kicker="3  FIXED RULE, OUTCOME STILL HIDDEN",
-        title="Both passed checks: score 0.60, predicts pass",
+        kicker="3  PREDICTIONS SAVED BEFORE THE FINAL TASK",
+        title="Either task changed the prediction",
         font_size=font_size,
     )
     axis.text(
         x + 0.022,
         y + 0.028,
-        "Dialogue 0.40 -> predicts fail     |     Inverted result 0.20 -> predicts fail\n"
-        "Threshold 0.60; these scores were hand-set, not calibrated probabilities.",
+        'First answer only: 0.40 -> "fail"\n'
+        'Related task: 0.60 -> "pass"     |     Comparison task: 0.60 -> "pass"\n'
+        "Fixed scores; the final task had not yet been shown.",
         transform=axis.transAxes,
         fontsize=font_size - 1.5,
         color=INK,
@@ -1154,59 +1177,6 @@ def _section_heading(
     )
 
 
-def _prediction_table(
-    axis: Axes,
-    data: WorkedExampleData,
-    *,
-    x: float,
-    y: float,
-    width: float,
-    font_size: float,
-) -> None:
-    axis.text(
-        x,
-        y + 0.126,
-        "CONDITION",
-        transform=axis.transAxes,
-        fontsize=font_size - 1.2,
-        fontweight="bold",
-        color=MUTED,
-        va="bottom",
-    )
-    axis.text(
-        x + width,
-        y + 0.126,
-        "SCORE  DECISION",
-        transform=axis.transAxes,
-        fontsize=font_size - 1.2,
-        fontweight="bold",
-        color=MUTED,
-        ha="right",
-        va="bottom",
-    )
-    for index, row in enumerate(data.predictions):
-        row_y = y + 0.103 - (0.029 * index)
-        axis.text(
-            x,
-            row_y,
-            row.label,
-            transform=axis.transAxes,
-            fontsize=font_size - 0.85,
-            color=INK,
-            va="center",
-        )
-        axis.text(
-            x + width,
-            row_y,
-            _short_prediction(row),
-            transform=axis.transAxes,
-            fontsize=font_size - 0.85,
-            color=INK,
-            ha="right",
-            va="center",
-        )
-
-
 def _card_background(
     axis: Axes,
     *,
@@ -1242,7 +1212,7 @@ def _card_background(
 
 def _short_prediction(row: WorkedExamplePrediction) -> str:
     answer = "pass" if row.predicts_success else "fail"
-    return f"{row.tracker_score:.2f}  ->  {answer}"
+    return f'{row.tracker_score:.2f} -> "{answer}"'
 
 
 def _source_table_csv(data: WorkedExampleData) -> bytes:

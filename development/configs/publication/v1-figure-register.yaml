@@ -228,8 +228,8 @@ figures:
       the frozen canonical result.
 
   - figure_id: FIG-08
-    title: Why one apparent probing success was misleading
-    question: Why did this case fail to show that relevant executable evidence improved assessment?
+    title: Why an extra coding task appeared to improve one prediction
+    question: Why can this case not show that the related coding task helped?
     source: >-
       configs/publication/v1-worked-example.yaml,
       data/benchmarks/v1/controls/unrelated.yaml,
@@ -243,21 +243,21 @@ figures:
       artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/failure-review-reliability-v1,
       artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/analysis-v1/harness_correction_analysis_report.json,
       and artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/attempts.
-    output_manifest: pending_corrected_generation
-    output_manifest_hash: pending_corrected_generation
-    generation_revision: pending_corrected_generation
+    output_manifest: pending_plain_language_generation
+    output_manifest_hash: pending_plain_language_generation
+    generation_revision: pending_plain_language_generation
     command: pixi run python scripts/benchmark_worked_example_figure.py
     outputs: benchmark_worked_example_report.pdf, benchmark_worked_example_report.svg, benchmark_worked_example_presentation.pdf, benchmark_worked_example_presentation.svg, benchmark_worked_example.json, benchmark_worked_example.csv
     destination: report-results-limitations-and-demo-experiment-walkthrough
     status: primary
-    availability: planned_m8_2
+    availability: planned_m8_2_revision
     intended_claim: >-
-      One post-hoc case shows how a hand-set scoring rule and incomplete
-      authored tests can make an apparent prediction improvement misleading.
+      One case shows how a weak comparison task, a fixed scoring rule, and
+      incomplete final tests can make a prediction improvement look convincing.
     claim_boundary: >-
-      The example explains a measurement weakness in one evaluation-model run;
-      it does not establish evidence relevance, learner mastery, or tutoring
-      benefit.
+      The example examines a measurement weakness in one model run. It does not
+      show that the related task caused a better prediction, or that any person
+      learned from tutoring.
 
 tables:
   - table_id: TAB-M7B-01
