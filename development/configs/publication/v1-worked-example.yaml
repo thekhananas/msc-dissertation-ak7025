@@ -1,29 +1,52 @@
-schema_version: 1
-schema_id: publication.worked_example_plan.v1
+schema_version: 2
+schema_id: publication.worked_example_plan.v2
 status: frozen
 figure_id: FIG-08
 case_id: h-c2m1-02
 sample_id: "001"
 decision_response_sample_id: cerebras-gpt-oss-120b-v1-decision-20260824-001:h-c2m1-02:001
+different_concept_case_id: h-c3m1-02
 selection_reason: >-
-  This was the only eligible v1 case where relevant executable evidence changed
-  an incorrect dialogue-only prediction into a correct prediction. Unrelated
-  evidence caused the same change, so the case also exposes the lack of
-  evidence specificity.
+  This case was selected after the corrected analysis because it was the only
+  eligible case where a same-concept check changed the prediction. A
+  different-concept check caused the same change, and later review found a
+  weakness in the task tests. It is therefore a cautionary example, rather than
+  evidence that probing worked.
 public_response_markers:
   - "True 3"
   - "False 2"
-evidence_response_marker: 'return ["read", "write"]'
+same_concept_response_marker: 'return ["read", "write"]'
+different_concept_response_marker: 'return ["checked", "new"]'
+criterion_response_marker: "filtered = [t for t in tags if t != tag]"
+different_concept_prompt_ref: evidence/h-c3m1-02-prompt.md
+different_concept_prompt_marker: 'labels.add("checked")'
+criterion_prompt_ref: evaluator/criterion/h-c2m1-02-prompt.md
+criterion_tests_ref: evaluator/criterion/h-c2m1-02-tests.yaml
+criterion_prompt_marker: "The input collection is mutable."
 public_summary: >-
-  The response opens with "True 3", then later concludes "False 2".
-evidence_summary: >-
-  The separate permissions-set answer returned ["read", "write"] and passed
-  its authored executable check.
+  The answer began with "True 3" and ended with "False 2". Two blinded raters
+  marked it as conflicting.
+same_concept_summary: >-
+  A permissions-alias check returned ["read", "write"] and passed its one
+  authored test.
+different_concept_summary: >-
+  A function-and-set control returned ["checked", "new"] and passed its one
+  authored test. Its declared concept differed, although it still used set
+  mutation.
+tracker_rule_summary: >-
+  The fixed rule started at 0.50, subtracted 0.10 for the conflicting answer,
+  and added 0.20 for any passed check. The decision threshold was 0.60.
+criterion_summary: >-
+  The later answer returned the expected sorted values and passed 2 of 2
+  authored tests.
+criterion_test_warning: >-
+  The prompt required the supplied list to change. The answer created a new
+  list; the tests checked returned values only.
 interpretation: >-
-  Relevant evidence moved this case from a wrong to a correct prediction.
-  Unrelated evidence caused the same change, so the example does not show that
-  relevance caused the improvement.
+  Both passed checks produced the same 0.60 score. The later pass missed the
+  requested mutation. This case does not establish a benefit from relevant
+  evidence.
 claim_boundary: >-
-  This is one authored case from one evaluation-model run. It explains the
-  measurement path; it does not represent a human learner or show that tutoring
-  improved learning.
+  This post-hoc example comes from one authored case and one evaluation-model
+  run. The tracker scores are hand-set rule values, not calibrated
+  probabilities. It says nothing about human learning or tutoring quality.

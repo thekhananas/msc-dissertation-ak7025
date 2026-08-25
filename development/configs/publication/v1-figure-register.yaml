@@ -228,28 +228,36 @@ figures:
       the frozen canonical result.
 
   - figure_id: FIG-08
-    title: One benchmark case from answer to held-out outcome
-    question: How does one visible answer become committed predictions and a later scored outcome?
+    title: Why one apparent probing success was misleading
+    question: Why did this case fail to show that relevant executable evidence improved assessment?
     source: >-
+      configs/publication/v1-worked-example.yaml,
+      data/benchmarks/v1/controls/unrelated.yaml,
+      data/benchmarks/v1/evidence/h-c3m1-02-prompt.md,
+      data/benchmarks/v1/evaluator/criterion/h-c2m1-02-prompt.md,
+      data/benchmarks/v1/evaluator/criterion/h-c2m1-02-tests.yaml,
       artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/recorded_responses.jsonl,
-      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/datasets/condition_predictions.parquet,
-      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/decision/evidence_executions,
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/datasets,
       artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/criterion/recorded_responses.jsonl,
-      and artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/closure-v1/harness_correction_closure_report.json.
-    output_manifest: planned
-    output_manifest_hash: pending_generation
-    generation_revision: pending_generation
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/failure-review-v1/review-submissions,
+      artifacts/external-decision/cerebras-gpt-oss-120b-20260824-001/decision-seal/analysis/failure-review-reliability-v1,
+      artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/analysis-v1/harness_correction_analysis_report.json,
+      and artifacts/harness-correction/cerebras-gpt-oss-120b-20260903-001/attempts.
+    output_manifest: pending_corrected_generation
+    output_manifest_hash: pending_corrected_generation
+    generation_revision: pending_corrected_generation
     command: pixi run python scripts/benchmark_worked_example_figure.py
-    outputs: benchmark_worked_example_report.pdf, benchmark_worked_example_report.svg, benchmark_worked_example_presentation.pdf, benchmark_worked_example_presentation.svg
-    destination: report-methods-and-demo-experiment-walkthrough
+    outputs: benchmark_worked_example_report.pdf, benchmark_worked_example_report.svg, benchmark_worked_example_presentation.pdf, benchmark_worked_example_presentation.svg, benchmark_worked_example.json, benchmark_worked_example.csv
+    destination: report-results-limitations-and-demo-experiment-walkthrough
     status: primary
     availability: planned_m8_2
     intended_claim: >-
-      One concrete case makes the commit-before-reveal method and its corrected
-      scoring understandable without relying on aggregate statistics alone.
+      One post-hoc case shows how a hand-set scoring rule and incomplete
+      authored tests can make an apparent prediction improvement misleading.
     claim_boundary: >-
-      The example concerns one authored case and one evaluation-model run; it
-      is not a learner profile, hidden reasoning trace, or tutoring result.
+      The example explains a measurement weakness in one evaluation-model run;
+      it does not establish evidence relevance, learner mastery, or tutoring
+      benefit.
 
 tables:
   - table_id: TAB-M7B-01

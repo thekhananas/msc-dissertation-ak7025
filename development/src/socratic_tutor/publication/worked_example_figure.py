@@ -20,9 +20,10 @@ from pathlib import Path
 from typing import Literal, cast
 
 import matplotlib as mpl
+import yaml
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from matplotlib.patches import FancyArrowPatch, Rectangle
+from matplotlib.patches import Rectangle
 from pydantic import Field, ValidationError, model_validator
 
 from socratic_tutor.benchmark.artifacts import (
@@ -38,6 +39,15 @@ from socratic_tutor.benchmark.command_io import (
 )
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.evaluator.datasets import read_criterion_records
+from socratic_tutor.benchmark.failure_review import (
+    FailureReviewLabel,
+    FailureReviewRecord,
+    FailureReviewRecordReport,
+)
+from socratic_tutor.benchmark.failure_review_reliability import (
+    FailureReviewReliabilityPlan,
+    FailureReviewReliabilityReport,
+)
 from socratic_tutor.benchmark.generation import GenerationChannel
 from socratic_tutor.benchmark.harness_correction_analysis import (
     HarnessCorrectionAnalysisReport,
@@ -46,6 +56,7 @@ from socratic_tutor.benchmark.harness_correction_analysis import (
 from socratic_tutor.benchmark.harness_correction_replay import HarnessCorrectionAttempt
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.benchmark.parquet import AtomicParquetDatasetStore
+from socratic_tutor.benchmark.public.controls import UnrelatedControlSpec
 from socratic_tutor.benchmark.public.datasets import read_condition_predictions
 from socratic_tutor.benchmark.public.models import EXPECTED_CONDITIONS, BenchmarkCondition
 from socratic_tutor.benchmark.replay import RecordedGenerationResponse
@@ -61,20 +72,19 @@ from socratic_tutor.publication.figure_style import (
     FigureProfile,
     style_for,
 )
+from socratic_tutor.sandbox.python_tests import AuthoredFunctionTestBundle
 
 _CONDITION_LABELS = {
-    BenchmarkCondition.DIALOGUE_ONLY: "Dialogue only",
-    BenchmarkCondition.PROBE_INFORMED: "Relevant evidence",
-    BenchmarkCondition.UNRELATED_PROBE: "Unrelated evidence",
-    BenchmarkCondition.CORRUPTED_PROBE: "Inverted evidence",
+    BenchmarkCondition.DIALOGUE_ONLY: "Dialogue answer",
+    BenchmarkCondition.PROBE_INFORMED: "Same-concept check",
+    BenchmarkCondition.UNRELATED_PROBE: "Different-concept check",
+    BenchmarkCondition.CORRUPTED_PROBE: "Inverted check result",
 }
-_TITLE = "One case shows both the promise and the weakness of executable evidence"
-_SUBTITLE = (
-    "Case h-c2m1-02; four predictions were fixed before a separate coding task was revealed."
-)
+_TITLE = "Why one apparent probing success was misleading"
+_SUBTITLE = "Case h-c2m1-02: two different passed checks received the same score."
 _FOOTNOTE = (
-    "Scope: one authored case and one Cerebras run. This does not represent a human learner or "
-    "show that tutoring improved learning."
+    "Scope: one post-hoc case from one evaluation-model run. Tracker values are fixed rule scores, "
+    "not calibrated probabilities; this is not evidence about human learning."
 )
 _STYLE: dict[str, object] = {
     "figure.facecolor": "white",
@@ -94,18 +104,30 @@ class WorkedExampleFigureError(ValueError):
 class WorkedExamplePlan(ContractModel):
     """Frozen case selection and plain-language interpretation."""
 
-    schema_version: Literal[1] = 1
-    schema_id: Literal["publication.worked_example_plan.v1"] = "publication.worked_example_plan.v1"
+    schema_version: Literal[2] = 2
+    schema_id: Literal["publication.worked_example_plan.v2"] = "publication.worked_example_plan.v2"
     status: Literal["frozen"] = "frozen"
     figure_id: Literal["FIG-08"] = "FIG-08"
     case_id: Literal["h-c2m1-02"] = "h-c2m1-02"
     sample_id: Literal["001"] = "001"
     decision_response_sample_id: str = Field(min_length=1)
+    different_concept_case_id: Literal["h-c3m1-02"] = "h-c3m1-02"
     selection_reason: str = Field(min_length=1)
     public_response_markers: tuple[str, ...] = Field(min_length=2)
-    evidence_response_marker: str = Field(min_length=1)
+    same_concept_response_marker: str = Field(min_length=1)
+    different_concept_response_marker: str = Field(min_length=1)
+    criterion_response_marker: str = Field(min_length=1)
+    different_concept_prompt_ref: str = Field(min_length=1)
+    different_concept_prompt_marker: str = Field(min_length=1)
+    criterion_prompt_ref: str = Field(min_length=1)
+    criterion_tests_ref: str = Field(min_length=1)
+    criterion_prompt_marker: str = Field(min_length=1)
     public_summary: str = Field(min_length=1)
-    evidence_summary: str = Field(min_length=1)
+    same_concept_summary: str = Field(min_length=1)
+    different_concept_summary: str = Field(min_length=1)
+    tracker_rule_summary: str = Field(min_length=1)
+    criterion_summary: str = Field(min_length=1)
+    criterion_test_warning: str = Field(min_length=1)
     interpretation: str = Field(min_length=1)
     claim_boundary: str = Field(min_length=1)
 
@@ -113,8 +135,6 @@ class WorkedExamplePlan(ContractModel):
     def validate_plan(self) -> WorkedExamplePlan:
         if len(set(self.public_response_markers)) != len(self.public_response_markers):
             raise ValueError("Public response markers must be unique")
-        if "Unrelated evidence" not in self.interpretation:
-            raise ValueError("Worked example must retain the specificity limitation")
         return self
 
 
@@ -123,10 +143,10 @@ class WorkedExamplePrediction(ContractModel):
 
     condition: BenchmarkCondition
     label: str = Field(min_length=1)
-    mastery_probability: float = Field(ge=0.0, le=1.0)
+    tracker_score: float = Field(ge=0.0, le=1.0)
     policy_threshold: float = Field(ge=0.0, le=1.0)
     predicts_success: bool
-    correct: bool
+    matches_authored_outcome: bool
     input_hash: Sha256
     record_hash: Sha256
     committed_at_utc: datetime
@@ -136,7 +156,7 @@ class WorkedExamplePrediction(ContractModel):
         _require_utc(self.committed_at_utc, "Prediction commit time")
         if self.label != _CONDITION_LABELS[self.condition]:
             raise ValueError("Prediction label does not match its condition")
-        if self.predicts_success is not (self.mastery_probability >= self.policy_threshold):
+        if self.predicts_success is not (self.tracker_score >= self.policy_threshold):
             raise ValueError("Prediction decision does not match its score")
         return self
 
@@ -144,8 +164,8 @@ class WorkedExamplePrediction(ContractModel):
 class WorkedExampleData(ContractModel):
     """Publication-safe values used by both figure profiles and the later demo."""
 
-    schema_version: Literal[1] = 1
-    schema_id: Literal["publication.worked_example_data.v1"] = "publication.worked_example_data.v1"
+    schema_version: Literal[2] = 2
+    schema_id: Literal["publication.worked_example_data.v2"] = "publication.worked_example_data.v2"
     figure_id: Literal["FIG-08"] = "FIG-08"
     benchmark_version: Literal["v1"] = "v1"
     run_id: str = Field(min_length=1)
@@ -156,10 +176,16 @@ class WorkedExampleData(ContractModel):
     public_summary: str = Field(min_length=1)
     public_rating_category: Literal["conflicting"] = "conflicting"
     public_response_hash: Sha256
-    evidence_summary: str = Field(min_length=1)
-    evidence_response_hash: Sha256
-    evidence_passed: int = Field(ge=0)
-    evidence_failed: int = Field(ge=0)
+    same_concept_summary: str = Field(min_length=1)
+    same_concept_response_hash: Sha256
+    same_concept_passed: int = Field(ge=0)
+    same_concept_failed: int = Field(ge=0)
+    different_concept_case_id: Literal["h-c3m1-02"] = "h-c3m1-02"
+    different_concept_summary: str = Field(min_length=1)
+    different_concept_response_hash: Sha256
+    different_concept_passed: int = Field(ge=0)
+    different_concept_failed: int = Field(ge=0)
+    tracker_rule_summary: str = Field(min_length=1)
     predictions: tuple[
         WorkedExamplePrediction,
         WorkedExamplePrediction,
@@ -169,15 +195,24 @@ class WorkedExampleData(ContractModel):
     criterion_response_hash: Sha256
     criterion_passed: int = Field(ge=0)
     criterion_failed: int = Field(ge=0)
-    criterion_demonstrated_performance: Literal[True] = True
+    criterion_summary: str = Field(min_length=1)
+    criterion_test_warning: str = Field(min_length=1)
+    criterion_tests_checked_input_mutation: Literal[False] = False
     criterion_revealed_at_utc: datetime
+    failure_review_category: Literal[FailureReviewLabel.ITEM_AMBIGUITY_OR_TEST_DEFECT]
+    reviewers_agreed_on_category: Literal[True] = True
+    primary_review_record_hash: Sha256
+    secondary_review_record_hash: Sha256
+    failure_review_reliability_report_hash: Sha256
     interpretation: str = Field(min_length=1)
     claim_boundary: str = Field(min_length=1)
     analysis_case_result_hash: Sha256
     evidence_attempt_hash: Sha256
+    different_concept_attempt_hash: Sha256
     criterion_attempt_hash: Sha256
     predictions_sealed_before_outcome_reveal: Literal[True] = True
-    relevant_and_unrelated_predictions_match: Literal[True] = True
+    same_and_different_concept_predictions_match: Literal[True] = True
+    tracker_scores_are_calibrated_probabilities: Literal[False] = False
     corrected_result_is_post_hoc: Literal[True] = True
     human_learning_claim_supported: Literal[False] = False
     tutoring_efficacy_claim_supported: Literal[False] = False
@@ -193,18 +228,28 @@ class WorkedExampleData(ContractModel):
         by_condition = {row.condition: row for row in self.predictions}
         dialogue = by_condition[BenchmarkCondition.DIALOGUE_ONLY]
         relevant = by_condition[BenchmarkCondition.PROBE_INFORMED]
-        unrelated = by_condition[BenchmarkCondition.UNRELATED_PROBE]
-        if dialogue.predicts_success or dialogue.correct:
+        different = by_condition[BenchmarkCondition.UNRELATED_PROBE]
+        if dialogue.predicts_success or dialogue.matches_authored_outcome:
             raise ValueError("Worked example no longer has the declared dialogue error")
-        if not relevant.predicts_success or not relevant.correct:
+        if not relevant.predicts_success or not relevant.matches_authored_outcome:
             raise ValueError("Worked example no longer has the declared relevant-evidence gain")
         if (
-            relevant.predicts_success != unrelated.predicts_success
-            or relevant.correct != unrelated.correct
+            relevant.predicts_success != different.predicts_success
+            or relevant.matches_authored_outcome != different.matches_authored_outcome
         ):
             raise ValueError("Worked example no longer exposes the specificity limitation")
-        if self.evidence_passed != 1 or self.evidence_failed != 0:
+        expected_scores = (0.4, 0.6, 0.6, 0.2)
+        if any(
+            not math.isclose(row.tracker_score, expected, abs_tol=1e-12)
+            for row, expected in zip(self.predictions, expected_scores, strict=True)
+        ):
+            raise ValueError("Worked example no longer has the frozen tracker scores")
+        if any(not math.isclose(row.policy_threshold, 0.6) for row in self.predictions):
+            raise ValueError("Worked example no longer uses the frozen 0.60 threshold")
+        if self.same_concept_passed != 1 or self.same_concept_failed != 0:
             raise ValueError("Worked example requires the reviewed 1/1 evidence result")
+        if self.different_concept_passed != 1 or self.different_concept_failed != 0:
+            raise ValueError("Worked example requires the reviewed 1/1 control result")
         if self.criterion_passed != 2 or self.criterion_failed != 0:
             raise ValueError("Worked example requires the reviewed 2/2 criterion result")
         if self.data_hash != model_content_hash(self, exclude={"data_hash"}):
@@ -222,6 +267,14 @@ class _WorkedExampleSources:
     criterion_publication_hash: Sha256
     analysis_report_hash: Sha256
     analysis_report_sha256: Sha256
+    criterion_prompt_sha256: Sha256
+    criterion_tests_sha256: Sha256
+    different_concept_prompt_sha256: Sha256
+    unrelated_control_sha256: Sha256
+    primary_review_sha256: Sha256
+    secondary_review_sha256: Sha256
+    failure_review_reliability_plan_sha256: Sha256
+    failure_review_reliability_sha256: Sha256
 
 
 def render_worked_example_figure(
@@ -232,6 +285,11 @@ def render_worked_example_figure(
     dataset_root: Path,
     correction_analysis_path: Path,
     correction_attempt_root: Path,
+    benchmark_root: Path,
+    primary_failure_review_path: Path,
+    secondary_failure_review_path: Path,
+    failure_review_reliability_plan_path: Path,
+    failure_review_reliability_path: Path,
     pixi_lock_path: Path,
     output_root: Path,
     publication_code_revision: str,
@@ -246,6 +304,11 @@ def render_worked_example_figure(
         dataset_root=dataset_root,
         correction_analysis_path=correction_analysis_path,
         correction_attempt_root=correction_attempt_root,
+        benchmark_root=benchmark_root,
+        primary_failure_review_path=primary_failure_review_path,
+        secondary_failure_review_path=secondary_failure_review_path,
+        failure_review_reliability_plan_path=failure_review_reliability_plan_path,
+        failure_review_reliability_path=failure_review_reliability_path,
     )
     pixi_lock = _read(pixi_lock_path, "Pixi lock")
     generated_at = _resolve_generated_at(
@@ -275,8 +338,8 @@ def render_worked_example_figure(
             )
 
     manifest_content: dict[str, object] = {
-        "schema_version": 1,
-        "schema_id": "publication.worked_example_figure_manifest.v1",
+        "schema_version": 2,
+        "schema_id": "publication.worked_example_figure_manifest.v2",
         "figure_id": "FIG-08",
         "benchmark_version": "v1",
         "run_id": sources.data.run_id,
@@ -288,9 +351,21 @@ def render_worked_example_figure(
         "criterion_publication_hash": sources.criterion_publication_hash,
         "correction_analysis_report_hash": sources.analysis_report_hash,
         "correction_analysis_report_sha256": sources.analysis_report_sha256,
+        "criterion_prompt_sha256": sources.criterion_prompt_sha256,
+        "criterion_tests_sha256": sources.criterion_tests_sha256,
+        "different_concept_prompt_sha256": sources.different_concept_prompt_sha256,
+        "unrelated_control_sha256": sources.unrelated_control_sha256,
+        "primary_failure_review_sha256": sources.primary_review_sha256,
+        "secondary_failure_review_sha256": sources.secondary_review_sha256,
+        "failure_review_reliability_plan_sha256": (sources.failure_review_reliability_plan_sha256),
+        "failure_review_reliability_sha256": sources.failure_review_reliability_sha256,
         "analysis_case_result_hash": sources.data.analysis_case_result_hash,
         "evidence_attempt_hash": sources.data.evidence_attempt_hash,
         "criterion_attempt_hash": sources.data.criterion_attempt_hash,
+        "different_concept_attempt_hash": sources.data.different_concept_attempt_hash,
+        "failure_review_reliability_report_hash": (
+            sources.data.failure_review_reliability_report_hash
+        ),
         "pixi_lock_sha256": file_sha256(pixi_lock),
         "publication_code_revision": _validate_revision(publication_code_revision),
         "files": files,
@@ -301,6 +376,9 @@ def render_worked_example_figure(
         "generated_at_utc": generated_at.isoformat().replace("+00:00", "Z"),
         "predictions_sealed_before_outcome_reveal": True,
         "corrected_result_is_post_hoc": True,
+        "tracker_scores_are_calibrated_probabilities": False,
+        "criterion_tests_checked_input_mutation": False,
+        "known_item_or_test_defect": True,
         "network_calls_made": 0,
         "sandbox_calls_made": 0,
         "human_learning_claim_supported": False,
@@ -323,6 +401,11 @@ def _load_worked_example(
     dataset_root: Path,
     correction_analysis_path: Path,
     correction_attempt_root: Path,
+    benchmark_root: Path,
+    primary_failure_review_path: Path,
+    secondary_failure_review_path: Path,
+    failure_review_reliability_plan_path: Path,
+    failure_review_reliability_path: Path,
 ) -> _WorkedExampleSources:
     plan = load_command_model(plan_path, WorkedExamplePlan)
     decision_bytes = _read(decision_responses_path, "decision response file")
@@ -335,10 +418,15 @@ def _load_worked_example(
         sample_id=plan.decision_response_sample_id,
         channel=GenerationChannel.PUBLIC,
     )
-    evidence_response = _select_response(
+    same_concept_response = _select_response(
         decision_responses,
         case_id=plan.case_id,
         sample_id=plan.decision_response_sample_id,
+        channel=GenerationChannel.EVIDENCE,
+    )
+    different_concept_response = _select_case_response(
+        decision_responses,
+        case_id=plan.different_concept_case_id,
         channel=GenerationChannel.EVIDENCE,
     )
     criterion_response = _select_response(
@@ -350,8 +438,72 @@ def _load_worked_example(
     for marker in plan.public_response_markers:
         if marker not in public_response.final_response:
             raise WorkedExampleFigureError(f"Public response no longer contains marker: {marker}")
-    if plan.evidence_response_marker not in evidence_response.final_response:
-        raise WorkedExampleFigureError("Evidence response no longer contains its frozen marker")
+    if plan.same_concept_response_marker not in same_concept_response.final_response:
+        raise WorkedExampleFigureError("Same-concept response no longer contains its marker")
+    if plan.different_concept_response_marker not in different_concept_response.final_response:
+        raise WorkedExampleFigureError("Different-concept response no longer contains its marker")
+    if plan.criterion_response_marker not in criterion_response.final_response:
+        raise WorkedExampleFigureError("Criterion response no longer contains its marker")
+
+    criterion_prompt_bytes = _read_benchmark_source(
+        benchmark_root,
+        plan.criterion_prompt_ref,
+        "criterion prompt",
+    )
+    if plan.criterion_prompt_marker not in criterion_prompt_bytes.decode("utf-8"):
+        raise WorkedExampleFigureError("Criterion prompt no longer states the mutable-input rule")
+    criterion_tests_bytes = _read_benchmark_source(
+        benchmark_root,
+        plan.criterion_tests_ref,
+        "criterion tests",
+    )
+    criterion_tests = _load_test_bundle(criterion_tests_bytes)
+    if criterion_tests.function != "discard_tag":
+        raise WorkedExampleFigureError("Criterion tests no longer target discard_tag")
+    if any("expected_input_after" in check.model_fields_set for check in criterion_tests.checks):
+        raise WorkedExampleFigureError(
+            "Criterion tests now check input mutation; revise this figure"
+        )
+
+    different_prompt_bytes = _read_benchmark_source(
+        benchmark_root,
+        plan.different_concept_prompt_ref,
+        "different-concept prompt",
+    )
+    if plan.different_concept_prompt_marker not in different_prompt_bytes.decode("utf-8"):
+        raise WorkedExampleFigureError("Different-concept prompt no longer uses set mutation")
+    unrelated_control_bytes = _read_benchmark_source(
+        benchmark_root,
+        "controls/unrelated.yaml",
+        "different-concept control",
+    )
+    unrelated_control = _load_unrelated_control(unrelated_control_bytes)
+    if unrelated_control.assignments.get(plan.case_id) != plan.different_concept_case_id:
+        raise WorkedExampleFigureError("Different-concept control assignment has changed")
+
+    primary_review_bytes, primary_review = _load_failure_review(
+        primary_failure_review_path,
+        "primary failure review",
+    )
+    secondary_review_bytes, secondary_review = _load_failure_review(
+        secondary_failure_review_path,
+        "secondary failure review",
+    )
+    reliability_plan_bytes, reliability_plan = _load_failure_review_reliability_plan(
+        failure_review_reliability_plan_path
+    )
+    reliability_bytes, reliability = _load_failure_review_reliability(
+        failure_review_reliability_path
+    )
+    primary_review_record, secondary_review_record = _validate_failure_reviews(
+        case_id=plan.case_id,
+        primary=primary_review,
+        secondary=secondary_review,
+        primary_file_sha256=file_sha256(primary_review_bytes),
+        secondary_file_sha256=file_sha256(secondary_review_bytes),
+        reliability_plan=reliability_plan,
+        reliability=reliability,
+    )
 
     store = AtomicParquetDatasetStore(dataset_root)
     prediction_dataset = read_condition_predictions(store)
@@ -376,8 +528,11 @@ def _load_worked_example(
     except ValidationError as error:
         raise WorkedExampleFigureError("Correction analysis report is invalid") from error
     case_result = _select_case_result(analysis, plan.case_id)
-    evidence_attempt = _load_attempt(
-        correction_attempt_root / "evidence" / f"{evidence_response.response_hash}.json"
+    same_concept_attempt = _load_attempt(
+        correction_attempt_root / "evidence" / f"{same_concept_response.response_hash}.json"
+    )
+    different_concept_attempt = _load_attempt(
+        correction_attempt_root / "evidence" / f"{different_concept_response.response_hash}.json"
     )
     criterion_attempt = _load_attempt(
         correction_attempt_root / "criterion" / f"{criterion_response.response_hash}.json"
@@ -385,21 +540,23 @@ def _load_worked_example(
     _validate_lineage(
         plan=plan,
         public_response=public_response,
-        evidence_response=evidence_response,
+        same_concept_response=same_concept_response,
+        different_concept_response=different_concept_response,
         criterion_response=criterion_response,
         prediction_rows=prediction_rows,
         criterion_row=criterion_row,
         analysis=analysis,
         case_result=case_result,
-        evidence_attempt=evidence_attempt,
+        same_concept_attempt=same_concept_attempt,
+        different_concept_attempt=different_concept_attempt,
         criterion_attempt=criterion_attempt,
     )
     predictions = _prediction_views(prediction_rows, case_result)
     revealed_at = _datetime_value(criterion_row, "revealed_at_utc")
     route = public_response.request.model_route
     content = {
-        "schema_version": 1,
-        "schema_id": "publication.worked_example_data.v1",
+        "schema_version": 2,
+        "schema_id": "publication.worked_example_data.v2",
         "figure_id": "FIG-08",
         "benchmark_version": "v1",
         "run_id": public_response.request.run_id,
@@ -410,23 +567,38 @@ def _load_worked_example(
         "public_summary": plan.public_summary,
         "public_rating_category": case_result.public_rating_category,
         "public_response_hash": public_response.response_hash,
-        "evidence_summary": plan.evidence_summary,
-        "evidence_response_hash": evidence_response.response_hash,
-        "evidence_passed": case_result.corrected_evidence.passed,
-        "evidence_failed": case_result.corrected_evidence.failed,
+        "same_concept_summary": plan.same_concept_summary,
+        "same_concept_response_hash": same_concept_response.response_hash,
+        "same_concept_passed": case_result.corrected_evidence.passed,
+        "same_concept_failed": case_result.corrected_evidence.failed,
+        "different_concept_case_id": plan.different_concept_case_id,
+        "different_concept_summary": plan.different_concept_summary,
+        "different_concept_response_hash": different_concept_response.response_hash,
+        "different_concept_passed": different_concept_attempt.corrected.passed,
+        "different_concept_failed": different_concept_attempt.corrected.failed,
+        "tracker_rule_summary": plan.tracker_rule_summary,
         "predictions": predictions,
         "criterion_response_hash": criterion_response.response_hash,
         "criterion_passed": case_result.corrected_criterion.passed,
         "criterion_failed": case_result.corrected_criterion.failed,
-        "criterion_demonstrated_performance": True,
+        "criterion_summary": plan.criterion_summary,
+        "criterion_test_warning": plan.criterion_test_warning,
+        "criterion_tests_checked_input_mutation": False,
         "criterion_revealed_at_utc": revealed_at,
+        "failure_review_category": FailureReviewLabel.ITEM_AMBIGUITY_OR_TEST_DEFECT,
+        "reviewers_agreed_on_category": True,
+        "primary_review_record_hash": primary_review_record.record_hash,
+        "secondary_review_record_hash": secondary_review_record.record_hash,
+        "failure_review_reliability_report_hash": reliability.report_hash,
         "interpretation": plan.interpretation,
         "claim_boundary": plan.claim_boundary,
         "analysis_case_result_hash": case_result.result_hash,
-        "evidence_attempt_hash": evidence_attempt.attempt_hash,
+        "evidence_attempt_hash": same_concept_attempt.attempt_hash,
+        "different_concept_attempt_hash": different_concept_attempt.attempt_hash,
         "criterion_attempt_hash": criterion_attempt.attempt_hash,
         "predictions_sealed_before_outcome_reveal": True,
-        "relevant_and_unrelated_predictions_match": True,
+        "same_and_different_concept_predictions_match": True,
+        "tracker_scores_are_calibrated_probabilities": False,
         "corrected_result_is_post_hoc": True,
         "human_learning_claim_supported": False,
         "tutoring_efficacy_claim_supported": False,
@@ -448,6 +620,14 @@ def _load_worked_example(
         criterion_publication_hash=criterion_dataset.manifest.publication_hash,
         analysis_report_hash=analysis.report_hash,
         analysis_report_sha256=file_sha256(analysis_bytes),
+        criterion_prompt_sha256=file_sha256(criterion_prompt_bytes),
+        criterion_tests_sha256=file_sha256(criterion_tests_bytes),
+        different_concept_prompt_sha256=file_sha256(different_prompt_bytes),
+        unrelated_control_sha256=file_sha256(unrelated_control_bytes),
+        primary_review_sha256=file_sha256(primary_review_bytes),
+        secondary_review_sha256=file_sha256(secondary_review_bytes),
+        failure_review_reliability_plan_sha256=file_sha256(reliability_plan_bytes),
+        failure_review_reliability_sha256=file_sha256(reliability_bytes),
     )
 
 
@@ -455,13 +635,15 @@ def _validate_lineage(
     *,
     plan: WorkedExamplePlan,
     public_response: RecordedGenerationResponse,
-    evidence_response: RecordedGenerationResponse,
+    same_concept_response: RecordedGenerationResponse,
+    different_concept_response: RecordedGenerationResponse,
     criterion_response: RecordedGenerationResponse,
     prediction_rows: tuple[dict[str, object], ...],
     criterion_row: dict[str, object],
     analysis: HarnessCorrectionAnalysisReport,
     case_result: HarnessCorrectionCaseResult,
-    evidence_attempt: HarnessCorrectionAttempt,
+    same_concept_attempt: HarnessCorrectionAttempt,
+    different_concept_attempt: HarnessCorrectionAttempt,
     criterion_attempt: HarnessCorrectionAttempt,
 ) -> None:
     if len(prediction_rows) != 4:
@@ -480,9 +662,9 @@ def _validate_lineage(
         raise WorkedExampleFigureError("Worked-example records belong to different runs")
     expected_attempts = (
         (
-            evidence_attempt,
+            same_concept_attempt,
             GenerationChannel.EVIDENCE,
-            evidence_response.response_hash,
+            same_concept_response.response_hash,
             case_result.evidence_attempt_hash,
             case_result.corrected_evidence,
         ),
@@ -504,6 +686,16 @@ def _validate_lineage(
             or attempt.outcome_changed
         ):
             raise WorkedExampleFigureError("Correction attempt does not match the selected case")
+    if (
+        different_concept_attempt.case_id != plan.different_concept_case_id
+        or different_concept_attempt.channel is not GenerationChannel.EVIDENCE
+        or different_concept_attempt.response_hash != different_concept_response.response_hash
+        or different_concept_attempt.corrected.status != "completed"
+        or different_concept_attempt.corrected.passed != 1
+        or different_concept_attempt.corrected.failed != 0
+        or different_concept_attempt.outcome_changed
+    ):
+        raise WorkedExampleFigureError("Different-concept execution does not match its source")
     if criterion_row["demonstrated_performance"] is not True:
         raise WorkedExampleFigureError("Selected criterion outcome is no longer successful")
 
@@ -525,9 +717,9 @@ def _prediction_views(
         score = score_by_condition.get(condition)
         if row is None or score is None or score.correct is None:
             raise WorkedExampleFigureError("Condition prediction is incomplete")
-        probability = float(row["tracker_mastery_probability"])
+        tracker_score = float(row["tracker_mastery_probability"])
         if (
-            not math.isclose(probability, score.mastery_score, abs_tol=1e-12)
+            not math.isclose(tracker_score, score.mastery_score, abs_tol=1e-12)
             or str(row["input_hash"]) != score.input_hash
         ):
             raise WorkedExampleFigureError("Sealed and corrected condition scores differ")
@@ -535,10 +727,10 @@ def _prediction_views(
             WorkedExamplePrediction(
                 condition=condition,
                 label=_CONDITION_LABELS[condition],
-                mastery_probability=probability,
+                tracker_score=tracker_score,
                 policy_threshold=score.policy_threshold,
                 predicts_success=score.binary_decision,
-                correct=score.correct,
+                matches_authored_outcome=score.correct,
                 input_hash=score.input_hash,
                 record_hash=str(row["record_hash"]),
                 committed_at_utc=_datetime_value(row, "committed_at_utc"),
@@ -592,13 +784,13 @@ def _render_vector_files(
 
 def _build_figure(data: WorkedExampleData, *, profile: FigureProfile) -> Figure:
     style = style_for(profile)
-    height = 6.2 if profile == "report" else style.height_in
+    height = 8.2 if profile == "report" else style.height_in
     figure = Figure(figsize=(style.width_in, height), facecolor="white")
     axis = figure.add_axes((0.0, 0.0, 1.0, 1.0))
     axis.set_axis_off()
     figure.text(
         0.055,
-        0.965,
+        0.968,
         _TITLE,
         fontsize=style.title_size,
         fontweight="bold",
@@ -607,7 +799,7 @@ def _build_figure(data: WorkedExampleData, *, profile: FigureProfile) -> Figure:
     )
     figure.text(
         0.055,
-        0.91 if profile == "report" else 0.875,
+        0.925 if profile == "report" else 0.875,
         _SUBTITLE,
         fontsize=style.font_size,
         color=MUTED,
@@ -617,10 +809,18 @@ def _build_figure(data: WorkedExampleData, *, profile: FigureProfile) -> Figure:
         _draw_report(axis, data, font_size=style.font_size)
     else:
         _draw_presentation(axis, data, font_size=style.font_size)
+    visible_footnote = (
+        _FOOTNOTE
+        if profile == "report"
+        else (
+            "Scope: one post-hoc model case. Hand-set scores are not probabilities; "
+            "no human-learning claim."
+        )
+    )
     figure.text(
         0.055,
-        0.018,
-        _FOOTNOTE,
+        0.014,
+        textwrap.fill(visible_footnote, width=116 if profile == "report" else 220),
         fontsize=style.font_size - (1.2 if profile == "report" else 1.5),
         color=MUTED,
         va="bottom",
@@ -630,81 +830,63 @@ def _build_figure(data: WorkedExampleData, *, profile: FigureProfile) -> Figure:
 
 
 def _draw_report(axis: Axes, data: WorkedExampleData, *, font_size: float) -> None:
-    cards = (
-        (0.755, 0.13, "1  Visible answer", data.public_summary, ORANGE),
-        (0.585, 0.125, "2  Executable check", data.evidence_summary, BLUE),
-        (0.22, 0.095, "4  Later task", "A separate tag-removal task passed 2 of 2 tests.", GREEN),
-        (0.065, 0.12, "5  What this means", data.interpretation, INK),
-    )
-    for y, height, title, body, colour in cards[:2]:
-        _report_card(
-            axis,
-            y=y,
-            height=height,
-            title=title,
-            body=body,
-            colour=colour,
-            font_size=font_size,
-        )
-    _vertical_arrow(axis, 0.748, 0.718)
-    _vertical_arrow(axis, 0.578, 0.552)
-    _prediction_report_card(axis, data, y=0.35, height=0.195, font_size=font_size)
-    _vertical_arrow(axis, 0.343, 0.322)
-    _report_card(
+    _content_card(
         axis,
-        y=cards[2][0],
-        height=cards[2][1],
-        title=cards[2][2],
-        body=cards[2][3],
-        colour=cards[2][4],
+        x=0.055,
+        y=0.78,
+        width=0.89,
+        height=0.11,
+        kicker="1  INITIAL ANSWER",
+        title="The response contradicted itself",
+        body=data.public_summary,
+        colour=ORANGE,
         font_size=font_size,
+        body_width=88,
     )
-    _vertical_arrow(axis, 0.213, 0.192)
-    _report_card(
+    _content_card(
         axis,
-        y=cards[3][0],
-        height=cards[3][1],
-        title=cards[3][2],
-        body=cards[3][3],
-        colour=cards[3][4],
+        x=0.055,
+        y=0.605,
+        width=0.425,
+        height=0.155,
+        kicker="2A  SAME-CONCEPT CHECK",
+        title="Permissions aliasing",
+        body=data.same_concept_summary,
+        colour=BLUE,
         font_size=font_size,
+        body_width=46,
+    )
+    _content_card(
+        axis,
+        x=0.52,
+        y=0.605,
+        width=0.425,
+        height=0.155,
+        kicker="2B  DIFFERENT-CONCEPT CONTROL",
+        title="Function and set mutation",
+        body=data.different_concept_summary,
+        colour=GREEN,
+        font_size=font_size,
+        body_width=46,
+    )
+    _score_report_card(axis, data, y=0.385, height=0.185, font_size=font_size)
+    _criterion_report_card(axis, data, y=0.205, height=0.15, font_size=font_size)
+    _content_card(
+        axis,
+        x=0.055,
+        y=0.045,
+        width=0.89,
+        height=0.13,
+        kicker="5  CONCLUSION",
+        title="What this case can support",
+        body=data.interpretation,
+        colour=ORANGE,
+        font_size=font_size,
+        body_width=94,
     )
 
 
-def _report_card(
-    axis: Axes,
-    *,
-    y: float,
-    height: float,
-    title: str,
-    body: str,
-    colour: str,
-    font_size: float,
-) -> None:
-    _card_background(axis, x=0.055, y=y, width=0.89, height=height, colour=colour)
-    axis.text(
-        0.085,
-        y + height - 0.028,
-        title,
-        transform=axis.transAxes,
-        fontsize=font_size,
-        fontweight="bold",
-        color=INK,
-        va="top",
-    )
-    axis.text(
-        0.31,
-        y + height - 0.027,
-        textwrap.fill(body, width=82),
-        transform=axis.transAxes,
-        fontsize=font_size - 0.6,
-        color=INK,
-        va="top",
-        linespacing=1.25,
-    )
-
-
-def _prediction_report_card(
+def _score_report_card(
     axis: Axes,
     data: WorkedExampleData,
     *,
@@ -713,138 +895,316 @@ def _prediction_report_card(
     font_size: float,
 ) -> None:
     _card_background(axis, x=0.055, y=y, width=0.89, height=height, colour=PURPLE)
-    axis.text(
-        0.085,
-        y + height - 0.028,
-        "3  Predictions fixed",
-        transform=axis.transAxes,
-        fontsize=font_size,
-        fontweight="bold",
-        color=INK,
-        va="top",
+    _section_heading(
+        axis,
+        x=0.08,
+        y=y + height - 0.022,
+        kicker="3  FIXED SCORING RULE",
+        title="Both passed checks crossed the same threshold",
+        font_size=font_size,
     )
     axis.text(
-        0.085,
-        y + height - 0.066,
-        "Outcome still hidden",
+        0.08,
+        y + height - 0.085,
+        "0.50 start - 0.10 conflict = 0.40\n"
+        "0.40 + 0.20 passed check = 0.60\n"
+        "Decision threshold = 0.60",
+        transform=axis.transAxes,
+        fontsize=font_size - 0.35,
+        color=INK,
+        va="top",
+        linespacing=1.35,
+    )
+    axis.text(
+        0.08,
+        y + 0.022,
+        "Hand-set tracker scores, not calibrated probabilities",
         transform=axis.transAxes,
         fontsize=font_size - 1.0,
         color=MUTED,
+        va="bottom",
+    )
+    _prediction_table(axis, data, x=0.515, y=y + 0.022, width=0.40, font_size=font_size)
+
+
+def _criterion_report_card(
+    axis: Axes,
+    data: WorkedExampleData,
+    *,
+    y: float,
+    height: float,
+    font_size: float,
+) -> None:
+    _card_background(axis, x=0.055, y=y, width=0.89, height=height, colour=ORANGE)
+    _section_heading(
+        axis,
+        x=0.08,
+        y=y + height - 0.022,
+        kicker="4  LATER TASK",
+        title="The authored tests reported a pass",
+        font_size=font_size,
+    )
+    axis.text(
+        0.08,
+        y + height - 0.087,
+        textwrap.fill(data.criterion_summary, width=50),
+        transform=axis.transAxes,
+        fontsize=font_size - 0.45,
+        color=INK,
+        va="top",
+        linespacing=1.25,
+    )
+    axis.text(
+        0.515,
+        y + height - 0.026,
+        "TEST LIMIT",
+        transform=axis.transAxes,
+        fontsize=font_size - 1.0,
+        fontweight="bold",
+        color=ORANGE,
         va="top",
     )
-    for index, row in enumerate(data.predictions):
-        column = index % 2
-        row_index = index // 2
-        x = 0.31 + (0.32 * column)
-        row_y = y + height - 0.042 - (0.068 * row_index)
-        answer = "predicts success" if row.predicts_success else "predicts no success"
-        axis.text(
-            x,
-            row_y,
-            f"{row.label}\n{row.mastery_probability:.0%}  |  {answer}",
-            transform=axis.transAxes,
-            fontsize=font_size - 0.7,
-            color=INK,
-            va="top",
-            linespacing=1.25,
-        )
+    axis.text(
+        0.515,
+        y + height - 0.055,
+        textwrap.fill(data.criterion_test_warning, width=54),
+        transform=axis.transAxes,
+        fontsize=font_size - 0.45,
+        color=INK,
+        va="top",
+        linespacing=1.25,
+    )
+    axis.text(
+        0.515,
+        y + 0.018,
+        "Later review category: item ambiguity or test defect",
+        transform=axis.transAxes,
+        fontsize=font_size - 1.0,
+        color=MUTED,
+        va="bottom",
+    )
 
 
 def _draw_presentation(axis: Axes, data: WorkedExampleData, *, font_size: float) -> None:
-    x_positions = (0.04, 0.285, 0.53, 0.775)
-    cards = (
-        (
-            "1  Visible answer",
-            f"{data.public_summary}\n\nIndependent category: conflicting",
-            ORANGE,
-        ),
-        (
-            "2  Executable check",
-            f"{data.evidence_summary}\n\nResult: 1 of 1 tests passed",
-            BLUE,
-        ),
-        (
-            "3  Predictions fixed",
-            "\n".join(_short_prediction(row) for row in data.predictions),
-            PURPLE,
-        ),
-        (
-            "4  Later task",
-            "A separate tag-removal task was revealed only after the predictions.\n\n"
-            "Result: 2 of 2 tests passed",
-            GREEN,
-        ),
+    _content_card(
+        axis,
+        x=0.04,
+        y=0.53,
+        width=0.26,
+        height=0.27,
+        kicker="1  INITIAL ANSWER",
+        title="The response conflicted",
+        body=data.public_summary,
+        colour=ORANGE,
+        font_size=font_size,
+        body_width=34,
     )
-    for index, (x, (title, body, colour)) in enumerate(zip(x_positions, cards, strict=True)):
-        _presentation_card(
-            axis,
-            x=x,
-            y=0.35,
-            width=0.205,
-            height=0.40,
-            title=title,
-            body=body,
-            colour=colour,
-            font_size=font_size,
-        )
-        if index < len(cards) - 1:
-            _horizontal_arrow(axis, x + 0.21, x_positions[index + 1] - 0.005)
-    _card_background(axis, x=0.04, y=0.095, width=0.94, height=0.165, colour=INK)
-    axis.text(
-        0.065,
-        0.225,
-        "5  What this means",
-        transform=axis.transAxes,
-        fontsize=font_size,
-        fontweight="bold",
-        color=INK,
-        va="top",
+    _content_card(
+        axis,
+        x=0.34,
+        y=0.53,
+        width=0.28,
+        height=0.27,
+        kicker="2A  SAME CONCEPT",
+        title="Passed 1 of 1 tests",
+        body=data.same_concept_summary,
+        colour=BLUE,
+        font_size=font_size,
+        body_width=38,
     )
-    axis.text(
-        0.24,
-        0.225,
-        textwrap.fill(data.interpretation, width=105),
-        transform=axis.transAxes,
-        fontsize=font_size - 1.0,
-        color=INK,
-        va="top",
-        linespacing=1.3,
+    _content_card(
+        axis,
+        x=0.66,
+        y=0.53,
+        width=0.30,
+        height=0.27,
+        kicker="2B  CONTROL",
+        title="Also passed 1 of 1 tests",
+        body=data.different_concept_summary,
+        colour=GREEN,
+        font_size=font_size,
+        body_width=40,
+    )
+    _score_presentation_card(
+        axis, data, x=0.04, y=0.265, width=0.56, height=0.23, font_size=font_size
+    )
+    _content_card(
+        axis,
+        x=0.64,
+        y=0.265,
+        width=0.32,
+        height=0.23,
+        kicker="4  LATER TASK",
+        title="Tests passed; mutation unchecked",
+        body=data.criterion_test_warning,
+        colour=ORANGE,
+        font_size=font_size,
+        body_width=43,
+    )
+    _content_card(
+        axis,
+        x=0.04,
+        y=0.065,
+        width=0.92,
+        height=0.165,
+        kicker="5  CONCLUSION",
+        title="This is a measurement warning",
+        body=data.interpretation,
+        colour=ORANGE,
+        font_size=font_size,
+        body_width=123,
     )
 
 
-def _presentation_card(
+def _score_presentation_card(
+    axis: Axes,
+    data: WorkedExampleData,
+    *,
+    x: float,
+    y: float,
+    width: float,
+    height: float,
+    font_size: float,
+) -> None:
+    _card_background(axis, x=x, y=y, width=width, height=height, colour=PURPLE)
+    _section_heading(
+        axis,
+        x=x + 0.022,
+        y=y + height - 0.026,
+        kicker="3  FIXED RULE, OUTCOME STILL HIDDEN",
+        title="Both passed checks: score 0.60, predicts pass",
+        font_size=font_size,
+    )
+    axis.text(
+        x + 0.022,
+        y + 0.028,
+        "Dialogue 0.40 -> predicts fail     |     Inverted result 0.20 -> predicts fail\n"
+        "Threshold 0.60; these scores were hand-set, not calibrated probabilities.",
+        transform=axis.transAxes,
+        fontsize=font_size - 1.5,
+        color=INK,
+        va="bottom",
+        linespacing=1.35,
+    )
+
+
+def _content_card(
     axis: Axes,
     *,
     x: float,
     y: float,
     width: float,
     height: float,
+    kicker: str,
     title: str,
     body: str,
     colour: str,
     font_size: float,
+    body_width: int,
 ) -> None:
     _card_background(axis, x=x, y=y, width=width, height=height, colour=colour)
+    _section_heading(
+        axis,
+        x=x + 0.025,
+        y=y + height - 0.022,
+        kicker=kicker,
+        title=title,
+        font_size=font_size,
+    )
     axis.text(
-        x + 0.018,
-        y + height - 0.035,
+        x + 0.025,
+        y + height - (0.071 if font_size < 10 else 0.084),
+        textwrap.fill(body, width=body_width),
+        transform=axis.transAxes,
+        fontsize=font_size - (0.45 if font_size < 10 else 1.5),
+        color=INK,
+        va="top",
+        linespacing=1.28,
+    )
+
+
+def _section_heading(
+    axis: Axes,
+    *,
+    x: float,
+    y: float,
+    kicker: str,
+    title: str,
+    font_size: float,
+) -> None:
+    axis.text(
+        x,
+        y,
+        kicker,
+        transform=axis.transAxes,
+        fontsize=font_size - (1.4 if font_size < 10 else 2.4),
+        fontweight="bold",
+        color=MUTED,
+        va="top",
+    )
+    axis.text(
+        x,
+        y - (0.025 if font_size < 10 else 0.034),
         title,
         transform=axis.transAxes,
-        fontsize=font_size,
+        fontsize=font_size + (0.1 if font_size < 10 else 0.2),
         fontweight="bold",
         color=INK,
         va="top",
     )
+
+
+def _prediction_table(
+    axis: Axes,
+    data: WorkedExampleData,
+    *,
+    x: float,
+    y: float,
+    width: float,
+    font_size: float,
+) -> None:
     axis.text(
-        x + 0.018,
-        y + height - 0.102,
-        textwrap.fill(body, width=28, replace_whitespace=False),
+        x,
+        y + 0.126,
+        "CONDITION",
         transform=axis.transAxes,
         fontsize=font_size - 1.2,
-        color=INK,
-        va="top",
-        linespacing=1.3,
+        fontweight="bold",
+        color=MUTED,
+        va="bottom",
     )
+    axis.text(
+        x + width,
+        y + 0.126,
+        "SCORE  DECISION",
+        transform=axis.transAxes,
+        fontsize=font_size - 1.2,
+        fontweight="bold",
+        color=MUTED,
+        ha="right",
+        va="bottom",
+    )
+    for index, row in enumerate(data.predictions):
+        row_y = y + 0.103 - (0.029 * index)
+        axis.text(
+            x,
+            row_y,
+            row.label,
+            transform=axis.transAxes,
+            fontsize=font_size - 0.85,
+            color=INK,
+            va="center",
+        )
+        axis.text(
+            x + width,
+            row_y,
+            _short_prediction(row),
+            transform=axis.transAxes,
+            fontsize=font_size - 0.85,
+            color=INK,
+            ha="right",
+            va="center",
+        )
 
 
 def _card_background(
@@ -880,37 +1240,9 @@ def _card_background(
     )
 
 
-def _vertical_arrow(axis: Axes, start_y: float, end_y: float) -> None:
-    axis.add_patch(
-        FancyArrowPatch(
-            (0.5, start_y),
-            (0.5, end_y),
-            transform=axis.transAxes,
-            arrowstyle="-|>",
-            mutation_scale=9,
-            linewidth=1.0,
-            color=MUTED,
-        )
-    )
-
-
-def _horizontal_arrow(axis: Axes, start_x: float, end_x: float) -> None:
-    axis.add_patch(
-        FancyArrowPatch(
-            (start_x, 0.55),
-            (end_x, 0.55),
-            transform=axis.transAxes,
-            arrowstyle="-|>",
-            mutation_scale=12,
-            linewidth=1.2,
-            color=MUTED,
-        )
-    )
-
-
 def _short_prediction(row: WorkedExamplePrediction) -> str:
-    answer = "yes" if row.predicts_success else "no"
-    return f"{row.label}: {row.mastery_probability:.0%} -> {answer}"
+    answer = "pass" if row.predicts_success else "fail"
+    return f"{row.tracker_score:.2f}  ->  {answer}"
 
 
 def _source_table_csv(data: WorkedExampleData) -> bytes:
@@ -921,9 +1253,17 @@ def _source_table_csv(data: WorkedExampleData) -> bytes:
     writer.writerow(
         (
             2,
-            "executable_evidence",
-            f"{data.evidence_passed}_passed_{data.evidence_failed}_failed",
-            data.evidence_response_hash,
+            "same_concept_check",
+            f"{data.same_concept_passed}_passed_{data.same_concept_failed}_failed",
+            data.same_concept_response_hash,
+        )
+    )
+    writer.writerow(
+        (
+            2,
+            "different_concept_check",
+            f"{data.different_concept_passed}_passed_{data.different_concept_failed}_failed",
+            data.different_concept_response_hash,
         )
     )
     for prediction in data.predictions:
@@ -931,7 +1271,7 @@ def _source_table_csv(data: WorkedExampleData) -> bytes:
             (
                 3,
                 prediction.condition.value,
-                f"{prediction.mastery_probability:.12g}",
+                f"{prediction.tracker_score:.12g}",
                 prediction.record_hash,
             )
         )
@@ -941,6 +1281,14 @@ def _source_table_csv(data: WorkedExampleData) -> bytes:
             "criterion_outcome",
             f"{data.criterion_passed}_passed_{data.criterion_failed}_failed",
             data.criterion_response_hash,
+        )
+    )
+    writer.writerow(
+        (
+            4,
+            "criterion_test_limit",
+            data.criterion_test_warning,
+            data.primary_review_record_hash,
         )
     )
     writer.writerow((5, "interpretation", data.interpretation, data.data_hash))
@@ -981,6 +1329,125 @@ def _select_response(
         raise WorkedExampleFigureError(
             f"Expected one {channel.value} response for {case_id}, found {len(matches)}"
         )
+    return matches[0]
+
+
+def _select_case_response(
+    records: tuple[RecordedGenerationResponse, ...],
+    *,
+    case_id: str,
+    channel: GenerationChannel,
+) -> RecordedGenerationResponse:
+    matches = tuple(
+        record
+        for record in records
+        if record.request.case_id == case_id and record.request.channel is channel
+    )
+    if len(matches) != 1:
+        raise WorkedExampleFigureError(
+            f"Expected one {channel.value} response for {case_id}, found {len(matches)}"
+        )
+    return matches[0]
+
+
+def _read_benchmark_source(root: Path, reference: str, label: str) -> bytes:
+    resolved_root = root.resolve()
+    path = (resolved_root / reference).resolve()
+    if not path.is_relative_to(resolved_root):
+        raise WorkedExampleFigureError(f"{label.capitalize()} escapes the benchmark root")
+    return _read(path, label)
+
+
+def _load_test_bundle(content: bytes) -> AuthoredFunctionTestBundle:
+    try:
+        payload = yaml.safe_load(content.decode("utf-8"))
+        return AuthoredFunctionTestBundle.model_validate(payload)
+    except (UnicodeDecodeError, yaml.YAMLError, ValidationError) as error:
+        raise WorkedExampleFigureError("Criterion test bundle is invalid") from error
+
+
+def _load_unrelated_control(content: bytes) -> UnrelatedControlSpec:
+    try:
+        payload = yaml.safe_load(content.decode("utf-8"))
+        return UnrelatedControlSpec.model_validate(payload)
+    except (UnicodeDecodeError, yaml.YAMLError, ValidationError) as error:
+        raise WorkedExampleFigureError("Different-concept control is invalid") from error
+
+
+def _load_failure_review(
+    path: Path,
+    label: str,
+) -> tuple[bytes, FailureReviewRecordReport]:
+    content = _read(path, label)
+    try:
+        return content, FailureReviewRecordReport.model_validate_json(content)
+    except ValidationError as error:
+        raise WorkedExampleFigureError(f"{label.capitalize()} is invalid") from error
+
+
+def _load_failure_review_reliability_plan(
+    path: Path,
+) -> tuple[bytes, FailureReviewReliabilityPlan]:
+    content = _read(path, "failure-review reliability plan")
+    try:
+        return content, FailureReviewReliabilityPlan.model_validate_json(content)
+    except ValidationError as error:
+        raise WorkedExampleFigureError("Failure-review reliability plan is invalid") from error
+
+
+def _load_failure_review_reliability(
+    path: Path,
+) -> tuple[bytes, FailureReviewReliabilityReport]:
+    content = _read(path, "failure-review reliability report")
+    try:
+        return content, FailureReviewReliabilityReport.model_validate_json(content)
+    except ValidationError as error:
+        raise WorkedExampleFigureError("Failure-review reliability report is invalid") from error
+
+
+def _validate_failure_reviews(
+    *,
+    case_id: str,
+    primary: FailureReviewRecordReport,
+    secondary: FailureReviewRecordReport,
+    primary_file_sha256: Sha256,
+    secondary_file_sha256: Sha256,
+    reliability_plan: FailureReviewReliabilityPlan,
+    reliability: FailureReviewReliabilityReport,
+) -> tuple[FailureReviewRecord, FailureReviewRecord]:
+    if primary.rater_id == secondary.rater_id:
+        raise WorkedExampleFigureError("Worked example requires two different reviewers")
+    if (
+        primary.packet_hash != secondary.packet_hash
+        or primary.taxonomy_hash != secondary.taxonomy_hash
+    ):
+        raise WorkedExampleFigureError("Failure reviews do not share one review packet")
+    if (
+        reliability_plan.primary_review_report_hash != primary.report_hash
+        or reliability_plan.secondary_review_report_hash != secondary.report_hash
+        or reliability_plan.primary_review_file_hash != primary_file_sha256
+        or reliability_plan.secondary_review_file_hash != secondary_file_sha256
+        or reliability.analysis_plan_hash != reliability_plan.plan_hash
+        or reliability.rater_ids != (primary.rater_id, secondary.rater_id)
+        or reliability.disagreement_count != 0
+        or reliability.agreement_count != reliability.item_count
+    ):
+        raise WorkedExampleFigureError("Failure-review agreement sources do not reconcile")
+    primary_record = _select_failure_review_record(primary, case_id)
+    secondary_record = _select_failure_review_record(secondary, case_id)
+    expected = FailureReviewLabel.ITEM_AMBIGUITY_OR_TEST_DEFECT
+    if primary_record.category is not expected or secondary_record.category is not expected:
+        raise WorkedExampleFigureError("Reviewers no longer agree on the selected test weakness")
+    return primary_record, secondary_record
+
+
+def _select_failure_review_record(
+    report: FailureReviewRecordReport,
+    case_id: str,
+) -> FailureReviewRecord:
+    matches = tuple(record for record in report.records if record.case_id == case_id)
+    if len(matches) != 1:
+        raise WorkedExampleFigureError("Failure review does not contain the selected case")
     return matches[0]
 
 
@@ -1064,6 +1531,12 @@ DEFAULT_DECISION_SEAL_ROOT = DEFAULT_EXTERNAL_ROOT / "decision-seal"
 DEFAULT_CORRECTION_ROOT = (
     PROJECT_ROOT / "artifacts" / "harness-correction" / "cerebras-gpt-oss-120b-20260903-001"
 )
+DEFAULT_FAILURE_REVIEW_ROOT = (
+    DEFAULT_DECISION_SEAL_ROOT / "analysis" / "failure-review-v1" / "review-submissions"
+)
+DEFAULT_FAILURE_RELIABILITY_ROOT = (
+    DEFAULT_DECISION_SEAL_ROOT / "analysis" / "failure-review-reliability-v1"
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1100,6 +1573,31 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=DEFAULT_CORRECTION_ROOT / "attempts",
     )
+    parser.add_argument(
+        "--benchmark-root",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "benchmarks" / "v1",
+    )
+    parser.add_argument(
+        "--primary-failure-review",
+        type=Path,
+        default=DEFAULT_FAILURE_REVIEW_ROOT / "researcher-primary-review-v2.json",
+    )
+    parser.add_argument(
+        "--secondary-failure-review",
+        type=Path,
+        default=DEFAULT_FAILURE_REVIEW_ROOT / "independent-secondary-review.json",
+    )
+    parser.add_argument(
+        "--failure-review-reliability-plan",
+        type=Path,
+        default=DEFAULT_FAILURE_RELIABILITY_ROOT / "failure_review_reliability_plan.json",
+    )
+    parser.add_argument(
+        "--failure-review-reliability",
+        type=Path,
+        default=DEFAULT_FAILURE_RELIABILITY_ROOT / "failure_review_reliability_report.json",
+    )
     parser.add_argument("--pixi-lock", type=Path, default=PROJECT_ROOT / "pixi.lock")
     parser.add_argument("--output-root", type=Path)
     parser.add_argument("--generated-at-utc", type=_utc_datetime)
@@ -1123,6 +1621,11 @@ def main(argv: list[str] | None = None) -> int:
             dataset_root=args.dataset_root,
             correction_analysis_path=args.correction_analysis,
             correction_attempt_root=args.correction_attempt_root,
+            benchmark_root=args.benchmark_root,
+            primary_failure_review_path=args.primary_failure_review,
+            secondary_failure_review_path=args.secondary_failure_review,
+            failure_review_reliability_plan_path=args.failure_review_reliability_plan,
+            failure_review_reliability_path=args.failure_review_reliability,
             pixi_lock_path=args.pixi_lock,
             output_root=output_root,
             publication_code_revision=revision,
