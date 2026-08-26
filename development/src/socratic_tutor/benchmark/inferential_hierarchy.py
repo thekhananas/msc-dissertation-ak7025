@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -20,6 +19,7 @@ from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.design import BenchmarkDesignPlan, DesignStatus
 from socratic_tutor.benchmark.evidence_specificity import EvidenceSpecificityAmendment
 from socratic_tutor.benchmark.hashing import model_content_hash
+from socratic_tutor.benchmark.json_io import load_json_model
 from socratic_tutor.benchmark.methodology_clarification import MethodologyClarification
 from socratic_tutor.benchmark.public_rating_procedure import PublicRatingProcedureRecord
 from socratic_tutor.contracts import ContractModel
@@ -197,15 +197,15 @@ def freeze_inferential_hierarchy(
 
 
 def load_methodology_clarification(path: Path) -> MethodologyClarification:
-    return _load_json_model(path, MethodologyClarification)
+    return load_json_model(path, MethodologyClarification)
 
 
 def load_binary_sensitivity_report(path: Path) -> BinarySensitivityReport:
-    return _load_json_model(path, BinarySensitivityReport)
+    return load_json_model(path, BinarySensitivityReport)
 
 
 def load_public_rating_procedure_record(path: Path) -> PublicRatingProcedureRecord:
-    return _load_json_model(path, PublicRatingProcedureRecord)
+    return load_json_model(path, PublicRatingProcedureRecord)
 
 
 def _validate_bound_sources(
@@ -265,11 +265,3 @@ def _validate_bound_sources(
         raise ValueError("Sensitivity report does not match the executed 24-case one-run design")
     if rating_procedure.item_count != 24:
         raise ValueError("Rating procedure does not cover the complete case corpus")
-
-
-def _load_json_model[ModelT: ContractModel](path: Path, model: type[ModelT]) -> ModelT:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"Could not read JSON artifact: {path}") from error
-    return model.model_validate(raw)

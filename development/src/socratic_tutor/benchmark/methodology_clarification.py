@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -20,6 +19,7 @@ from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.evaluator.scoring import PrimaryMetric
 from socratic_tutor.benchmark.external_protocol import ExternalModelExecutionProtocol
 from socratic_tutor.benchmark.hashing import canonical_sha256, model_content_hash
+from socratic_tutor.benchmark.json_io import load_json_model
 from socratic_tutor.benchmark.public_rating import PublicAnswerRatingReport
 from socratic_tutor.contracts import ContractModel, EvidenceCategory
 
@@ -130,7 +130,7 @@ def load_methodology_clarification_plan(path: Path) -> MethodologyClarificationP
 def load_public_answer_rating_report(path: Path) -> PublicAnswerRatingReport:
     """Load and validate the rating report committed before criterion access."""
 
-    return _load_json_model(path, PublicAnswerRatingReport)
+    return load_json_model(path, PublicAnswerRatingReport)
 
 
 def freeze_methodology_clarification(
@@ -254,11 +254,3 @@ def _validate_bound_inputs(
         raise ValueError("Clarification v1 requires tracker simple-v1")
     if calibration_report.decision.policy_threshold != 0.6:
         raise ValueError("Clarification v1 requires the frozen 0.60 policy threshold")
-
-
-def _load_json_model[ModelT: ContractModel](path: Path, model: type[ModelT]) -> ModelT:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"Could not read JSON artifact: {path}") from error
-    return model.model_validate(raw)
