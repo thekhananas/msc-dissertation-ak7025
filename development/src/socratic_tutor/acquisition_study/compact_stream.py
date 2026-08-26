@@ -41,7 +41,7 @@ from socratic_tutor.benchmark.hashing import (
     model_content_hash,
 )
 from socratic_tutor.contracts import ContractModel
-from socratic_tutor.filesystem import fsync_directory
+from socratic_tutor.filesystem import files_equal, fsync_directory
 
 
 class CompactPolicyStreamError(ValueError):
@@ -438,7 +438,7 @@ def _write_immutable_record_stream(
             handle.flush()
             os.fsync(handle.fileno())
         if path.exists():
-            if not _files_equal(path, temporary):
+            if not files_equal(path, temporary):
                 raise ArtifactConflictError(f"Immutable artifact already differs: {path}")
         else:
             os.replace(temporary, path)
@@ -446,16 +446,3 @@ def _write_immutable_record_stream(
     finally:
         temporary.unlink(missing_ok=True)
     return digest.hexdigest(), row_count, byte_count
-
-
-def _files_equal(left: Path, right: Path) -> bool:
-    if left.stat().st_size != right.stat().st_size:
-        return False
-    with left.open("rb") as left_handle, right.open("rb") as right_handle:
-        while True:
-            left_chunk = left_handle.read(1024 * 1024)
-            right_chunk = right_handle.read(1024 * 1024)
-            if left_chunk != right_chunk:
-                return False
-            if not left_chunk:
-                return True

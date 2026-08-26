@@ -41,7 +41,7 @@ from socratic_tutor.benchmark.hashing import (
     model_content_hash,
 )
 from socratic_tutor.contracts import ContractModel
-from socratic_tutor.filesystem import fsync_directory
+from socratic_tutor.filesystem import files_equal, fsync_directory
 
 _PUBLIC_FILE = "canonical_public_policy_metrics.jsonl"
 _RESTRICTED_FILE = "canonical_restricted_episodes.jsonl"
@@ -507,18 +507,5 @@ def _validate_plan_pair(
 
 
 def _verify_existing_or_absent(path: Path, temporary: Path) -> None:
-    if path.exists() and not _files_equal(path, temporary):
+    if path.exists() and not files_equal(path, temporary):
         raise ArtifactConflictError(f"Immutable artifact already differs: {path}")
-
-
-def _files_equal(left: Path, right: Path) -> bool:
-    if left.stat().st_size != right.stat().st_size:
-        return False
-    with left.open("rb") as left_handle, right.open("rb") as right_handle:
-        while True:
-            left_chunk = left_handle.read(1024 * 1024)
-            right_chunk = right_handle.read(1024 * 1024)
-            if left_chunk != right_chunk:
-                return False
-            if not left_chunk:
-                return True

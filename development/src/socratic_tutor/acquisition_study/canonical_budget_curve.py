@@ -55,7 +55,7 @@ from socratic_tutor.benchmark.hashing import (
     model_content_hash,
 )
 from socratic_tutor.contracts import ContractModel
-from socratic_tutor.filesystem import fsync_directory
+from socratic_tutor.filesystem import files_equal, fsync_directory
 
 _SOURCE_POLICY_ORDER = (
     PolicyId.RELIABILITY_AWARE_BOUNDED,
@@ -514,7 +514,7 @@ def write_verified_canonical_budget_curve_stream(
         )
         if first != replay:
             raise CanonicalBudgetCurveError("Canonical budget-curve retry differs")
-        if output_path.exists() and not _files_equal(output_path, temporary):
+        if output_path.exists() and not files_equal(output_path, temporary):
             raise ArtifactConflictError(f"Immutable artifact already differs: {output_path}")
         if not output_path.exists():
             os.replace(temporary, output_path)
@@ -733,19 +733,6 @@ def _project_path(project_root: Path, relative: str) -> Path:
             f"Canonical source escapes project root: {relative}"
         ) from error
     return path
-
-
-def _files_equal(left: Path, right: Path) -> bool:
-    if left.stat().st_size != right.stat().st_size:
-        return False
-    with left.open("rb") as left_handle, right.open("rb") as right_handle:
-        while True:
-            left_chunk = left_handle.read(1024 * 1024)
-            right_chunk = right_handle.read(1024 * 1024)
-            if left_chunk != right_chunk:
-                return False
-            if not left_chunk:
-                return True
 
 
 def _hash_file(path: Path) -> tuple[Sha256, int]:
