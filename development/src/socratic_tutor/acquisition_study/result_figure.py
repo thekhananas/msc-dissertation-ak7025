@@ -9,8 +9,6 @@ import argparse
 import csv
 import io
 import json
-import re
-import subprocess
 import sys
 from datetime import UTC, datetime
 from io import BytesIO
@@ -45,6 +43,7 @@ from socratic_tutor.publication.figure_style import (
     FigureProfile,
     style_for,
 )
+from socratic_tutor.repository_state import current_clean_revision
 
 _CANDIDATE = PolicyId.RELIABILITY_AWARE_BOUNDED.value
 _BUDGETS = (0.0, 0.25, 0.5, 0.75, 1.0)
@@ -681,7 +680,13 @@ def main(argv: list[str] | None = None) -> int:
             budget_report_path=args.budget_report,
             pixi_lock_path=args.pixi_lock,
             output_root=args.output_root,
-            publication_code_revision=_current_clean_revision(),
+            publication_code_revision=current_clean_revision(
+                PROJECT_ROOT,
+                dirty_message="Commit or remove all visible changes before publishing the figure",
+                untracked_files="all",
+                required_branch="main",
+                operation_name="Figure publication",
+            ),
             generated_at_utc=args.generated_at_utc,
         )
     except Exception as error:
@@ -712,30 +717,6 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
-
-
-def _current_clean_revision() -> str:
-    branch = _git("branch", "--show-current")
-    status = _git("status", "--porcelain", "--untracked-files=all")
-    revision = _git("rev-parse", "HEAD")
-    if branch != "main":
-        raise ValueError(
-            f"Figure publication requires branch main, not {branch or 'detached HEAD'}"
-        )
-    if status:
-        raise ValueError("Commit or remove all visible changes before publishing the figure")
-    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
-        raise ValueError("Git did not return a full source revision")
-    return revision
-
-
-def _git(*arguments: str) -> str:
-    return subprocess.run(
-        ["git", "-C", str(PROJECT_ROOT), *arguments],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
 
 
 def _utc_datetime(value: str) -> datetime:

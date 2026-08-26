@@ -7,7 +7,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
 import sys
 from datetime import date
 from pathlib import Path, PurePosixPath
@@ -20,6 +19,7 @@ from socratic_tutor.benchmark.artifacts import artifact_locations, write_immutab
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.repository_state import current_clean_revision
 
 
 class ImplementationFreezeError(ValueError):
@@ -322,7 +322,17 @@ def main(argv: list[str] | None = None) -> int:
         manifest = freeze_m7b_implementation(
             args.specification,
             project_root=PROJECT_ROOT,
-            code_revision=_current_clean_revision(),
+            code_revision=current_clean_revision(
+                PROJECT_ROOT,
+                dirty_message=(
+                    "Commit or remove all visible changes before freezing the implementation"
+                ),
+                untracked_files="all",
+                required_branch="main",
+                operation_name="Implementation freeze",
+                invalid_revision_message="Implementation revision must be a full Git SHA",
+                error_factory=ImplementationFreezeError,
+            ),
         )
         output_path = (PROJECT_ROOT / specification.output_path).resolve()
     except Exception as error:
@@ -353,27 +363,3 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
-
-
-def _current_clean_revision() -> str:
-    branch = _git("branch", "--show-current")
-    status = _git("status", "--porcelain", "--untracked-files=all")
-    revision = _git("rev-parse", "HEAD")
-    if branch != "main":
-        raise ImplementationFreezeError(
-            f"Implementation freeze requires branch main, not {branch or 'detached HEAD'}"
-        )
-    if status:
-        raise ImplementationFreezeError(
-            "Commit or remove all visible changes before freezing the implementation"
-        )
-    return _validate_revision(revision)
-
-
-def _git(*arguments: str) -> str:
-    return subprocess.run(
-        ["git", "-C", str(PROJECT_ROOT), *arguments],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()

@@ -31,6 +31,7 @@ from socratic_tutor.benchmark.artifacts import immutable_json_bytes, write_immut
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.repository_state import current_clean_revision
 
 _POLICY_ORDER = (
     PolicyId.RELIABILITY_AWARE_BOUNDED,
@@ -789,30 +790,18 @@ def _verify_recoverable_output_root(output_root: Path) -> None:
 
 def _clean_repository_state(project_root: Path, required_branch: str) -> tuple[str, str]:
     try:
-        revision = _git(project_root, "rev-parse", "HEAD")
-        branch = _git(project_root, "branch", "--show-current")
-        status = _git(project_root, "status", "--porcelain", "--untracked-files=all")
+        revision = current_clean_revision(
+            project_root,
+            dirty_message="Commit or remove all visible changes before sealing",
+            untracked_files="all",
+            required_branch=required_branch,
+            operation_name="Canonical execution",
+            invalid_revision_message="Git did not return a full lowercase commit SHA",
+            error_factory=CanonicalExecutionError,
+        )
     except (OSError, subprocess.CalledProcessError) as error:
         raise CanonicalExecutionError("Could not verify the Git repository") from error
-    if len(revision) != 40 or any(character not in "0123456789abcdef" for character in revision):
-        raise CanonicalExecutionError("Git did not return a full lowercase commit SHA")
-    if branch != required_branch:
-        actual_branch = branch or "detached HEAD"
-        raise CanonicalExecutionError(
-            f"Canonical execution requires branch {required_branch}, not {actual_branch}"
-        )
-    if status:
-        raise CanonicalExecutionError("Commit or remove all visible changes before sealing")
-    return revision, branch
-
-
-def _git(project_root: Path, *arguments: str) -> str:
-    return subprocess.run(
-        ["git", "-C", str(project_root), *arguments],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
+    return revision, required_branch
 
 
 def _load_model[ModelT: ContractModel](path: Path, model: type[ModelT]) -> ModelT:

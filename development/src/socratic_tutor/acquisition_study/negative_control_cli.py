@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -15,6 +13,7 @@ from socratic_tutor.acquisition_study.negative_control import (
 )
 from socratic_tutor.acquisition_study.plan import load_acquisition_study_plan
 from socratic_tutor.benchmark.artifacts import artifact_locations
+from socratic_tutor.repository_state import current_clean_revision
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -43,7 +42,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        code_revision = _current_clean_revision()
+        code_revision = current_clean_revision(
+            PROJECT_ROOT,
+            dirty_message="Commit tracked changes before publishing the negative control",
+            untracked_files="no",
+        )
         short_revision = code_revision[:7]
         output_root = args.output_root or (
             args.source_manifest.parent / f"negative-control-{short_revision}"
@@ -93,23 +96,3 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
-
-
-def _current_clean_revision() -> str:
-    status = _git("status", "--porcelain", "--untracked-files=no")
-    if status:
-        raise ValueError("Commit tracked changes before publishing the negative control")
-    revision = _git("rev-parse", "HEAD")
-    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
-        raise ValueError("Git did not return a full source revision")
-    return revision
-
-
-def _git(*arguments: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(PROJECT_ROOT), *arguments],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return completed.stdout.strip()

@@ -9,7 +9,6 @@ import io
 import json
 import math
 import re
-import subprocess
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -50,6 +49,7 @@ from socratic_tutor.benchmark.artifacts import (
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.repository_state import current_clean_revision
 
 _BUDGETS = (0.0, 0.25, 0.5, 0.75, 1.0)
 _POLICIES = BUDGET_CURVE_POLICY_ORDER
@@ -723,7 +723,13 @@ def main(argv: list[str] | None = None) -> int:
             analysis_path=args.analysis,
             pixi_lock_path=args.pixi_lock,
             output_root=args.output_root,
-            analysis_code_revision=_current_clean_revision(),
+            analysis_code_revision=current_clean_revision(
+                PROJECT_ROOT,
+                dirty_message="Commit or remove all visible changes before canonical analysis",
+                untracked_files="all",
+                required_branch="main",
+                operation_name="Canonical analysis",
+            ),
         )
     except Exception as error:
         print(
@@ -753,27 +759,3 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
-
-
-def _current_clean_revision() -> str:
-    branch = _git("branch", "--show-current")
-    status = _git("status", "--porcelain", "--untracked-files=all")
-    revision = _git("rev-parse", "HEAD")
-    if branch != "main":
-        raise ValueError(
-            f"Canonical analysis requires branch main, not {branch or 'detached HEAD'}"
-        )
-    if status:
-        raise ValueError("Commit or remove all visible changes before canonical analysis")
-    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
-        raise ValueError("Git did not return a full source revision")
-    return revision
-
-
-def _git(*arguments: str) -> str:
-    return subprocess.run(
-        ["git", "-C", str(PROJECT_ROOT), *arguments],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()

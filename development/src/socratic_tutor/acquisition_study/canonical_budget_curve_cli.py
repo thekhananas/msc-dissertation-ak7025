@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -13,6 +11,7 @@ from socratic_tutor.acquisition_study.canonical_budget_curve import (
     run_canonical_budget_curve,
 )
 from socratic_tutor.benchmark.artifacts import artifact_locations
+from socratic_tutor.repository_state import current_clean_revision
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_SOURCE_PLAN = (
@@ -44,7 +43,13 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        revision = _current_clean_revision()
+        revision = current_clean_revision(
+            PROJECT_ROOT,
+            dirty_message="Commit or remove all visible changes before canonical analysis",
+            untracked_files="all",
+            required_branch="main",
+            operation_name="Canonical analysis",
+        )
         manifest = run_canonical_budget_curve(
             args.source_plan,
             args.primary_manifest,
@@ -79,27 +84,3 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
-
-
-def _current_clean_revision() -> str:
-    branch = _git("branch", "--show-current")
-    status = _git("status", "--porcelain", "--untracked-files=all")
-    revision = _git("rev-parse", "HEAD")
-    if branch != "main":
-        raise ValueError(
-            f"Canonical analysis requires branch main, not {branch or 'detached HEAD'}"
-        )
-    if status:
-        raise ValueError("Commit or remove all visible changes before canonical analysis")
-    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
-        raise ValueError("Git did not return a full source revision")
-    return revision
-
-
-def _git(*arguments: str) -> str:
-    return subprocess.run(
-        ["git", "-C", str(PROJECT_ROOT), *arguments],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()

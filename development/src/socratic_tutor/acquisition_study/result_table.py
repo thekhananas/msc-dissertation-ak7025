@@ -8,7 +8,6 @@ import io
 import json
 import math
 import re
-import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -27,6 +26,7 @@ from socratic_tutor.benchmark.artifacts import (
     write_immutable_json,
 )
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
+from socratic_tutor.repository_state import current_clean_revision
 
 _COMPARATOR_LABELS = {
     PolicyId.SEEDED_RANDOM_BOUNDED: "Random selection",
@@ -369,7 +369,15 @@ def main(argv: list[str] | None = None) -> int:
             primary_report_path=args.primary_report,
             pixi_lock_path=args.pixi_lock,
             output_root=args.output_root,
-            publication_code_revision=_current_clean_revision(),
+            publication_code_revision=current_clean_revision(
+                PROJECT_ROOT,
+                dirty_message="Commit or remove all visible changes before publishing the table",
+                untracked_files="all",
+                required_branch="main",
+                operation_name="Table publication",
+                invalid_revision_message="Publication revision must be a Git SHA",
+                invalid_revision_error_factory=AcquisitionResultTableError,
+            ),
             generated_at_utc=args.generated_at_utc,
         )
     except Exception as error:
@@ -400,26 +408,6 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     return 0
-
-
-def _current_clean_revision() -> str:
-    branch = _git("branch", "--show-current")
-    status = _git("status", "--porcelain", "--untracked-files=all")
-    revision = _git("rev-parse", "HEAD")
-    if branch != "main":
-        raise ValueError(f"Table publication requires branch main, not {branch or 'detached HEAD'}")
-    if status:
-        raise ValueError("Commit or remove all visible changes before publishing the table")
-    return _validate_revision(revision)
-
-
-def _git(*arguments: str) -> str:
-    return subprocess.run(
-        ["git", "-C", str(PROJECT_ROOT), *arguments],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
 
 
 def _utc_datetime(value: str) -> datetime:
