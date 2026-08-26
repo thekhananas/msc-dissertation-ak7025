@@ -1,1 +1,1 @@
-"""Executable application packages."""
+"""Executable application packages"""
