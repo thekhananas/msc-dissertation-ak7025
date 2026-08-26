@@ -7,7 +7,7 @@ import hashlib
 import io
 import math
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from statistics import fmean
 from typing import Literal, Self
 
@@ -26,6 +26,7 @@ from socratic_tutor.acquisition_study.canonical_stream import (
     CanonicalStreamReport,
 )
 from socratic_tutor.acquisition_study.contracts import PolicyId
+from socratic_tutor.acquisition_study.path_validation import validate_relative_path
 from socratic_tutor.acquisition_study.plan import (
     AcquisitionAnalysisSpecification,
     EnvironmentRole,
@@ -146,7 +147,7 @@ class CanonicalPrimarySourcePlan(ContractModel):
             self.public_stream_path,
             self.output_root,
         ):
-            _validate_relative_path(value)
+            validate_relative_path(value)
         if self.comparator_policy_ids != _COMPARATORS:
             raise ValueError("Primary comparators differ from the frozen order")
         if self.environment_ids != _ENVIRONMENT_ORDER or self.policy_ids != _POLICY_ORDER:
@@ -1139,14 +1140,8 @@ def _hash_path(path: Path, label: str) -> Sha256:
 
 
 def _project_path(project_root: Path, relative_path: str) -> Path:
-    _validate_relative_path(relative_path)
+    validate_relative_path(relative_path)
     resolved = (project_root / relative_path).resolve()
     if not resolved.is_relative_to(project_root.resolve()):
         raise CanonicalPrimaryAnalysisError(f"Path leaves the project root: {relative_path}")
     return resolved
-
-
-def _validate_relative_path(value: str) -> None:
-    path = PurePosixPath(value)
-    if path.is_absolute() or ".." in path.parts or value != path.as_posix():
-        raise ValueError(f"Path must be a normal relative POSIX path: {value}")

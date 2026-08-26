@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass
 from datetime import date
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from time import perf_counter_ns
 from typing import Literal, Self
 
@@ -19,6 +19,7 @@ from socratic_tutor.acquisition_study.canonical_stream import (
     write_verified_canonical_streams,
 )
 from socratic_tutor.acquisition_study.contracts import PolicyId
+from socratic_tutor.acquisition_study.path_validation import validate_relative_path
 from socratic_tutor.acquisition_study.plan import (
     AcquisitionAnalysisSpecification,
     AcquisitionEnvironmentSpecification,
@@ -67,7 +68,7 @@ class DevelopmentEvidenceRequirement(ContractModel):
 
     @model_validator(mode="after")
     def validate_requirement(self) -> Self:
-        _validate_relative_path(self.path)
+        validate_relative_path(self.path)
         if set(self.required_true_fields) & set(self.required_false_fields):
             raise ValueError("An evidence field cannot be required both true and false")
         return self
@@ -82,7 +83,7 @@ class ReviewedFileRequirement(ContractModel):
 
     @model_validator(mode="after")
     def validate_requirement(self) -> Self:
-        _validate_relative_path(self.path)
+        validate_relative_path(self.path)
         return self
 
 
@@ -811,14 +812,8 @@ def _load_model[ModelT: ContractModel](path: Path, model: type[ModelT]) -> Model
 
 
 def _project_path(project_root: Path, relative_path: str) -> Path:
-    _validate_relative_path(relative_path)
+    validate_relative_path(relative_path)
     resolved = (project_root / relative_path).resolve()
     if not resolved.is_relative_to(project_root.resolve()):
         raise CanonicalExecutionError(f"Path leaves the project root: {relative_path}")
     return resolved
-
-
-def _validate_relative_path(value: str) -> None:
-    path = PurePosixPath(value)
-    if path.is_absolute() or ".." in path.parts or value != path.as_posix():
-        raise ValueError(f"Path must be a normal relative POSIX path: {value}")
