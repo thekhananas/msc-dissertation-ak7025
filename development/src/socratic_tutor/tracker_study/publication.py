@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-import csv
 from datetime import UTC, datetime
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -20,6 +19,7 @@ from socratic_tutor.benchmark.artifacts import write_immutable_bytes, write_immu
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.csv_output import csv_bytes
 from socratic_tutor.tracker_study.analysis import (
     TrackerDevelopmentAnalysisPlan,
     TrackerDevelopmentAnalysisReport,
@@ -235,7 +235,7 @@ def _condition_metrics_csv(report: TrackerDevelopmentAnalysisReport) -> bytes:
         )
         for row in report.condition_metrics
     ]
-    return _csv_bytes(
+    return csv_bytes(
         (
             "condition",
             "tracker_id",
@@ -268,7 +268,7 @@ def _sensitivity_csv(report: TrackerDevelopmentSensitivityReport) -> bytes:
         )
         for point in report.points
     ]
-    return _csv_bytes(
+    return csv_bytes(
         (
             "dimension",
             "value",
@@ -300,7 +300,7 @@ def _runtime_csv(report: TrackerDevelopmentRuntimeReport) -> bytes:
         )
         for row in report.measurements
     ]
-    return _csv_bytes(
+    return csv_bytes(
         (
             "tracker_id",
             "non_missing_updates_per_repetition",
@@ -339,7 +339,7 @@ def _primary_summary_csv(report: TrackerDevelopmentAnalysisReport) -> bytes:
             "development_only_no_decision",
         ),
     )
-    return _csv_bytes(
+    return csv_bytes(
         (
             "comparison",
             "effect",
@@ -351,16 +351,6 @@ def _primary_summary_csv(report: TrackerDevelopmentAnalysisReport) -> bytes:
         ),
         rows,
     )
-
-
-def _csv_bytes(
-    headers: tuple[str, ...], rows: list[tuple[object, ...]] | tuple[tuple[object, ...], ...]
-) -> bytes:
-    buffer = StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(headers)
-    writer.writerows(rows)
-    return buffer.getvalue().encode("utf-8")
 
 
 def _render_figure(

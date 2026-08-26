@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-import csv
 from datetime import UTC, datetime
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -25,6 +24,7 @@ from socratic_tutor.benchmark.result_interpretation import (
     ResultInterpretationReport,
 )
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.csv_output import csv_bytes
 
 _BLUE = "#0072B2"
 _ORANGE = "#D55E00"
@@ -187,7 +187,7 @@ def _case_results_csv(report: PrimaryAnalysisReport) -> bytes:
             )
         else:
             rows.append((case_id, "missing", "", "", "", missing[case_id].missing_reason))
-    return _csv_bytes(
+    return csv_bytes(
         (
             "case_id",
             "analysis_status",
@@ -530,14 +530,6 @@ def _validate_sources(
     )
     if observed != expected:
         raise PrimaryResultFigureError("Interpretation values differ from the primary report")
-
-
-def _csv_bytes(headers: tuple[str, ...], rows: list[tuple[object, ...]]) -> bytes:
-    buffer = StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(headers)
-    writer.writerows(rows)
-    return buffer.getvalue().encode("utf-8")
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:

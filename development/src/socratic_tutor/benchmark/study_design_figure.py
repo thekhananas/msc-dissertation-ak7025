@@ -5,11 +5,10 @@
 
 from __future__ import annotations
 
-import csv
 import textwrap
 from collections import Counter
 from datetime import UTC, datetime
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -32,6 +31,7 @@ from socratic_tutor.benchmark.external_seal import (
 )
 from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.csv_output import csv_bytes
 
 _BLUE = "#0072B2"
 _ORANGE = "#D55E00"
@@ -256,7 +256,7 @@ def _stage_data_csv(
         (0, "model", "provider", decision_plan.model_route.provider),
         (0, "model", "model", decision_plan.model_route.model),
     )
-    return _csv_bytes(("stage", "stage_id", "measure", "value"), rows)
+    return csv_bytes(("stage", "stage_id", "measure", "value"), rows)
 
 
 def _render_vector_files(
@@ -523,14 +523,6 @@ def _validate_sources(
         raise StudyDesignFigureError("Criterion plan was not created after the decision seal")
     if criterion_report.completed_at_utc < criterion_plan.created_at_utc:
         raise StudyDesignFigureError("Criterion report predates its plan")
-
-
-def _csv_bytes(headers: tuple[str, ...], rows: tuple[tuple[object, ...], ...]) -> bytes:
-    buffer = StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(headers)
-    writer.writerows(rows)
-    return buffer.getvalue().encode("utf-8")
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:

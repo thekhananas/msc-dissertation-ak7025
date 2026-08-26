@@ -5,10 +5,9 @@
 
 from __future__ import annotations
 
-import csv
 from collections import Counter
 from datetime import UTC, datetime
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -29,6 +28,7 @@ from socratic_tutor.benchmark.failure_review_reliability import (
 )
 from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.csv_output import csv_bytes
 
 _BLUE = "#0072B2"
 _ORANGE = "#D55E00"
@@ -210,7 +210,7 @@ def _review_rows_csv(
         )
         for record in sorted(primary.records, key=lambda item: item.case_id)
     ]
-    return _csv_bytes(
+    return csv_bytes(
         (
             "case_id",
             "selection_role",
@@ -553,14 +553,6 @@ def _style_axis(axis: Axes) -> None:
     axis.spines["right"].set_visible(False)
     axis.grid(axis="x", color=_LIGHT_GREY, linewidth=0.7, alpha=0.7)
     axis.set_axisbelow(True)
-
-
-def _csv_bytes(headers: tuple[str, ...], rows: list[tuple[object, ...]]) -> bytes:
-    buffer = StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(headers)
-    writer.writerows(rows)
-    return buffer.getvalue().encode("utf-8")
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:

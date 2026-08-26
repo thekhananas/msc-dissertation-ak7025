@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-import csv
 from datetime import UTC, datetime
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -29,6 +28,7 @@ from socratic_tutor.benchmark.harness_correction_closure import (
 from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
 from socratic_tutor.benchmark.public.models import BenchmarkCondition
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.csv_output import csv_bytes
 
 _BLUE = "#0072B2"
 _ORANGE = "#D55E00"
@@ -261,7 +261,7 @@ def _summary_csv(
             "",
         ),
     ]
-    return _csv_bytes(
+    return csv_bytes(
         (
             "measure",
             "comparison",
@@ -295,7 +295,7 @@ def _case_results_csv(report: HarnessCorrectionAnalysisReport) -> bytes:
                 else "",
             )
         )
-    return _csv_bytes(
+    return csv_bytes(
         (
             "case_id",
             "analysis_status",
@@ -616,14 +616,6 @@ def validate_harness_correction_sources(
         raise HarnessCorrectionFigureError("Closure does not support the plotted primary wording")
     if claims.get("relevance_specific_advantage") != "not_supported_after_complete_correction":
         raise HarnessCorrectionFigureError("Closure does not support the plotted relevance wording")
-
-
-def _csv_bytes(headers: tuple[str, ...], rows: list[tuple[object, ...]]) -> bytes:
-    buffer = StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(headers)
-    writer.writerows(rows)
-    return buffer.getvalue().encode("utf-8")
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:

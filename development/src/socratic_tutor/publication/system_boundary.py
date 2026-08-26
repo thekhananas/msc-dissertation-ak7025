@@ -5,12 +5,11 @@
 
 from __future__ import annotations
 
-import csv
 import textwrap
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import StrEnum
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path, PurePosixPath
 from typing import Literal
 
@@ -25,6 +24,7 @@ from socratic_tutor.benchmark.command_io import load_command_model
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.csv_output import csv_bytes
 
 _BLUE = "#0072B2"
 _ORANGE = "#D55E00"
@@ -298,7 +298,7 @@ def _component_table_csv(specification: SystemBoundarySpecification) -> bytes:
         )
         for node in specification.nodes
     ]
-    return _csv_bytes(
+    return csv_bytes(
         ("boundary", "lane", "order", "node_id", "title", "kind", "detail"),
         rows,
     )
@@ -549,14 +549,6 @@ def _load_specification(path: Path) -> SystemBoundarySpecification:
         raise SystemBoundaryFigureError(
             f"Could not verify system-boundary specification: {path}: {error}"
         ) from error
-
-
-def _csv_bytes(headers: tuple[str, ...], rows: list[tuple[object, ...]]) -> bytes:
-    buffer = StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(headers)
-    writer.writerows(rows)
-    return buffer.getvalue().encode("utf-8")
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:

@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-import csv
 from datetime import UTC, datetime
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 from typing import Literal
 
@@ -20,6 +19,7 @@ from socratic_tutor.benchmark.artifacts import write_immutable_bytes, write_immu
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.csv_output import csv_bytes
 from socratic_tutor.tracker_study.analysis import (
     TrackerCanonicalAnalysisPlan,
     TrackerCanonicalAnalysisReport,
@@ -223,7 +223,7 @@ def _condition_metrics_csv(report: TrackerCanonicalAnalysisReport) -> bytes:
         )
         for row in report.condition_metrics
     ]
-    return _csv_bytes(
+    return csv_bytes(
         (
             "condition",
             "tracker_id",
@@ -267,7 +267,7 @@ def _primary_summary_csv(report: TrackerCanonicalAnalysisReport) -> bytes:
             report.clean_guardrail_passed,
         ),
     )
-    return _csv_bytes(
+    return csv_bytes(
         (
             "comparison",
             "effect",
@@ -312,7 +312,7 @@ def _claim_boundaries_csv(report: TrackerCanonicalAnalysisReport) -> bytes:
             "The study did not evaluate the Cognitive Bandwidth construct.",
         ),
     )
-    return _csv_bytes(("claim", "supported", "reason"), rows)
+    return csv_bytes(("claim", "supported", "reason"), rows)
 
 
 def _render_figure(
@@ -599,17 +599,6 @@ def _validate_lineage(
     )
     if observed != expected:
         raise TrackerCanonicalPublicationError("Interpretation values differ from the analysis")
-
-
-def _csv_bytes(
-    headers: tuple[str, ...],
-    rows: list[tuple[object, ...]] | tuple[tuple[object, ...], ...],
-) -> bytes:
-    buffer = StringIO(newline="")
-    writer = csv.writer(buffer, lineterminator="\n")
-    writer.writerow(headers)
-    writer.writerows(rows)
-    return buffer.getvalue().encode("utf-8")
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:
