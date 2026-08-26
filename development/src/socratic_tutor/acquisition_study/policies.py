@@ -60,10 +60,22 @@ def bounded_posterior(
 
     raw_delta = math.log(true_likelihood / false_likelihood)
     bounded_delta = min(kappa, max(-kappa, raw_delta))
-    updated_log_odds = math.log(prior / (1.0 - prior)) + bounded_delta
-    if updated_log_odds >= 0.0:
-        return 1.0 / (1.0 + math.exp(-updated_log_odds))
-    odds = math.exp(updated_log_odds)
+    prior_log_odds = math.log(prior / (1.0 - prior))
+    updated_log_odds = prior_log_odds + bounded_delta
+    posterior = _probability_from_log_odds(updated_log_odds)
+
+    # At extreme probabilities, converting log-odds to a float and back can
+    # move the result a few ulps beyond the declared bound. Nudge it towards
+    # the prior until the public probability preserves the bound as well.
+    while abs(math.log(posterior / (1.0 - posterior)) - prior_log_odds) > abs(bounded_delta):
+        posterior = math.nextafter(posterior, prior)
+    return posterior
+
+
+def _probability_from_log_odds(log_odds: float) -> float:
+    if log_odds >= 0.0:
+        return 1.0 / (1.0 + math.exp(-log_odds))
+    odds = math.exp(log_odds)
     return odds / (1.0 + odds)
 
 
