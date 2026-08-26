@@ -21,13 +21,18 @@ from socratic_tutor.acquisition_study.plan import (
     AcquisitionEnvironmentSpecification,
 )
 from socratic_tutor.acquisition_study.runtime_forecast import AcquisitionRuntimePlatform
+from socratic_tutor.acquisition_study.runtime_metrics import (
+    NANOSECONDS_PER_SECOND,
+)
+from socratic_tutor.acquisition_study.runtime_metrics import (
+    runtime_seconds as runtime_seconds,
+)
 from socratic_tutor.benchmark.artifacts import write_immutable_json
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-_NANOSECONDS_PER_SECOND = 1_000_000_000
 
 
 class CompactRuntimeForecastError(ValueError):
@@ -218,7 +223,7 @@ class DevelopmentCompactRuntimeForecastReport(ContractModel):
             raise ValueError("Compact planning memory limit does not reconcile")
         runtime_gate = (
             self.guarded_projected_canonical_elapsed_nanoseconds
-            <= self.remaining_m7b_seconds * _NANOSECONDS_PER_SECOND
+            <= self.remaining_m7b_seconds * NANOSECONDS_PER_SECOND
         )
         memory_gate = self.guarded_planning_canonical_peak_rss_bytes <= memory_limit
         if self.runtime_within_remaining_m7b_time != runtime_gate:
@@ -333,7 +338,7 @@ def run_development_compact_runtime_forecast(
     planning_memory_limit = (
         runtime_platform.physical_memory_bytes // plan.planning_physical_memory_divisor
     )
-    runtime_within_gate = guarded_time <= plan.remaining_m7b_seconds * _NANOSECONDS_PER_SECOND
+    runtime_within_gate = guarded_time <= plan.remaining_m7b_seconds * NANOSECONDS_PER_SECOND
     memory_within_limit = guarded_memory <= planning_memory_limit
     report_content = {
         "schema_version": 1,
@@ -379,12 +384,6 @@ def run_development_compact_runtime_forecast(
     write_immutable_json(output_root / "development_compact_runtime_plan.json", plan)
     write_immutable_json(output_root / "development_compact_runtime_report.json", report)
     return report
-
-
-def runtime_seconds(nanoseconds: int) -> float:
-    """Convert a stored integer duration for concise command output."""
-
-    return nanoseconds / _NANOSECONDS_PER_SECOND
 
 
 def _load_verified_parity(

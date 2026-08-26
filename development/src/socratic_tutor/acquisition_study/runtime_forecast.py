@@ -19,13 +19,18 @@ from socratic_tutor.acquisition_study.plan import (
 from socratic_tutor.acquisition_study.primary_analysis import (
     load_verified_development_policy_matrix,
 )
+from socratic_tutor.acquisition_study.runtime_metrics import (
+    NANOSECONDS_PER_SECOND,
+)
+from socratic_tutor.acquisition_study.runtime_metrics import (
+    runtime_seconds as runtime_seconds,
+)
 from socratic_tutor.benchmark.artifacts import write_immutable_json
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-_NANOSECONDS_PER_SECOND = 1_000_000_000
 
 
 class AcquisitionRuntimeForecastError(ValueError):
@@ -228,7 +233,7 @@ class DevelopmentRuntimeForecastReport(ContractModel):
             raise ValueError("Planning memory limit does not reconcile")
         expected_runtime_gate = (
             self.guarded_projected_canonical_elapsed_nanoseconds
-            <= self.remaining_m7b_seconds * _NANOSECONDS_PER_SECOND
+            <= self.remaining_m7b_seconds * NANOSECONDS_PER_SECOND
         )
         expected_memory_gate = (
             self.guarded_projected_canonical_peak_rss_bytes <= expected_memory_limit
@@ -346,7 +351,7 @@ def run_development_runtime_forecast(
     planning_memory_limit = (
         runtime_platform.physical_memory_bytes // plan.planning_physical_memory_divisor
     )
-    runtime_within_gate = guarded_time <= plan.remaining_m7b_seconds * _NANOSECONDS_PER_SECOND
+    runtime_within_gate = guarded_time <= plan.remaining_m7b_seconds * NANOSECONDS_PER_SECOND
     memory_within_limit = guarded_memory <= planning_memory_limit
     report_content = {
         "schema_version": 1,
@@ -458,9 +463,3 @@ def _platform() -> AcquisitionRuntimePlatform:
         logical_cpu_count=cpu_count,
         physical_memory_bytes=physical_memory,
     )
-
-
-def runtime_seconds(nanoseconds: int) -> float:
-    """Convert a stored integer duration for concise command output."""
-
-    return nanoseconds / _NANOSECONDS_PER_SECOND
