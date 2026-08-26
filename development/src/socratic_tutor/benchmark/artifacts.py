@@ -9,6 +9,7 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 from socratic_tutor.benchmark.hashing import canonical_json_bytes
+from socratic_tutor.filesystem import fsync_directory
 
 
 class ArtifactConflictError(ValueError):
@@ -85,14 +86,6 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary, path)
-        _fsync_directory(path.parent)
+        fsync_directory(path.parent)
     finally:
         temporary.unlink(missing_ok=True)
-
-
-def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)

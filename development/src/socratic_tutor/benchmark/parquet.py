@@ -21,6 +21,7 @@ from pydantic import Field, model_validator
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.filesystem import fsync_directory
 
 
 class BenchmarkDatasetKind(StrEnum):
@@ -225,7 +226,7 @@ class AtomicParquetDatasetStore:
                         "Temporary Parquet schema changed during serialization"
                     )
                 os.replace(temporary, parquet_path)
-                _fsync_directory(self.root)
+                fsync_directory(self.root)
                 self._after_data_publish(dataset)
 
                 parquet_hash = file_sha256(parquet_path.read_bytes())
@@ -314,7 +315,7 @@ class AtomicParquetDatasetStore:
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, path)
-            _fsync_directory(self.root)
+            fsync_directory(self.root)
         finally:
             temporary.unlink(missing_ok=True)
 
@@ -403,11 +404,3 @@ def _require_utc(value: datetime, field_name: str) -> None:
 def _fsync_file(path: Path) -> None:
     with path.open("rb") as handle:
         os.fsync(handle.fileno())
-
-
-def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)

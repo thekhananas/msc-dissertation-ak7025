@@ -41,6 +41,7 @@ from socratic_tutor.benchmark.hashing import (
     model_content_hash,
 )
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.filesystem import fsync_directory
 
 _PUBLIC_FILE = "canonical_public_policy_metrics.jsonl"
 _RESTRICTED_FILE = "canonical_restricted_episodes.jsonl"
@@ -430,7 +431,7 @@ def _materialise_verified_streams(
             os.replace(public_temporary, public_path)
         if not restricted_path.exists():
             os.replace(restricted_temporary, restricted_path)
-        _fsync_directory(output_root)
+        fsync_directory(output_root)
         return result, replay
     finally:
         public_temporary.unlink(missing_ok=True)
@@ -521,11 +522,3 @@ def _files_equal(left: Path, right: Path) -> bool:
                 return False
             if not left_chunk:
                 return True
-
-
-def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)

@@ -23,6 +23,7 @@ from socratic_tutor.benchmark.public.commitments import (
 from socratic_tutor.benchmark.public.models import EXPECTED_CONDITIONS, BenchmarkCondition
 from socratic_tutor.benchmark.public.predictions import DecisionPredictionRecord
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.filesystem import fsync_directory
 
 
 class GlobalSealError(ValueError):
@@ -493,7 +494,7 @@ class FilesystemGlobalDecisionSealStore:
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, self.path)
-            _fsync_directory(self.path.parent)
+            fsync_directory(self.path.parent)
         finally:
             temporary.unlink(missing_ok=True)
 
@@ -629,11 +630,3 @@ def _require_utc(value: datetime, *, field_name: str) -> None:
 
 def _utc_now() -> datetime:
     return datetime.now(UTC)
-
-
-def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)

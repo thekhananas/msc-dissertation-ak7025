@@ -55,6 +55,7 @@ from socratic_tutor.benchmark.hashing import (
     model_content_hash,
 )
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.filesystem import fsync_directory
 
 _SOURCE_POLICY_ORDER = (
     PolicyId.RELIABILITY_AWARE_BOUNDED,
@@ -517,7 +518,7 @@ def write_verified_canonical_budget_curve_stream(
             raise ArtifactConflictError(f"Immutable artifact already differs: {output_path}")
         if not output_path.exists():
             os.replace(temporary, output_path)
-            _fsync_directory(output_path.parent)
+            fsync_directory(output_path.parent)
         return first, replay
     finally:
         temporary.unlink(missing_ok=True)
@@ -758,11 +759,3 @@ def _hash_file(path: Path) -> tuple[Sha256, int]:
     except OSError as error:
         raise CanonicalBudgetCurveError(f"Could not verify existing output: {path}") from error
     return digest.hexdigest(), byte_count
-
-
-def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)

@@ -20,6 +20,7 @@ from socratic_tutor.benchmark.public.predictions import (
     prediction_record_hash,
 )
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.filesystem import fsync_directory
 
 
 class CommitmentError(ValueError):
@@ -496,7 +497,7 @@ class FilesystemConditionCommitStore:
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, path)
-            _fsync_directory(path.parent)
+            fsync_directory(path.parent)
         finally:
             temporary.unlink(missing_ok=True)
 
@@ -567,14 +568,6 @@ def _sample_key_order(key: BenchmarkSampleKey) -> tuple[str, str, str, str, str]
 def _require_utc(value: datetime, *, field_name: str) -> None:
     if value.tzinfo is None or value.utcoffset() != timedelta(0):
         raise ValueError(f"{field_name} must use UTC")
-
-
-def _fsync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
 
 
 def _utc_now() -> datetime:
