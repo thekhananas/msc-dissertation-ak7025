@@ -1,0 +1,27 @@
+schema_id: csedm.inventory_specification.v1
+schema_version: 1
+dataset_id: csedm-2019-data-challenge
+dataset_version: "1.1"
+archive_path: data/CSEDM_DataChallenge v1.1.zip
+archive_sha256: 306dec9329d3f823332a8fe67903841c5929dc93e5ee036907cf908caee94931
+source_url: https://github.com/thomaswp/CSEDM2019-Data-Challenge
+access_terms: The archive README requires a DataShop account and permission from the dataset contact.
+licence_status: No explicit redistribution licence was found in the supplied archive.
+public_data_policy: Publish aggregate counts and model results only; keep the archive, learner identifiers, event rows, and source code local.
+required_members:
+  - README.md
+  - DatasetMetadata.csv
+  - MainTable.csv
+  - CodeStates/CodeState.csv
+  - Predict.csv
+  - Example/cv_predict.csv
+  - Example/evaluation_overall.csv
+  - Example/model.txt
+excluded_local_sources:
+  - data/All/
+  - data/F19_Release_All_05_23_22.zip
+known_caveats:
+  - Problems could be completed in different orders.
+  - MainTable correctness was reconstructed after the study and may differ from feedback originally shown to learners.
+  - Three non-target problems have no correctness values.
+  - Version 1.1 corrected test-set leakage in the supplied example model.
