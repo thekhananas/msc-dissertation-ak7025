@@ -7,7 +7,6 @@ import gc
 import hashlib
 import json
 import os
-import resource
 import sys
 import tempfile
 from pathlib import Path
@@ -19,6 +18,7 @@ from socratic_tutor.acquisition_study.compact_stream import (
     iter_compact_policy_records,
 )
 from socratic_tutor.acquisition_study.plan import load_acquisition_study_plan
+from socratic_tutor.acquisition_study.runtime_metrics import peak_rss_bytes
 from socratic_tutor.benchmark.hashing import canonical_json_bytes
 
 
@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> int:
             args.analysis,
         )
         gc.collect()
-        baseline_peak = _peak_rss_bytes()
+        baseline_peak = peak_rss_bytes()
         digest = hashlib.sha256()
         row_count = 0
         case_prediction_count = 0
@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> int:
             handle.flush()
             os.fsync(handle.fileno())
         elapsed = perf_counter_ns() - started
-        observed_peak = _peak_rss_bytes()
+        observed_peak = peak_rss_bytes()
         environment_count = 7
         policy_count = 7
         sample = CompactRuntimeSample(
@@ -95,11 +95,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(sample.model_dump_json(indent=2))
     return 0
-
-
-def _peak_rss_bytes() -> int:
-    raw_value = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-    return raw_value if sys.platform == "darwin" else raw_value * 1024
 
 
 if __name__ == "__main__":

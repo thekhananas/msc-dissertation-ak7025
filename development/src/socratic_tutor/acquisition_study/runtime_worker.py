@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import gc
 import json
-import resource
 import sys
 from pathlib import Path
 from time import perf_counter_ns
@@ -13,6 +12,7 @@ from time import perf_counter_ns
 from socratic_tutor.acquisition_study.plan import load_acquisition_study_plan
 from socratic_tutor.acquisition_study.runner import run_development_policy_matrix
 from socratic_tutor.acquisition_study.runtime_forecast import AcquisitionRuntimeSample
+from socratic_tutor.acquisition_study.runtime_metrics import peak_rss_bytes
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,7 +32,7 @@ def main(argv: list[str] | None = None) -> int:
             args.analysis,
         )
         gc.collect()
-        baseline_peak = _peak_rss_bytes()
+        baseline_peak = peak_rss_bytes()
         started = perf_counter_ns()
         matrix = run_development_policy_matrix(
             specification,
@@ -40,7 +40,7 @@ def main(argv: list[str] | None = None) -> int:
             episodes_per_environment=args.episodes_per_environment,
         )
         elapsed = perf_counter_ns() - started
-        observed_peak = _peak_rss_bytes()
+        observed_peak = peak_rss_bytes()
         policy_result_count = sum(len(row.results) for row in matrix.comparisons)
         sample = AcquisitionRuntimeSample(
             repetition_index=args.repetition_index,
@@ -74,11 +74,6 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print(sample.model_dump_json(indent=2))
     return 0
-
-
-def _peak_rss_bytes() -> int:
-    raw_value = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-    return raw_value if sys.platform == "darwin" else raw_value * 1024
 
 
 if __name__ == "__main__":

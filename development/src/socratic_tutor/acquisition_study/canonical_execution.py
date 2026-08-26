@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import resource
 import subprocess
-import sys
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path, PurePosixPath
@@ -27,6 +25,7 @@ from socratic_tutor.acquisition_study.plan import (
     EvaluationEnvironmentId,
     load_acquisition_study_plan,
 )
+from socratic_tutor.acquisition_study.runtime_metrics import peak_rss_bytes
 from socratic_tutor.benchmark.artifacts import immutable_json_bytes, write_immutable_json
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
@@ -582,7 +581,7 @@ def run_canonical_execution(
         "restricted_file": stream_report.restricted_file,
         "restricted_file_sha256": stream_report.restricted_file_sha256,
         "elapsed_nanoseconds": elapsed,
-        "peak_rss_bytes": _peak_rss_bytes(),
+        "peak_rss_bytes": peak_rss_bytes(),
         "peak_memory_source": "resource.getrusage_rusage_self",
         "episode_count": stream_report.episode_count,
         "policy_result_count": stream_report.public_row_count,
@@ -823,8 +822,3 @@ def _validate_relative_path(value: str) -> None:
     path = PurePosixPath(value)
     if path.is_absolute() or ".." in path.parts or value != path.as_posix():
         raise ValueError(f"Path must be a normal relative POSIX path: {value}")
-
-
-def _peak_rss_bytes() -> int:
-    raw_value = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-    return raw_value if sys.platform == "darwin" else raw_value * 1024
