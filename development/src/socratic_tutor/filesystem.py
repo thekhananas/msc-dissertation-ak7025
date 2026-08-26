@@ -1,9 +1,18 @@
 """Small filesystem primitives shared by research artifact writers."""
 
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 _READ_CHUNK_SIZE = 1024 * 1024
+
+
+def read_bytes(path: Path, label: str, error_type: Callable[[str], Exception]) -> bytes:
+    """Read bytes and preserve a caller-specific error type on failure."""
+    try:
+        return path.read_bytes()
+    except OSError as error:
+        raise error_type(f"Could not read {label}: {path}") from error
 
 
 def files_equal(left: Path, right: Path) -> bool:

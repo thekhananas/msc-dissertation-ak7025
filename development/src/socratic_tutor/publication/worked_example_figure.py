@@ -61,6 +61,7 @@ from socratic_tutor.benchmark.public.datasets import read_condition_predictions
 from socratic_tutor.benchmark.public.models import EXPECTED_CONDITIONS, BenchmarkCondition
 from socratic_tutor.benchmark.replay import RecordedGenerationResponse
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.filesystem import read_bytes
 from socratic_tutor.publication.figure_style import (
     BLUE,
     GREEN,
@@ -1462,10 +1463,7 @@ def _datetime_value(row: dict[str, object], key: str) -> datetime:
 
 
 def _read(path: Path, label: str) -> bytes:
-    try:
-        return path.read_bytes()
-    except OSError as error:
-        raise WorkedExampleFigureError(f"Could not read {label}: {path}") from error
+    return read_bytes(path, label, WorkedExampleFigureError)
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:

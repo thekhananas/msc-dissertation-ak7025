@@ -33,6 +33,7 @@ from socratic_tutor.benchmark.artifacts import (
     write_immutable_json,
 )
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
+from socratic_tutor.filesystem import read_bytes
 from socratic_tutor.publication.figure_style import (
     BLUE,
     GREEN,
@@ -457,10 +458,7 @@ def _save(figure: Figure, file_format: str) -> bytes:
 
 
 def _read(path: Path, label: str) -> bytes:
-    try:
-        return path.read_bytes()
-    except OSError as error:
-        raise AcquisitionAblationFigureError(f"Could not read {label}: {path}") from error
+    return read_bytes(path, label, AcquisitionAblationFigureError)
 
 
 def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> datetime:
