@@ -21,6 +21,7 @@ from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.external_protocol import ExternalModelExecutionProtocol
 from socratic_tutor.benchmark.generation import GenerationChannel, PublicTaskPayload
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
+from socratic_tutor.benchmark.json_io import load_json_model
 from socratic_tutor.benchmark.replay import RecordedGenerationResponse
 from socratic_tutor.contracts import ContractModel, EvidenceCategory
 
@@ -335,15 +336,15 @@ def load_public_rating_guide_plan(path: Path) -> PublicAnswerRatingGuidePlan:
 
 
 def load_public_answer_rating_guide(path: Path) -> PublicAnswerRatingGuide:
-    return _load_json_model(path, PublicAnswerRatingGuide)
+    return load_json_model(path, PublicAnswerRatingGuide)
 
 
 def load_public_rating_protocol_amendment(path: Path) -> PublicRatingProtocolAmendment:
-    return _load_json_model(path, PublicRatingProtocolAmendment)
+    return load_json_model(path, PublicRatingProtocolAmendment)
 
 
 def load_public_answer_rating_packet(path: Path) -> PublicAnswerRatingPacket:
-    return _load_json_model(path, PublicAnswerRatingPacket)
+    return load_json_model(path, PublicAnswerRatingPacket)
 
 
 def freeze_public_rating_boundary(
@@ -860,14 +861,6 @@ def _cohen_kappa(
 
 def _load_recorded_responses(path: Path) -> tuple[RecordedGenerationResponse, ...]:
     return _load_jsonl_models(path, RecordedGenerationResponse)
-
-
-def _load_json_model[ModelT: ContractModel](path: Path, model: type[ModelT]) -> ModelT:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"Could not read JSON artifact: {path}") from error
-    return model.model_validate(raw)
 
 
 def _load_jsonl_models[ModelT: ContractModel](

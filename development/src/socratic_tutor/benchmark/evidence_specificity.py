@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from pathlib import Path
 from typing import Literal
@@ -21,6 +20,7 @@ from socratic_tutor.benchmark.evaluator.aggregation import CaseAggregate, CaseCo
 from socratic_tutor.benchmark.evaluator.scoring import PrimaryMetric
 from socratic_tutor.benchmark.external_protocol import ExternalModelExecutionProtocol
 from socratic_tutor.benchmark.hashing import canonical_sha256, model_content_hash
+from socratic_tutor.benchmark.json_io import load_json_model
 from socratic_tutor.benchmark.public_rating import PublicRatingProtocolAmendment
 from socratic_tutor.benchmark.statistics import PairedCaseInference, paired_case_inference
 from socratic_tutor.contracts import ContractModel
@@ -176,17 +176,17 @@ def load_evidence_specificity_amendment_plan(path: Path) -> EvidenceSpecificityA
 
 
 def load_evidence_specificity_amendment(path: Path) -> EvidenceSpecificityAmendment:
-    return _load_json_model(path, EvidenceSpecificityAmendment)
+    return load_json_model(path, EvidenceSpecificityAmendment)
 
 
 def load_uncalibrated_decision_report(path: Path) -> UncalibratedDecisionReport:
-    return _load_json_model(path, UncalibratedDecisionReport)
+    return load_json_model(path, UncalibratedDecisionReport)
 
 
 def load_external_run_preflight(path: Path) -> ExternalRunPreflight:
     """Load and validate the frozen gate required before held-out generation."""
 
-    return _load_json_model(path, ExternalRunPreflight)
+    return load_json_model(path, ExternalRunPreflight)
 
 
 def freeze_evidence_specificity_amendment(
@@ -426,11 +426,3 @@ def _create_case_effect(
     return EvidenceSpecificityCaseEffect.model_validate(
         {**content, "effect_hash": canonical_sha256(content)}
     )
-
-
-def _load_json_model[ModelT: ContractModel](path: Path, model: type[ModelT]) -> ModelT:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise ValueError(f"Could not read JSON artifact: {path}") from error
-    return model.model_validate(raw)
