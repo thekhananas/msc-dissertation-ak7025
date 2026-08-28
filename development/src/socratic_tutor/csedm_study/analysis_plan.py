@@ -164,6 +164,8 @@ class SafeguardSpecification(ContractModel):
         Literal["FirstCorrect", "EverCorrect", "UsedHint", "Attempts"], ...
     ]
     problem_statistics_fit_scope: Literal["training_learners_only"]
+    training_row_problem_rate: Literal["leave_one_target_out"]
+    test_row_problem_rate: Literal["full_training_fold_only"]
     missing_history_rule: Literal["training_only_defaults_plus_missingness_indicators"]
     invalid_label_rule: Literal["fail_run"]
     model_convergence_failure_rule: Literal["fail_run"]
