@@ -1,0 +1,115 @@
+schema_id: csedm.analysis_plan.v1
+schema_version: 1
+study_id: csedm-uncertainty-triage-v1
+status: frozen_before_out_of_fold_predictions
+frozen_date: 2026-09-09
+research_question: >-
+  On the official learner-separated CSEDM folds, does ranking out-of-fold
+  predictions by uncertainty capture more first-attempt prediction errors
+  within a fixed 50% review budget than the exact expectation under uniform
+  random selection?
+inventory_report_hash: fcc9248164d722b2c025c273aa2211f5e3128141fa4e675ec8654c1163804b8c
+inventory_report_file_sha256: e0cf1fa0d21ac5039c452a655e97bf82a17a79de0eaeb8de2dca6a5a60cf3ed5
+archive_sha256: 306dec9329d3f823332a8fe67903841c5929dc93e5ee036907cf908caee94931
+official_fold_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+out_of_fold_results_inspected_before_freeze: false
+
+primary:
+  label: FirstCorrect
+  prediction_scope: official_learner_separated_out_of_fold
+  independent_unit: learner
+  features:
+    - prior_event_count
+    - prior_submission_count
+    - prior_correctness_rate
+    - prior_hint_request_rate
+    - prior_distinct_problem_count
+    - training_learner_target_problem_success_rate
+  prediction_baselines:
+    - training_label_prevalence
+    - training_problem_frequency
+  model:
+    implementation: sklearn.linear_model.LogisticRegression
+    solver: lbfgs
+    penalty: l2
+    regularisation_c: 1.0
+    fit_intercept: true
+    class_weight: none
+    maximum_iterations: 1000
+    tolerance: 0.00000001
+    random_seed: 9052901
+    classification_threshold: 0.5
+    numeric_scaling: training_fold_standard_score
+    missing_value_handling: training_fold_median_plus_indicator
+  uncertainty_score: absolute_probability_minus_one_half_ascending
+  review_budget_fraction: 0.5
+  budget_scope: within_each_official_test_fold
+  selected_count_rule: floor_budget_fraction_times_fold_target_count
+  tie_break: ascending_sha256_of_fold_subject_problem_start_order
+  outcome: captured_error_recall
+  comparator: exact_uniform_random_expectation_at_same_fold_budgets
+  estimand: uncertainty_ranked_minus_random_expected_captured_error_recall
+  favourable_direction: greater_than_zero
+  claim_rule: learner_bootstrap_95_percent_interval_lower_bound_above_zero
+
+bootstrap:
+  method: learner_cluster_percentile_bootstrap
+  repetitions: 10000
+  seed: 9052902
+  confidence_level: 0.95
+  resampling_unit: learner
+  preserve_all_rows_per_sampled_learner: true
+  selected_status: fixed_from_original_out_of_fold_ranking
+
+secondary:
+  prediction_metrics:
+    - accuracy
+    - brier_score
+    - log_loss
+    - expected_calibration_error
+  log_loss_probability_floor: 0.000001
+  ece_equal_width_bin_count: 10
+  risk_coverage_fractions: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  fold_sensitivity: leave_one_official_fold_out
+  status: descriptive_not_confirmatory
+
+reference_baseline:
+  source_member: Example/evaluation_overall.csv
+  check: recalculate_metrics_from_supplied_example_predictions
+  expected_accuracy: 0.731138545953361
+  expected_f1: 0.699386503067485
+  expected_cohen_kappa: 0.466364899386008
+  absolute_tolerance: 0.000000000001
+  status: reference_check_not_primary_model
+
+safeguards:
+  history_cutoff: MainTable.Order_strictly_less_than_Predict.StartOrder
+  forbidden_target_features: [FirstCorrect, EverCorrect, UsedHint, Attempts]
+  problem_statistics_fit_scope: training_learners_only
+  missing_history_rule: training_only_defaults_plus_missingness_indicators
+  invalid_label_rule: fail_run
+  model_convergence_failure_rule: fail_run
+  exclusion_rule: none_after_validated_inventory
+  parameter_selection_after_results_allowed: false
+  hyperparameter_search_allowed: false
+  calibration_model_allowed: false
+  test_fold_model_selection_allowed: false
+
+claims:
+  prediction_error_triage_on_this_dataset_allowed: true
+  executable_probe_benefit_allowed: false
+  tutoring_effect_allowed: false
+  human_learning_effect_allowed: false
+  cognitive_offloading_effect_allowed: false
+  deployment_cost_saving_allowed: false
+
+interpretation_order:
+  - source_and_fold_integrity
+  - primary_model_prediction_quality
+  - primary_uncertainty_triage_contrast
+  - learner_level_interval
+  - fold_sensitivity
+  - secondary_prediction_and_risk_coverage_metrics
+  - dataset_and_claim_boundaries
+
+plan_hash: c700401087b171abbcba4a9f67fa11f347fe55dc72fe45730f103d93b820a155

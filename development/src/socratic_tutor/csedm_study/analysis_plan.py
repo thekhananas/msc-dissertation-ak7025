@@ -37,6 +37,8 @@ class LogisticModelSpecification(ContractModel):
     tolerance: float = Field(gt=0.0)
     random_seed: int = Field(ge=0)
     classification_threshold: float = Field(gt=0.0, lt=1.0)
+    numeric_scaling: Literal["training_fold_standard_score"]
+    missing_value_handling: Literal["training_fold_median_plus_indicator"]
 
     @model_validator(mode="after")
     def validate_numeric_settings(self) -> Self:
@@ -54,7 +56,11 @@ class PrimaryAnalysisSpecification(ContractModel):
 
     label: Literal["FirstCorrect"]
     prediction_scope: Literal["official_learner_separated_out_of_fold"]
+    independent_unit: Literal["learner"]
     features: tuple[str, ...]
+    prediction_baselines: tuple[
+        Literal["training_label_prevalence", "training_problem_frequency"], ...
+    ]
     model: LogisticModelSpecification
     uncertainty_score: Literal["absolute_probability_minus_one_half_ascending"]
     review_budget_fraction: float = Field(gt=0.0, lt=1.0)
@@ -65,11 +71,17 @@ class PrimaryAnalysisSpecification(ContractModel):
     comparator: Literal["exact_uniform_random_expectation_at_same_fold_budgets"]
     estimand: Literal["uncertainty_ranked_minus_random_expected_captured_error_recall"]
     favourable_direction: Literal["greater_than_zero"]
+    claim_rule: Literal["learner_bootstrap_95_percent_interval_lower_bound_above_zero"]
 
     @model_validator(mode="after")
     def validate_features(self) -> Self:
         if self.features != PRIMARY_FEATURES:
             raise ValueError("Primary CSEDM features differ from the frozen feature order")
+        if self.prediction_baselines != (
+            "training_label_prevalence",
+            "training_problem_frequency",
+        ):
+            raise ValueError("Prediction baselines differ from the frozen order")
         if self.review_budget_fraction != 0.5:
             raise ValueError("Primary review budget must remain at 50%")
         return self
@@ -157,6 +169,9 @@ class SafeguardSpecification(ContractModel):
     model_convergence_failure_rule: Literal["fail_run"]
     exclusion_rule: Literal["none_after_validated_inventory"]
     parameter_selection_after_results_allowed: Literal[False]
+    hyperparameter_search_allowed: Literal[False]
+    calibration_model_allowed: Literal[False]
+    test_fold_model_selection_allowed: Literal[False]
 
 
 class ClaimBoundary(ContractModel):
