@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import io
 import json
 import sys
@@ -23,33 +22,22 @@ from socratic_tutor.benchmark.artifacts import (
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
 from socratic_tutor.contracts import ContractModel
-
-PREDICT_COLUMNS = (
-    "SubjectID",
-    "ProblemID",
-    "StartOrder",
-    "FirstCorrect",
-    "EverCorrect",
-    "UsedHint",
-    "Attempts",
+from socratic_tutor.csedm_study.source import (
+    CODE_STATE_COLUMNS,
+    FOLD_COUNT,
+    MAIN_TABLE_COLUMNS,
+    PREDICT_COLUMNS,
+    CSEDMInventoryError,
+    CsvRow,
+    TableInventory,
+    TargetKey,
 )
-MAIN_TABLE_COLUMNS = (
-    "EventType",
-    "EventID",
-    "Order",
-    "SubjectID",
-    "ToolInstances",
-    "CodeStateID",
-    "ServerTimestamp",
-    "ProblemID",
-    "Correct",
+from socratic_tutor.csedm_study.source import (
+    read_table as _read_table,
 )
-CODE_STATE_COLUMNS = ("CodeStateID", "Code")
-FOLD_COUNT = 10
-
-
-class CSEDMInventoryError(ValueError):
-    """The supplied archive does not satisfy the frozen inventory contract."""
+from socratic_tutor.csedm_study.source import (
+    target_key as _target_key,
+)
 
 
 class CSEDMInventorySpecification(ContractModel):
@@ -79,15 +67,6 @@ class CSEDMInventorySpecification(ContractModel):
             if len(entries) != len(set(entries)):
                 raise ValueError("Inventory specification entries must be unique")
         return self
-
-
-class TableInventory(ContractModel):
-    """Aggregate structure of one source table."""
-
-    member: str
-    columns: tuple[str, ...]
-    row_count: int = Field(ge=0)
-    missing_by_column: dict[str, int]
 
 
 class FoldInventory(ContractModel):
@@ -143,10 +122,6 @@ class CSEDMInventoryReport(ContractModel):
         if self.report_hash != expected_hash:
             raise ValueError("Inventory report hash does not match its content")
         return self
-
-
-type CsvRow = dict[str, str]
-type TargetKey = tuple[str, str, str]
 
 
 def load_inventory_specification(path: Path) -> CSEDMInventorySpecification:
@@ -238,53 +213,6 @@ def _inventory_payload(
         "excluded_local_sources": specification.excluded_local_sources,
         "known_caveats": specification.known_caveats,
     }
-
-
-class _LoadedTable:
-    def __init__(self, summary: TableInventory, rows: tuple[CsvRow, ...]) -> None:
-        self.summary = summary
-        self.rows = rows
-
-
-def _read_table(
-    archive: zipfile.ZipFile,
-    member: str,
-    expected_columns: tuple[str, ...],
-) -> _LoadedTable:
-    try:
-        with archive.open(member) as binary:
-            text = io.TextIOWrapper(binary, encoding="utf-8-sig", newline="")
-            reader = csv.DictReader(text)
-            columns = tuple(reader.fieldnames or ())
-            if columns != expected_columns:
-                raise CSEDMInventoryError(
-                    f"Unexpected columns in {member}: expected {expected_columns}, found {columns}"
-                )
-            rows = tuple(_normalise_row(row, columns, member) for row in reader)
-    except KeyError as error:
-        raise CSEDMInventoryError(f"CSEDM archive is missing required member: {member}") from error
-    missing = {column: sum(row[column] == "" for row in rows) for column in columns}
-    return _LoadedTable(
-        TableInventory(
-            member=member,
-            columns=columns,
-            row_count=len(rows),
-            missing_by_column=missing,
-        ),
-        rows,
-    )
-
-
-def _normalise_row(
-    row: dict[str | None, str | None], columns: tuple[str, ...], member: str
-) -> CsvRow:
-    if None in row or any(row.get(column) is None for column in columns):
-        raise CSEDMInventoryError(f"Malformed CSV row in {member}")
-    return {column: row[column] or "" for column in columns}
-
-
-def _target_key(row: CsvRow) -> TargetKey:
-    return row["SubjectID"], row["ProblemID"], row["StartOrder"]
 
 
 def _inventory_folds(
