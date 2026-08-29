@@ -80,8 +80,7 @@ def read_table(
     except KeyError as error:
         raise CSEDMInventoryError(f"CSEDM archive is missing required member: {member}") from error
     missing = {
-        column: sum(is_unavailable_source_value(row[column]) for row in rows)
-        for column in columns
+        column: sum(is_unavailable_source_value(row[column]) for row in rows) for column in columns
     }
     return LoadedTable(
         summary=TableInventory(
