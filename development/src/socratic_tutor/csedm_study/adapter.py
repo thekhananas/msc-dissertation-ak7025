@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any, Literal, Self
 
 import pyarrow as pa
-import pyarrow.parquet as pq
 from pydantic import Field, model_validator
 
 from socratic_tutor.benchmark.artifacts import (
@@ -48,6 +47,7 @@ from socratic_tutor.csedm_study.source import (
     read_table,
     target_key,
 )
+from socratic_tutor.csedm_study.tabular import parquet_bytes
 
 
 class FoldFeatureAudit(ContractModel):
@@ -134,8 +134,8 @@ def build_csedm_adapter(
 
     schema = _feature_schema()
     restricted_root = output_root / "restricted"
-    fold_parquet = _parquet_bytes(schema, fold_rows)
-    out_of_fold_parquet = _parquet_bytes(schema, out_of_fold_rows)
+    fold_parquet = parquet_bytes(schema, fold_rows)
+    out_of_fold_parquet = parquet_bytes(schema, out_of_fold_rows)
     transform_payload = _transform_payload(transforms)
     feature_schema = _feature_schema_payload(schema)
     fold_audit = _fold_audit_payload(audits)
@@ -315,15 +315,6 @@ def _feature_schema() -> Any:
         )
     fields.append(pa.field("record_hash", pa.string(), nullable=False))
     return pa.schema(fields, metadata={b"schema_id": b"csedm.fold_feature_row.v1"})
-
-
-def _parquet_bytes(schema: Any, rows: tuple[dict[str, object], ...]) -> bytes:
-    table = pa.Table.from_pylist(list(rows), schema=schema)
-    if not table.schema.equals(schema, check_metadata=True):
-        raise CSEDMAdapterError("CSEDM feature table does not match its Arrow schema")
-    sink = pa.BufferOutputStream()
-    pq.write_table(table, sink, compression="zstd", version="2.6", use_dictionary=False)
-    return sink.getvalue().to_pybytes()
 
 
 def _transform_payload(
