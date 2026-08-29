@@ -167,6 +167,9 @@ class SafeguardSpecification(ContractModel):
     training_row_problem_rate: Literal["leave_one_target_out"]
     test_row_problem_rate: Literal["full_training_fold_only"]
     missing_history_rule: Literal["training_only_defaults_plus_missingness_indicators"]
+    unavailable_prior_correctness_rule: Literal[
+        "exclude_from_rate_denominator_keep_event_and_submission_counts"
+    ]
     invalid_label_rule: Literal["fail_run"]
     model_convergence_failure_rule: Literal["fail_run"]
     exclusion_rule: Literal["none_after_validated_inventory"]

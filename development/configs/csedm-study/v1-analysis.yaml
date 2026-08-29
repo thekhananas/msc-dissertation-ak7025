@@ -2,14 +2,14 @@ schema_id: csedm.analysis_plan.v1
 schema_version: 1
 study_id: csedm-uncertainty-triage-v1
 status: frozen_before_out_of_fold_predictions
-frozen_date: 2026-09-09
+frozen_date: 2026-09-10
 research_question: >-
   On the official learner-separated CSEDM folds, does ranking out-of-fold
   predictions by uncertainty capture more first-attempt prediction errors
   within a fixed 50% review budget than the exact expectation under uniform
   random selection?
-inventory_report_hash: fcc9248164d722b2c025c273aa2211f5e3128141fa4e675ec8654c1163804b8c
-inventory_report_file_sha256: e0cf1fa0d21ac5039c452a655e97bf82a17a79de0eaeb8de2dca6a5a60cf3ed5
+inventory_report_hash: b670079a905bcce82527770d7810fbebbdc691210d86e03b2f5bfe04ec6fd398
+inventory_report_file_sha256: d210d3a624ba293b3df22551d9be3389eb2557f1457f8ca6ddf068f275405b9a
 archive_sha256: 306dec9329d3f823332a8fe67903841c5929dc93e5ee036907cf908caee94931
 official_fold_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 out_of_fold_results_inspected_before_freeze: false
@@ -89,6 +89,7 @@ safeguards:
   training_row_problem_rate: leave_one_target_out
   test_row_problem_rate: full_training_fold_only
   missing_history_rule: training_only_defaults_plus_missingness_indicators
+  unavailable_prior_correctness_rule: exclude_from_rate_denominator_keep_event_and_submission_counts
   invalid_label_rule: fail_run
   model_convergence_failure_rule: fail_run
   exclusion_rule: none_after_validated_inventory
@@ -114,4 +115,4 @@ interpretation_order:
   - secondary_prediction_and_risk_coverage_metrics
   - dataset_and_claim_boundaries
 
-plan_hash: 2a570d622f70247f88e4a2e9c5236ea35e3811fa0e69be917895e67beaf064e8
+plan_hash: 6a26dcd9a3a2f88e3b15201295391c896bcfecddac53b5637607dcd7e027783e
