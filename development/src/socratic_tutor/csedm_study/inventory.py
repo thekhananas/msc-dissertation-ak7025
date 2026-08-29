@@ -280,6 +280,11 @@ def _data_card(report: CSEDMInventoryReport) -> str:
                 f"{report.main_learner_count} learners across "
                 f"{report.main_problem_count} problems"
             ),
+            (
+                "- "
+                f"{report.main_events.missing_by_column['Correct']} activity events "
+                "have no recorded correctness value"
+            ),
         )
     )
     caveats = "\n".join(f"- {item}" for item in report.known_caveats)

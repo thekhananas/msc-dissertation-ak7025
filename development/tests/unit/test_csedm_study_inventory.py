@@ -45,6 +45,7 @@ def test_inventory_publishes_aggregates_and_rejects_learner_leakage(tmp_path: Pa
     assert report.prediction_targets.row_count == 20
     assert report.eligible_learner_count == 10
     assert report.target_problem_count == 2
+    assert report.main_events.missing_by_column["Correct"] == 1
     assert report.test_folds_cover_each_target_once is True
     assert all(fold.learner_overlap_count == 0 for fold in report.folds)
     assert "learner-00" not in (output_root / "data_card.md").read_text(encoding="utf-8")
@@ -79,7 +80,7 @@ def _write_archive(path: Path, *, leak_fold_zero: bool) -> Path:
                         "CodeStateID": f"code-{index}",
                         "ServerTimestamp": "2016-01-01T00:00:00",
                         "ProblemID": row["ProblemID"],
-                        "Correct": row["FirstCorrect"],
+                        "Correct": "NA" if index == 0 else row["FirstCorrect"],
                     }
                     for index, row in enumerate(predictions)
                 ],

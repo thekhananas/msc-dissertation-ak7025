@@ -12,6 +12,7 @@ def test_features_exclude_later_events_and_each_training_rows_own_label() -> Non
         (
             _event("learner-a", order=1, event_type="Submit", correct="TRUE"),
             _event("learner-a", order=2, event_type="X-HintRequest", correct="FALSE"),
+            _event("learner-a", order=3, event_type="Submit", correct="NA"),
             _event("learner-a", order=10, event_type="Submit", correct="FALSE"),
         )
     )
@@ -23,10 +24,10 @@ def test_features_exclude_later_events_and_each_training_rows_own_label() -> Non
 
     training_features, test_features = build_fold_features(training, test, events)
 
-    assert training_features[0].prior_event_count == 2.0
-    assert training_features[0].prior_submission_count == 1.0
+    assert training_features[0].prior_event_count == 3.0
+    assert training_features[0].prior_submission_count == 2.0
     assert training_features[0].prior_correctness_rate == 1.0
-    assert training_features[0].prior_hint_request_rate == 0.5
+    assert training_features[0].prior_hint_request_rate == 1 / 3
     assert training_features[0].training_learner_target_problem_success_rate == 0.0
     assert training_features[1].training_learner_target_problem_success_rate == 1.0
     assert test_features[0].training_learner_target_problem_success_rate == 0.5

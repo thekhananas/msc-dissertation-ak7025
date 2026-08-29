@@ -8,7 +8,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 
 from socratic_tutor.csedm_study.analysis_plan import PRIMARY_FEATURES
-from socratic_tutor.csedm_study.source import CsvRow
+from socratic_tutor.csedm_study.source import CsvRow, is_unavailable_source_value
 
 
 class CSEDMAdapterError(ValueError):
@@ -23,7 +23,7 @@ class LearnerEvent:
     learner_id: str
     problem_id: str
     event_type: str
-    correct: bool
+    correct: bool | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,7 +75,7 @@ def parse_events(rows: tuple[CsvRow, ...]) -> dict[str, tuple[LearnerEvent, ...]
             learner_id=_required(row["SubjectID"], "MainTable.SubjectID"),
             problem_id=_required(row["ProblemID"], "MainTable.ProblemID"),
             event_type=_required(row["EventType"], "MainTable.EventType"),
-            correct=_boolean(row["Correct"], "MainTable.Correct"),
+            correct=_optional_boolean(row["Correct"], "MainTable.Correct"),
         )
         grouped[event.learner_id].append(event)
     return {
@@ -187,12 +187,15 @@ def _raw_features(
         if event.order < target.start_order
     )
     submissions = tuple(event for event in prior_events if event.event_type == "Submit")
+    scored_submissions = tuple(event for event in submissions if event.correct is not None)
     hints = sum(event.event_type == "X-HintRequest" for event in prior_events)
     return RawFeatures(
         prior_event_count=float(len(prior_events)),
         prior_submission_count=float(len(submissions)),
         prior_correctness_rate=(
-            sum(event.correct for event in submissions) / len(submissions) if submissions else None
+            sum(event.correct is True for event in scored_submissions) / len(scored_submissions)
+            if scored_submissions
+            else None
         ),
         prior_hint_request_rate=hints / len(prior_events) if prior_events else None,
         prior_distinct_problem_count=float(len({event.problem_id for event in prior_events})),
@@ -223,3 +226,9 @@ def _boolean(value: str, field: str) -> bool:
     if normalised not in {"TRUE", "FALSE"}:
         raise CSEDMAdapterError(f"{field} must be TRUE or FALSE")
     return normalised == "TRUE"
+
+
+def _optional_boolean(value: str, field: str) -> bool | None:
+    if is_unavailable_source_value(value):
+        return None
+    return _boolean(value, field)

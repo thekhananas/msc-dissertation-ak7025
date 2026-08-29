@@ -33,6 +33,7 @@ MAIN_TABLE_COLUMNS = (
 )
 CODE_STATE_COLUMNS = ("CodeStateID", "Code")
 FOLD_COUNT = 10
+UNAVAILABLE_SOURCE_VALUES = frozenset({"", "NA"})
 
 type CsvRow = dict[str, str]
 type TargetKey = tuple[str, str, str]
@@ -78,7 +79,10 @@ def read_table(
             rows = tuple(_normalise_row(row, columns, member) for row in reader)
     except KeyError as error:
         raise CSEDMInventoryError(f"CSEDM archive is missing required member: {member}") from error
-    missing = {column: sum(row[column] == "" for row in rows) for column in columns}
+    missing = {
+        column: sum(is_unavailable_source_value(row[column]) for row in rows)
+        for column in columns
+    }
     return LoadedTable(
         summary=TableInventory(
             member=member,
@@ -94,6 +98,12 @@ def target_key(row: CsvRow) -> TargetKey:
     """Return the stable source identity of one prediction target."""
 
     return row["SubjectID"], row["ProblemID"], row["StartOrder"]
+
+
+def is_unavailable_source_value(value: str) -> bool:
+    """Return whether the archive marks a value as unavailable."""
+
+    return value.strip().upper() in UNAVAILABLE_SOURCE_VALUES
 
 
 def _normalise_row(
