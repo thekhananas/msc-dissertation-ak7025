@@ -21,6 +21,10 @@ from socratic_tutor.csedm_study.prediction import (
     CSEDMPredictionManifest,
     publish_out_of_fold_predictions,
 )
+from socratic_tutor.csedm_study.publication import (
+    CSEDMPublicationManifest,
+    publish_csedm_results,
+)
 
 __all__ = [
     "CSEDMAdapterManifest",
@@ -31,10 +35,12 @@ __all__ = [
     "CSEDMInventoryReport",
     "CSEDMInventorySpecification",
     "CSEDMPredictionManifest",
+    "CSEDMPublicationManifest",
     "build_csedm_adapter",
     "create_inventory",
     "load_analysis_plan",
     "load_inventory_specification",
+    "publish_csedm_results",
     "publish_out_of_fold_predictions",
     "publish_uncertainty_analysis",
 ]
