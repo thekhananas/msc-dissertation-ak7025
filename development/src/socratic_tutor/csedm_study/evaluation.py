@@ -19,6 +19,7 @@ class PredictionRecord:
     fold_id: int
     target_id: str
     learner_id: str
+    problem_id: str
     first_correct: bool
     probability_correct: float
 

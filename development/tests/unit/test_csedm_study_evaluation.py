@@ -60,6 +60,7 @@ def _record(
         fold_id=fold_id,
         target_id=target_id,
         learner_id=learner_id,
+        problem_id="problem-a",
         first_correct=first_correct,
         probability_correct=probability_correct,
     )
