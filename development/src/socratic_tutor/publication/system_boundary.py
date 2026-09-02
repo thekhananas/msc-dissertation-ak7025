@@ -408,7 +408,7 @@ def _build_figure(specification: SystemBoundarySpecification) -> Figure:
         BoundaryId.EXTERNAL_BENCHMARK: (0.320, 0.255, _PALE_ORANGE, _ORANGE),
         # The tracker study has two rows; its boundary is taller so the
         # larger descriptions retain a clear bottom margin.
-        BoundaryId.OFFLINE_ANALYSIS: (0.065, 0.225, _PALE_GREY, _PURPLE),
+        BoundaryId.OFFLINE_ANALYSIS: (0.055, 0.255, _PALE_GREY, _PURPLE),
     }
     coordinates: dict[str, tuple[float, float, float, float]] = {}
     for boundary in specification.boundaries:
@@ -423,7 +423,7 @@ def _build_figure(specification: SystemBoundarySpecification) -> Figure:
         lane_count = len(grouped)
         for lane, nodes in sorted(grouped.items()):
             nodes.sort(key=lambda item: item.order)
-            lane_height = (height - 0.075) / lane_count
+            lane_height = (height - 0.060) / lane_count
             lane_y = y_position + 0.018 + (lane_count - lane - 1) * lane_height
             coordinates.update(_draw_lane(axis, nodes, lane_y, lane_height - 0.012, accent))
 
