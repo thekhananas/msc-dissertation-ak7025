@@ -116,3 +116,25 @@ test("keeps three tutor turns distinct and above the response form", async ({ pa
   expect(geometry.clearOfComposer).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("three-turns.png"), fullPage: true });
 });
+
+test("replays a recorded experiment before revealing its result", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Shared list references" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Experiment" }).click();
+  await expect(
+    page.getByRole("heading", { name: "When is another coding check worth requesting?" }),
+  ).toBeVisible();
+  await expect(page.getByText("The model first wrote \"True 3\"", { exact: false })).toBeVisible();
+  await expect(page.getByText("The final task asked the model", { exact: false })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Reveal recorded result" }).click();
+  await expect(page.getByText("The final task asked the model", { exact: false })).toBeVisible();
+  await expect(page.getByText("Important test limit:", { exact: false })).toBeVisible();
+
+  const horizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(horizontalOverflow).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: testInfo.outputPath("experiment-replay.png"), fullPage: true });
+});

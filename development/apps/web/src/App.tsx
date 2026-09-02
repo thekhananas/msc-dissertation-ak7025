@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import { createSession, listTasks, submitTurn } from "./api";
+import { ExperimentView } from "./ExperimentView";
+import { newIdempotencyKey } from "./ids";
 import type { SessionSnapshot, TaskView } from "./types";
 
 type SessionState =
@@ -13,13 +15,6 @@ type FailedSubmission = {
   responseText: string;
   idempotencyKey: string;
 };
-
-function newIdempotencyKey(): string {
-  if (typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
 
 function readableLabel(value: string): string {
   return value.replaceAll("-", " ").replace(/^./, (character) => character.toUpperCase());
@@ -34,6 +29,7 @@ export function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [failedSubmission, setFailedSubmission] = useState<FailedSubmission | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<"tutor" | "experiment">("tutor");
   const conversationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -171,31 +167,54 @@ export function App() {
           <p className="eyebrow">Research proof of concept</p>
           <h1>Socratic Tutor</h1>
         </div>
-        <div className="header-actions">
-          <label>
-            <span>Practice task</span>
-            <span className="select-control">
-              <select
-                aria-label="Practice task"
-                value={session.task.task_id}
-                onChange={(event) => handleTaskChange(event.target.value)}
-                disabled={isSubmitting}
-              >
-                {availableTasks.map((task) => (
-                  <option key={task.task_id} value={task.task_id}>
-                    {task.title}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
-          <button className="secondary-button" type="button" onClick={handleReset}>
-            Reset session
-          </button>
+        <div className="header-controls">
+          <nav className="view-tabs" aria-label="Demo view">
+            <button
+              type="button"
+              aria-current={activeView === "tutor" ? "page" : undefined}
+              onClick={() => setActiveView("tutor")}
+            >
+              Tutor
+            </button>
+            <button
+              type="button"
+              aria-current={activeView === "experiment" ? "page" : undefined}
+              onClick={() => setActiveView("experiment")}
+            >
+              Experiment
+            </button>
+          </nav>
+          {activeView === "tutor" && (
+            <div className="header-actions">
+              <label>
+                <span>Practice task</span>
+                <span className="select-control">
+                  <select
+                    aria-label="Practice task"
+                    value={session.task.task_id}
+                    onChange={(event) => handleTaskChange(event.target.value)}
+                    disabled={isSubmitting}
+                  >
+                    {availableTasks.map((task) => (
+                      <option key={task.task_id} value={task.task_id}>
+                        {task.title}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              </label>
+              <button className="secondary-button" type="button" onClick={handleReset}>
+                Reset session
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
-      <main className="workspace-grid">
+      {activeView === "experiment" ? (
+        <ExperimentView />
+      ) : (
+        <main className="workspace-grid">
         <section className="task-pane" aria-labelledby="task-title">
           <div className="section-heading">
             <span>Python task</span>
@@ -292,7 +311,8 @@ export function App() {
             </div>
           </form>
         </section>
-      </main>
+        </main>
+      )}
     </div>
   );
 }

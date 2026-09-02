@@ -1,4 +1,10 @@
-import type { HealthResponse, SessionSnapshot, TaskView } from "./types";
+import type {
+  BenchmarkReplaySnapshot,
+  ExperimentSummary,
+  HealthResponse,
+  SessionSnapshot,
+  TaskView,
+} from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -70,4 +76,31 @@ export async function submitTurn(
     }),
   });
   return readJson<SessionSnapshot>(response);
+}
+
+export async function getExperimentSummary(signal?: AbortSignal): Promise<ExperimentSummary> {
+  return readJson<ExperimentSummary>(await fetch("/api/experiment-summary", { signal }));
+}
+
+export async function startBenchmarkReplay(
+  idempotencyKey: string,
+  signal?: AbortSignal,
+): Promise<BenchmarkReplaySnapshot> {
+  const response = await fetch("/api/benchmark-replays", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idempotency_key: idempotencyKey }),
+    signal,
+  });
+  return readJson<BenchmarkReplaySnapshot>(response);
+}
+
+export async function revealBenchmarkOutcome(
+  replayId: string,
+): Promise<BenchmarkReplaySnapshot> {
+  return readJson<BenchmarkReplaySnapshot>(
+    await fetch(`/api/benchmark-replays/${encodeURIComponent(replayId)}/reveal`, {
+      method: "POST",
+    }),
+  );
 }
