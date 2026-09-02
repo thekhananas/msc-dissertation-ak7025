@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Literal
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,3 +25,8 @@ class Settings(BaseSettings):
     event_log_path: Path = Path(".local/demo-events.jsonl")
     benchmark_replay_path: Path = Path("data/demo/benchmark-replay-v1.json")
     experiment_summary_path: Path = Path("data/demo/experiment-summary-v1.json")
+    live_evaluation_enabled: bool = False
+    live_evaluation_case_id: str = "dev-aliasing-001"
+    live_evaluation_manifest_path: Path = Path("data/benchmarks/dev-v0/manifest.yaml")
+    live_evaluation_system_prompt_path: Path = Path("data/demo/live-evaluation-system-v1.md")
+    cerebras_api_key: SecretStr | None = None

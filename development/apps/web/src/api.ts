@@ -2,6 +2,8 @@ import type {
   BenchmarkReplaySnapshot,
   ExperimentSummary,
   HealthResponse,
+  LiveEvaluationSnapshot,
+  LiveEvaluationStatus,
   SessionSnapshot,
   TaskView,
 } from "./types";
@@ -100,6 +102,32 @@ export async function revealBenchmarkOutcome(
 ): Promise<BenchmarkReplaySnapshot> {
   return readJson<BenchmarkReplaySnapshot>(
     await fetch(`/api/benchmark-replays/${encodeURIComponent(replayId)}/reveal`, {
+      method: "POST",
+    }),
+  );
+}
+
+export async function getLiveEvaluationStatus(
+  signal?: AbortSignal,
+): Promise<LiveEvaluationStatus> {
+  return readJson<LiveEvaluationStatus>(await fetch("/api/live-evaluations/status", { signal }));
+}
+
+export async function startLiveEvaluation(
+  idempotencyKey: string,
+  caseId: string,
+): Promise<LiveEvaluationSnapshot> {
+  const response = await fetch("/api/live-evaluations", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idempotency_key: idempotencyKey, case_id: caseId }),
+  });
+  return readJson<LiveEvaluationSnapshot>(response);
+}
+
+export async function revealLiveEvaluation(runId: string): Promise<LiveEvaluationSnapshot> {
+  return readJson<LiveEvaluationSnapshot>(
+    await fetch(`/api/live-evaluations/${encodeURIComponent(runId)}/reveal`, {
       method: "POST",
     }),
   );

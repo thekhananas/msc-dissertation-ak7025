@@ -27,6 +27,11 @@ Then open `http://127.0.0.1:5173`. Vite proxies `/api` to FastAPI on port 8000.
 
 The offline demo presents one Python list-aliasing task. A submitted explanation passes through a bounded LangGraph turn, deterministic evidence rules, a simple mastery tracker, a heuristic policy, and a leakage guardrail. Completed turns are written to `.local/demo-events.jsonl` and recovered when the API restarts.
 
+The **Experiment** view also contains an optional live illustration. It uses one development case, up to three Cerebras requests,
+and two network-blocked Modal executions to show that predictions are fixed before a later result is requested. It is disabled by
+default and is not research evidence. To enable it, complete `pixi run modal setup`, then set the three commented live variables in
+`.env.example` within the local `.env` file. The recorded replay remains the presentation fallback.
+
 ## Focused Commands
 
 ```bash

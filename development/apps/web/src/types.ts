@@ -145,3 +145,70 @@ export type ExperimentSummary = {
   findings: ExperimentFinding[];
   claim_boundary: string;
 };
+
+export type LiveEvaluationStatus = {
+  enabled: boolean;
+  available: boolean;
+  case_id: string;
+  evaluation_model: string;
+  reason: string | null;
+  claim_boundary: string;
+};
+
+export type LiveExecution = {
+  passed_checks: number;
+  failed_checks: number;
+  passed_all_checks: boolean;
+  sandbox_id: string | null;
+};
+
+export type LivePrediction = {
+  condition: "dialogue_only" | "probe_informed";
+  label: string;
+  tracker_score: number;
+  policy_threshold: number;
+  predicts_success: boolean;
+  committed_at_utc: string;
+  record_hash: string;
+};
+
+export type LiveEvaluationSnapshot = {
+  run_id: string;
+  case_id: string;
+  source: "live_demo";
+  canonical: false;
+  phase: "predictions_committed" | "outcome_revealed" | "failed";
+  evaluation_model: string;
+  public_response: string | null;
+  public_assessment: {
+    category: EvidenceCategory;
+    method: "transparent_development_rule";
+    rationale: string;
+  } | null;
+  evidence_response: string | null;
+  evidence_execution: LiveExecution | null;
+  predictions: LivePrediction[];
+  commitment_hash: string | null;
+  committed_at_utc: string | null;
+  outcome: {
+    response: string;
+    execution: LiveExecution;
+    revealed_at_utc: string;
+  } | null;
+  predictions_sealed_before_outcome_reveal: boolean;
+  model_calls_made: number;
+  sandbox_calls_made: number;
+  provider_latency_ms: number;
+  failure: {
+    stage:
+      | "public_generation"
+      | "evidence_generation"
+      | "evidence_extraction"
+      | "evidence_execution"
+      | "criterion_generation"
+      | "criterion_extraction"
+      | "criterion_execution";
+    message: string;
+  } | null;
+  claim_boundary: string;
+};

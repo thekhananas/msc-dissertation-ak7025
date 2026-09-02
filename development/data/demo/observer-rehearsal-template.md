@@ -15,6 +15,8 @@ verbatim answer, or personal opinion.
 3. Give the observer control of the browser.
 4. Read each task exactly as written. Do not explain where controls are or what the expected answer means.
 5. Record help only when the observer cannot continue.
+6. Use **Recorded replay**, not **Live illustration**. Record the application revision and whether local changes are present;
+   do not describe a modified working copy as a clean committed version.
 
 ## Observer Tasks
 
@@ -52,9 +54,11 @@ Ask these after the browser tasks. Do not suggest an answer.
 
 Mark the meaning, not exact wording:
 
-- **Question:** when an adaptive tutoring system should request executable programming evidence, and how much it should trust it.
-- **Result:** the proposed policy beat random selection in simulation, but did not beat uncertainty-only or ordinary
-  value-of-information selection. More evidence was sometimes harmful.
+- **Question:** whether extra coding checks improve predictions, and which cases should receive checks when their number is
+  limited. Tutoring is the application context; the completed selection study allocates exactly half the checks in advance.
+- **Result:** the proposed policy beat random selection on the held-out simulation average, but lost to uncertainty-only and
+  the simpler rule using average reliability. More evidence was harmful in some settings. The observer does not need the
+  technical name `plug-in clipped-belief rule`; do not accept a claim that ordinary value-of-information selection was tested.
 - **Limit:** the completed work does not show improved human learning, better live tutoring, reduced cognitive offloading, or
   deployed cost savings.
 
@@ -66,6 +70,10 @@ Mark the meaning, not exact wording:
 
 ~~~text
 Observer code:
+Date:
+Application revision:
+Local changes present: YES / NO
+Previous exposure to this demo: YES / NO / UNKNOWN
 Total task time:
 Help given, if any:
 Operation issue:
@@ -76,5 +84,12 @@ Result: PASS / REHEARSE AGAIN
 ~~~
 
 Pass only when the observer completes both browser tasks without help and answers all three comprehension questions accurately.
-If the rehearsal fails, correct only the demonstrated problem, then repeat with a different observer or after enough time has
-passed that the first observer is no longer recalling the expected route.
+Do not fill any checkbox before observing the corresponding action or explanation. A successful automated browser test does
+not satisfy this checklist.
+
+If the rehearsal fails, retain that record and correct the demonstrated problem. Prefer a new observer for the next independent
+check. A repeat with the same person can verify usability fixes, but previous exposure may help them remember the route or
+answer; label it as a repeat, even if time has passed. Do not replace the first attempt with the later result.
+
+This checklist does not time the presenter's five-minute story or verify the backup video. Record those separately using the
+demo runbook; completing this rehearsal cannot close either requirement.

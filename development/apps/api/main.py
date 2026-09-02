@@ -11,8 +11,11 @@ from socratic_tutor.contracts import (
     BenchmarkReplaySnapshot,
     CreateSessionRequest,
     ExperimentSummaryArtifact,
+    LiveEvaluationSnapshot,
+    LiveEvaluationStatus,
     SessionSnapshot,
     StartBenchmarkReplayRequest,
+    StartLiveEvaluationRequest,
     SubmitTurnRequest,
     TaskView,
 )
@@ -21,6 +24,14 @@ from socratic_tutor.demo_replay import (
     ExperimentSummaryService,
     ReplayArtifactError,
     ReplayNotStartedError,
+)
+from socratic_tutor.live_evaluation import (
+    LiveEvaluationCaseError,
+    LiveEvaluationConflictError,
+    LiveEvaluationNotFoundError,
+    LiveEvaluationService,
+    LiveEvaluationUnavailableError,
+    create_live_evaluation_service,
 )
 from socratic_tutor.sessions import (
     IdempotencyConflictError,
@@ -54,10 +65,15 @@ def _experiment_summary_service(request: Request) -> ExperimentSummaryService:
     return cast(ExperimentSummaryService, request.app.state.experiment_summary_service)
 
 
+def _live_evaluation_service(request: Request) -> LiveEvaluationService:
+    return cast(LiveEvaluationService, request.app.state.live_evaluation_service)
+
+
 def create_app(
     event_log_path: Path | None = None,
     benchmark_replay_path: Path | None = None,
     experiment_summary_path: Path | None = None,
+    live_evaluation_service: LiveEvaluationService | None = None,
 ) -> FastAPI:
     """Build an app with an injectable event log for tests and local recovery."""
 
@@ -77,6 +93,11 @@ def create_app(
     application.state.session_service = SessionService(JsonlEventStore(path))
     application.state.benchmark_replay_service = BenchmarkReplayService(replay_path)
     application.state.experiment_summary_service = ExperimentSummaryService(summary_path)
+    application.state.live_evaluation_service = (
+        live_evaluation_service
+        if live_evaluation_service is not None
+        else create_live_evaluation_service(settings)
+    )
 
     @application.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:  # pyright: ignore[reportUnusedFunction]
@@ -173,6 +194,54 @@ def create_app(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Benchmark replay is unavailable",
             ) from error
+
+    @application.get(
+        "/api/live-evaluations/status",
+        response_model=LiveEvaluationStatus,
+    )
+    async def get_live_evaluation_status(  # pyright: ignore[reportUnusedFunction]
+        request: Request,
+    ) -> LiveEvaluationStatus:
+        return _live_evaluation_service(request).status()
+
+    @application.post(
+        "/api/live-evaluations",
+        response_model=LiveEvaluationSnapshot,
+        status_code=status.HTTP_201_CREATED,
+    )
+    async def start_live_evaluation(  # pyright: ignore[reportUnusedFunction]
+        body: StartLiveEvaluationRequest,
+        request: Request,
+    ) -> LiveEvaluationSnapshot:
+        try:
+            return await _live_evaluation_service(request).start(body)
+        except LiveEvaluationUnavailableError as error:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(error),
+            ) from error
+        except LiveEvaluationCaseError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        except LiveEvaluationConflictError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+
+    @application.post(
+        "/api/live-evaluations/{run_id}/reveal",
+        response_model=LiveEvaluationSnapshot,
+    )
+    async def reveal_live_evaluation(  # pyright: ignore[reportUnusedFunction]
+        run_id: str,
+        request: Request,
+    ) -> LiveEvaluationSnapshot:
+        try:
+            return await _live_evaluation_service(request).reveal(run_id)
+        except LiveEvaluationUnavailableError as error:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(error),
+            ) from error
+        except LiveEvaluationNotFoundError as error:
+            raise HTTPException(status_code=404, detail="Live evaluation not found") from error
 
     return application
 

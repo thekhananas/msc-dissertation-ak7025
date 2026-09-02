@@ -501,6 +501,43 @@ progress {
   margin-top: 34px;
 }
 
+.experiment-mode-tabs {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  margin-top: 22px;
+  border: 1px solid #9ba8b2;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.experiment-mode-tabs button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 0;
+  color: #52616c;
+  background: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.experiment-mode-tabs button + button {
+  border-left: 1px solid #9ba8b2;
+}
+
+.experiment-mode-tabs button[aria-selected="true"] {
+  color: #ffffff;
+  background: #27343d;
+}
+
+#live-evaluation-panel {
+  min-width: 0;
+}
+
+#live-evaluation-panel[hidden],
+#recorded-replay-panel[hidden] {
+  display: none;
+}
+
 .replay-panel {
   min-width: 0;
   padding-right: 34px;
@@ -543,6 +580,111 @@ progress {
   background: #f1f6f8;
   font-size: 0.7rem;
   font-weight: 750;
+}
+
+.live-record-status {
+  border-color: #9a6a17;
+  color: #71490d;
+  background: #fff7e8;
+}
+
+.live-start,
+.live-unavailable,
+.live-failure {
+  padding: 18px;
+  border: 1px solid #c5ccd2;
+  border-radius: 5px;
+  background: #f8f9fa;
+}
+
+.live-start p,
+.live-unavailable p,
+.live-failure p {
+  margin: 0 0 16px;
+  color: #3f4d57;
+  font-size: 0.9rem;
+  line-height: 1.58;
+}
+
+.live-start .primary-button,
+.live-start .secondary-button {
+  margin-right: 10px;
+}
+
+.live-unavailable h4 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.live-failure {
+  margin-bottom: 20px;
+  border-color: #d7a39c;
+  background: #fff2f0;
+}
+
+.live-failure strong {
+  color: #8a1c13;
+}
+
+.live-failure p {
+  margin-top: 6px;
+  color: #7a2a20;
+}
+
+.live-response {
+  max-height: 260px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid #c5ccd2;
+  border-radius: 4px;
+  color: #27343d;
+  background: #f6f7f8;
+  font: 0.78rem/1.58 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.experiment-step .live-assessment,
+.experiment-step .live-check-result {
+  margin-top: 10px;
+  color: #52616c;
+  font-size: 0.8rem;
+}
+
+.live-check-result {
+  font-weight: 650;
+}
+
+.live-activity {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 18px 0 0;
+  border-top: 1px solid #c5ccd2;
+  border-bottom: 1px solid #c5ccd2;
+}
+
+.live-activity div {
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.live-activity div + div {
+  border-left: 1px solid #d7dce0;
+}
+
+.live-activity dt {
+  color: #61717d;
+  font-size: 0.66rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.live-activity dd {
+  margin: 4px 0 0;
+  color: #27343d;
+  font-size: 0.78rem;
+  font-weight: 650;
 }
 
 .experiment-step {
@@ -841,6 +983,29 @@ progress {
 }
 
 @media (max-width: 620px) {
+  .prediction-table {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .prediction-table th,
+  .prediction-table td {
+    padding: 10px 8px;
+    overflow-wrap: anywhere;
+  }
+
+  .prediction-table th:first-child {
+    width: 50%;
+  }
+
+  .prediction-table th:nth-child(2) {
+    width: 20%;
+  }
+
+  .prediction-table th:last-child {
+    width: 30%;
+  }
+
   .app-header {
     align-items: flex-start;
     flex-direction: column;
@@ -911,6 +1076,11 @@ progress {
     width: 100%;
   }
 
+  .experiment-mode-tabs {
+    display: grid;
+    width: 100%;
+  }
+
   .experiment-meta div + div {
     border-top: 1px solid #d7dce0;
     border-left: 0;
@@ -931,6 +1101,25 @@ progress {
     align-items: flex-start;
     flex-direction: column;
     gap: 5px;
+  }
+
+  .live-start .primary-button,
+  .live-start .secondary-button {
+    width: 100%;
+    margin: 0;
+  }
+
+  .live-start .secondary-button {
+    margin-top: 10px;
+  }
+
+  .live-activity {
+    grid-template-columns: 1fr;
+  }
+
+  .live-activity div + div {
+    border-top: 1px solid #d7dce0;
+    border-left: 0;
   }
 
   .finding-label-row span:last-child {

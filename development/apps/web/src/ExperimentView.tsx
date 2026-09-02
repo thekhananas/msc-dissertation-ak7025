@@ -2,15 +2,37 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   getExperimentSummary,
+  getLiveEvaluationStatus,
   revealBenchmarkOutcome,
   startBenchmarkReplay,
 } from "./api";
 import { newIdempotencyKey } from "./ids";
-import type { BenchmarkReplaySnapshot, ExperimentSummary } from "./types";
+import { LiveEvaluationPanel } from "./LiveEvaluationPanel";
+import type {
+  BenchmarkReplaySnapshot,
+  ExperimentSummary,
+  LiveEvaluationStatus,
+} from "./types";
+
+type ExperimentMode = "recorded" | "live";
+
+const unavailableLiveStatus: LiveEvaluationStatus = {
+  enabled: false,
+  available: false,
+  case_id: "dev-aliasing-001",
+  evaluation_model: "cerebras/gpt-oss-120b",
+  reason: "The live status could not be loaded. The recorded replay remains available.",
+  claim_boundary: "Illustration only. Live runs are not canonical research evidence.",
+};
 
 type ExperimentState =
   | { kind: "loading" }
-  | { kind: "ready"; replay: BenchmarkReplaySnapshot; summary: ExperimentSummary }
+  | {
+      kind: "ready";
+      replay: BenchmarkReplaySnapshot;
+      summary: ExperimentSummary;
+      liveStatus: LiveEvaluationStatus;
+    }
   | { kind: "error"; message: string };
 
 function scoreLabel(score: number): string {
@@ -29,6 +51,7 @@ function evidenceTypeLabel(value: string): string {
 export function ExperimentView() {
   const replayKey = useRef(newIdempotencyKey());
   const [state, setState] = useState<ExperimentState>({ kind: "loading" });
+  const [mode, setMode] = useState<ExperimentMode>("recorded");
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealError, setRevealError] = useState<string | null>(null);
 
@@ -37,8 +60,11 @@ export function ExperimentView() {
     void Promise.all([
       startBenchmarkReplay(replayKey.current, controller.signal),
       getExperimentSummary(controller.signal),
+      getLiveEvaluationStatus(controller.signal).catch(() => unavailableLiveStatus),
     ])
-      .then(([replay, summary]) => setState({ kind: "ready", replay, summary }))
+      .then(([replay, summary, liveStatus]) =>
+        setState({ kind: "ready", replay, summary, liveStatus }),
+      )
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
@@ -59,7 +85,12 @@ export function ExperimentView() {
     setRevealError(null);
     try {
       const replay = await revealBenchmarkOutcome(state.replay.replay_id);
-      setState({ kind: "ready", replay, summary: state.summary });
+      setState({
+        kind: "ready",
+        replay,
+        summary: state.summary,
+        liveStatus: state.liveStatus,
+      });
     } catch (error: unknown) {
       setRevealError(error instanceof Error ? error.message : "Unable to reveal the result");
     } finally {
@@ -85,34 +116,69 @@ export function ExperimentView() {
     );
   }
 
-  const { replay, summary } = state;
+  const { replay, summary, liveStatus } = state;
+  const showingLive = mode === "live";
 
   return (
     <main className="experiment-page">
       <section className="experiment-intro" aria-labelledby="experiment-title">
         <div>
-          <p className="eyebrow">Recorded research evidence</p>
+          <p className="eyebrow">
+            {showingLive ? "Optional live illustration" : "Recorded research evidence"}
+          </p>
           <h2 id="experiment-title">When is another coding check worth requesting?</h2>
           <p>{summary.overarching_question}</p>
         </div>
         <dl className="experiment-meta">
           <div>
             <dt>Case</dt>
-            <dd>{replay.case_id}</dd>
+            <dd>{showingLive ? liveStatus.case_id : replay.case_id}</dd>
           </div>
           <div>
             <dt>Evaluation model</dt>
-            <dd>{replay.evaluation_model}</dd>
+            <dd>{showingLive ? liveStatus.evaluation_model : replay.evaluation_model}</dd>
           </div>
           <div>
-            <dt>Replay activity</dt>
-            <dd>0 model calls, 0 code runs</dd>
+            <dt>{showingLive ? "Live activity" : "Replay activity"}</dt>
+            <dd>
+              {showingLive
+                ? liveStatus.available
+                  ? "Up to 3 model requests, 2 remote code runs"
+                  : "Disabled"
+                : "0 model calls, 0 code runs"}
+            </dd>
           </div>
         </dl>
       </section>
 
+      <div className="experiment-mode-tabs" role="tablist" aria-label="Experiment source">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={!showingLive}
+          aria-controls="recorded-replay-panel"
+          onClick={() => setMode("recorded")}
+        >
+          Recorded replay
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={showingLive}
+          aria-controls="live-evaluation-panel"
+          onClick={() => setMode("live")}
+        >
+          Live illustration
+        </button>
+      </div>
+
       <div className="experiment-layout">
-        <section className="replay-panel" aria-labelledby="replay-title">
+        <section
+          id="recorded-replay-panel"
+          className="replay-panel"
+          aria-labelledby="replay-title"
+          hidden={showingLive}
+        >
           <div className="experiment-section-heading">
             <div>
               <span>Worked example</span>
@@ -229,6 +295,13 @@ export function ExperimentView() {
 
           <p className="claim-boundary">{replay.claim_boundary}</p>
         </section>
+
+        <div id="live-evaluation-panel" hidden={!showingLive}>
+          <LiveEvaluationPanel
+            status={liveStatus}
+            onUseRecorded={() => setMode("recorded")}
+          />
+        </div>
 
         <aside className="findings-panel" aria-labelledby="findings-title">
           <div className="experiment-section-heading">

@@ -10,6 +10,7 @@ from typing import Any, cast
 import httpx
 
 from apps.api.main import create_app
+from socratic_tutor.live_evaluation import LiveEvaluationService
 
 WORKSPACE_ROOT = Path(__file__).parents[2]
 REPLAY_ARTIFACT = WORKSPACE_ROOT / "data" / "demo" / "benchmark-replay-v1.json"
@@ -17,7 +18,16 @@ SUMMARY_ARTIFACT = WORKSPACE_ROOT / "data" / "demo" / "experiment-summary-v1.jso
 
 
 async def _exercise_replay_api(log_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
-    app = create_app(log_path, REPLAY_ARTIFACT, SUMMARY_ARTIFACT)
+    app = create_app(
+        log_path,
+        REPLAY_ARTIFACT,
+        SUMMARY_ARTIFACT,
+        LiveEvaluationService(
+            enabled=False,
+            case_id="dev-aliasing-001",
+            unavailable_reason="Disabled for the API test.",
+        ),
+    )
     transport = httpx.ASGITransport(app=app)  # pyright: ignore[reportUnknownMemberType]
     async with httpx.AsyncClient(  # pyright: ignore[reportUnknownMemberType]
         transport=transport,
@@ -27,6 +37,12 @@ async def _exercise_replay_api(log_path: Path) -> tuple[dict[str, Any], dict[str
             f"/api/benchmark-replays/{'0' * 64}/reveal"
         )
         assert missing.status_code == 404
+
+        live_status_response = await client.get("/api/live-evaluations/status")
+        assert live_status_response.status_code == 200
+        live_status = cast(dict[str, Any], live_status_response.json())
+        assert live_status["enabled"] is False
+        assert live_status["available"] is False
 
         started_response = await client.post(  # pyright: ignore[reportUnknownMemberType]
             "/api/benchmark-replays",
