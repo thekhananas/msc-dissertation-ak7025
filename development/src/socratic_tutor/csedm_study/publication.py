@@ -327,7 +327,7 @@ def _build_figure(report: CSEDMAnalysisReport) -> Figure:
     grid = figure.add_gridspec(
         1,
         2,
-        left=0.11,
+        left=0.175,
         right=0.97,
         bottom=0.24,
         top=0.70,
@@ -382,7 +382,7 @@ def _build_figure(report: CSEDMAnalysisReport) -> Figure:
 def _draw_capture_panel(axis: Axes, report: CSEDMAnalysisReport) -> None:
     primary = report.primary
     values = (primary.expected_random_captured_error_recall, primary.captured_error_recall)
-    labels = ("Random review\n(expected)", "Most uncertain\npredictions")
+    labels = ("Random selection\n(expected)", "Uncertainty\nranking")
     bars = axis.barh((1, 0), values, color=(GREY, BLUE), height=0.52)
     axis.set_title("Share of the model's errors found", loc="left", pad=10)
     axis.set_xlim(0.0, 0.82)
@@ -421,7 +421,7 @@ def _draw_difference_panel(axis: Axes, report: CSEDMAnalysisReport) -> None:
         capsize=5,
         markersize=7,
     )
-    axis.set_title("Advantage over random review", loc="left", pad=10)
+    axis.set_title("Gain over random selection", loc="left", pad=10)
     axis.set_xlim(-0.04, 0.34)
     axis.set_ylim(0.0, 1.0)
     axis.set_yticks(())
