@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "schema_id": "demo.benchmark_replay_artifact.v1",
+  "source_data_hash": "569465b9871baf82cb8bec37b8b46cd60bac845c58332dfc7b2bdca95a49a04a",
+  "source_manifest_hash": "7faf14c9dff4a6c201df3d322fab9e7b299dca7268d077a134aec399bfb4e34e",
+  "benchmark_version": "v1",
+  "case_id": "h-c2m1-02",
+  "evaluation_model": "cerebras/gpt-oss-120b",
+  "public_summary": "The model first wrote \"True 3\", then ended with \"False 2\". Two reviewers saw only this answer; both called it conflicting.",
+  "predictions": [
+    {
+      "condition": "dialogue_only",
+      "label": "First answer only",
+      "tracker_score": 0.4,
+      "policy_threshold": 0.6,
+      "predicts_success": false,
+      "committed_at_utc": "2026-09-01T07:47:56.338340Z",
+      "record_hash": "e91faa27f73e20f9af3f6cd1c6b3c182eacdb87538986eb19c1ef3a1074a1fe4"
+    },
+    {
+      "condition": "probe_informed",
+      "label": "Related coding task",
+      "tracker_score": 0.6000000000000001,
+      "policy_threshold": 0.6,
+      "predicts_success": true,
+      "committed_at_utc": "2026-09-01T07:47:56.338340Z",
+      "record_hash": "81ce39882d475f3c60d1bd27c32f28e1947389186e2fc257bf3355adc0decca0"
+    },
+    {
+      "condition": "unrelated_probe",
+      "label": "Comparison coding task",
+      "tracker_score": 0.6000000000000001,
+      "policy_threshold": 0.6,
+      "predicts_success": true,
+      "committed_at_utc": "2026-09-01T07:47:56.338340Z",
+      "record_hash": "2e4eae30d1a43052b63e9404f6b257e049c5a8de7f0292476bf6cab9622fa626"
+    },
+    {
+      "condition": "corrupted_probe",
+      "label": "Reversed check result",
+      "tracker_score": 0.2,
+      "policy_threshold": 0.6,
+      "predicts_success": false,
+      "committed_at_utc": "2026-09-01T07:47:56.338340Z",
+      "record_hash": "203a8038693d3e0b1add13f6c5059f35fb1b831363951cdc48f3c6c44a0c9ab0"
+    }
+  ],
+  "outcome": {
+    "summary": "The final task asked the model to remove a tag from the supplied list, then return the remaining tags in sorted order. Its answer passed both automatic tests.",
+    "test_warning": "The model created a new list, so the supplied list did not change. The tests checked only the returned values; they never checked the supplied list.",
+    "passed_checks": 2,
+    "failed_checks": 0,
+    "revealed_at_utc": "2026-09-01T09:03:39.348417Z"
+  },
+  "predictions_sealed_before_outcome_reveal": true,
+  "claim_boundary": "This replay examines one response from one model run. It demonstrates prediction ordering and an evaluation weakness; it does not measure student learning or tutoring quality."
+}

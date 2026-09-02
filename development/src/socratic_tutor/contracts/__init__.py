@@ -15,6 +15,14 @@ from socratic_tutor.contracts.models import (
     TutorAction,
     TutorPromptTemplates,
 )
+from socratic_tutor.contracts.replay import (
+    BenchmarkReplayArtifact,
+    BenchmarkReplaySnapshot,
+    CommittedPredictionView,
+    RecordedOutcomeView,
+    ReplayPhase,
+    StartBenchmarkReplayRequest,
+)
 from socratic_tutor.contracts.session import (
     CreateSessionRequest,
     SessionSnapshot,
@@ -23,6 +31,9 @@ from socratic_tutor.contracts.session import (
 )
 
 __all__ = [
+    "BenchmarkReplayArtifact",
+    "BenchmarkReplaySnapshot",
+    "CommittedPredictionView",
     "ContractModel",
     "CreateSessionRequest",
     "Evidence",
@@ -30,7 +41,10 @@ __all__ = [
     "EvidenceRules",
     "GuardrailResult",
     "PolicyDecision",
+    "RecordedOutcomeView",
+    "ReplayPhase",
     "SessionSnapshot",
+    "StartBenchmarkReplayRequest",
     "StudentSubmission",
     "SubmitTurnRequest",
     "TaskDefinition",
