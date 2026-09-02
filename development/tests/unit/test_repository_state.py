@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from socratic_tutor.repository_state import current_clean_revision
+from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 
 
 def test_returns_full_revision_for_clean_repository(tmp_path: Path) -> None:
@@ -66,6 +66,30 @@ def test_rejects_non_full_revision(monkeypatch: pytest.MonkeyPatch, tmp_path: Pa
 
     with pytest.raises(ValueError, match="Git did not return a full source revision"):
         current_clean_revision(tmp_path, dirty_message="Repository is dirty")
+
+
+def test_revision_validation_requires_explicit_abbreviation_permission() -> None:
+    full_revision = "a" * 40
+    short_revision = "b" * 7
+
+    assert validate_git_revision(full_revision, invalid_message="Invalid revision") == full_revision
+    with pytest.raises(ValueError, match="Invalid revision"):
+        validate_git_revision(short_revision, invalid_message="Invalid revision")
+
+    assert (
+        validate_git_revision(
+            short_revision,
+            invalid_message="Invalid revision",
+            allow_abbreviated=True,
+        )
+        == short_revision
+    )
+    with pytest.raises(ValueError, match="Invalid revision"):
+        validate_git_revision(
+            "c" * 6,
+            invalid_message="Invalid revision",
+            allow_abbreviated=True,
+        )
 
 
 def _initialise_repository(path: Path) -> str:

@@ -39,10 +39,25 @@ def current_clean_revision(
         raise error_factory(dirty_message)
 
     revision = _git(project_root, "rev-parse", "HEAD")
-    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
-        revision_error = invalid_revision_error_factory or error_factory
-        raise revision_error(invalid_revision_message)
-    return revision
+    return validate_git_revision(
+        revision,
+        invalid_message=invalid_revision_message,
+        error_factory=invalid_revision_error_factory or error_factory,
+    )
+
+
+def validate_git_revision(
+    value: str,
+    *,
+    invalid_message: str,
+    error_factory: ErrorFactory = ValueError,
+    allow_abbreviated: bool = False,
+) -> str:
+    """Validate a lowercase full SHA, or an explicitly permitted short SHA."""
+    pattern = r"[0-9a-f]{7,40}" if allow_abbreviated else r"[0-9a-f]{40}"
+    if re.fullmatch(pattern, value) is None:
+        raise error_factory(invalid_message)
+    return value
 
 
 def _git(project_root: Path, *arguments: str) -> str:
