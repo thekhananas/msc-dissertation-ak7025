@@ -42,7 +42,7 @@ _LIGHT_GREY = "#D7DDE2"
 _PALE_GREY = "#F5F7F8"
 _INK = "#17212B"
 _MUTED = "#56616B"
-_TITLE = "How did the study keep predictions separate from the outcome?"
+_TITLE = "Predictions were saved before the outcome"
 _STYLE: dict[str, object] = {
     "figure.facecolor": "#FAFAF7",
     "font.family": ["Helvetica Neue", "Arial", "DejaVu Sans", "sans-serif"],
@@ -305,103 +305,82 @@ def _build_figure(
     decision_report: ExternalDecisionSealReport,
     criterion_report: ExternalCriterionReport,
 ) -> Figure:
-    figure = Figure(figsize=(12.4, 9.3), facecolor="#FAFAF7")
+    figure = Figure(figsize=(6.0, 8.0), facecolor="white")
     axis = figure.add_axes((0, 0, 1, 1))
     axis.set_xlim(0, 1)
     axis.set_ylim(0, 1)
     axis.axis("off")
 
-    figure.text(0.07, 0.955, _TITLE, fontsize=22, fontweight="bold", color=_INK)
+    figure.text(0.07, 0.97, textwrap.fill(_TITLE, 34), fontsize=16, fontweight="bold", va="top")
     figure.text(
         0.07,
-        0.912,
-        "For each case, predictions were fixed first; the later coding task was requested "
-        "only afterwards.",
-        fontsize=12,
+        0.885,
+        f"Evaluation model: {decision_plan.model_route.model}.\n"
+        "The study measured performance on authored coding tasks.",
+        fontsize=10.5,
         color=_MUTED,
-    )
-    figure.text(
-        0.07,
-        0.858,
-        f"No human learner took part. {decision_plan.model_route.model} was an evaluation model, "
-        "not a validated student simulator.",
-        fontsize=11.5,
-        fontweight="bold",
-        color=_ORANGE,
+        va="top",
     )
 
     misconception_count = sum(len(concept.misconception_ids) for concept in design.concepts)
     stages = (
         (
-            "Fix the cases",
-            f"{len(design.held_out_cases)} fixed cases",
-            f"{len(design.concepts)} concepts; {misconception_count} misconceptions",
-            "Each step uses its own context",
+            "Prepare the cases",
+            f"{len(design.held_out_cases)} cases cover",
+            f"{len(design.concepts)} concepts and {misconception_count} misconceptions.",
+            "The answer, probe and outcome use separate prompts and contexts.",
             _GREY,
         ),
         (
-            "Collect responses before the outcome",
-            "One public response and one separate evidence response per case",
-            (
-                f"{decision_report.evidence_execution_count} probe programmes run in a "
-                "separate sandbox"
-            ),
-            "The outcome task is still hidden",
+            "Collect the answer and probe",
+            "Collect one public answer and one probe response per case.",
+            (f"Run {decision_report.evidence_execution_count} probe programmes in sandboxes."),
+            "The outcome response has not been requested.",
             _BLUE,
         ),
         (
-            "Fix four predictions per case",
-            "Dialogue only; relevant evidence; unrelated control; inverted control",
-            f"{decision_report.prediction_count} predictions saved in a permanent record",
-            "The outcome is still hidden",
+            "Save four predictions per case",
+            "Use dialogue alone, relevant evidence, unrelated evidence or inverted evidence.",
+            f"Save {decision_report.prediction_count} predictions",
+            "with hashes for later verification.",
             _PURPLE,
         ),
         (
-            "Reveal the later outcome",
-            "Only then request the separate outcome response",
+            "Request and execute the outcome task",
+            "After verifying the saved predictions, request the separate outcome response.",
             f"{criterion_report.completed_execution_count} completed; "
-            f"{criterion_report.sandbox_missing_count} missing after sandbox execution",
-            "The saved predictions cannot be changed",
+            f"{criterion_report.sandbox_missing_count} missing after execution.",
+            "Retain the original prediction records.",
             _GREEN,
         ),
         (
-            "Compare conditions within each case",
-            "Compare each prediction with the same coding outcome",
-            (
-                f"{criterion_report.completed_execution_count} eligible paired cases; "
-                "one model run per case"
-            ),
-            "Report the difference, uncertainty, missing cases, controls, and failures",
+            "Compare predictions with outcomes",
+            "Compare all four predictions with the same outcome for each of the",
+            (f"{criterion_report.completed_execution_count} eligible cases."),
+            "Report differences, uncertainty and missing outcomes.",
             _INK,
         ),
     )
-    y_positions = (0.71, 0.575, 0.44, 0.305, 0.17)
+    y_positions = (0.70, 0.555, 0.41, 0.265, 0.12)
     for index, (stage, left, middle, right, colour) in enumerate(stages, start=1):
         _draw_stage(axis, index, y_positions[index - 1], stage, left, middle, right, colour)
         if index < len(stages):
             axis.annotate(
                 "",
-                xy=(0.082, y_positions[index] + 0.052),
-                xytext=(0.082, y_positions[index - 1] - 0.01),
+                xy=(0.06, y_positions[index] + 0.08),
+                xytext=(0.06, y_positions[index - 1] + 0.04),
                 arrowprops={"arrowstyle": "-|>", "color": _GREY, "linewidth": 1.2},
             )
 
     figure.text(
-        0.12,
-        0.071,
-        "Before the outcome was revealed, the predictions were fixed. No prediction request "
-        "was allowed afterwards.",
-        fontsize=10.5,
-        fontweight="bold",
-        color=_GREEN,
-    )
-    figure.text(
-        0.12,
-        0.033,
-        "Scope: this study asks whether executable evidence improves prediction on fixed cases. "
-        "It does not measure learning or tutoring effectiveness.",
+        0.07,
+        0.065,
+        "Hashes support checking for changes to saved files.\n"
+        "Local files can still be edited outside the workflow.\n"
+        "No human learning outcome was measured.",
         fontsize=10,
         color=_MUTED,
+        va="top",
     )
     return figure
 
@@ -417,9 +396,9 @@ def _draw_stage(
     colour: str,
 ) -> None:
     box = FancyBboxPatch(
-        (0.12, y_position),
-        0.82,
-        0.105,
+        (0.11, y_position),
+        0.85,
+        0.125,
         boxstyle="round,pad=0.004,rounding_size=0.008",
         facecolor=_PALE_GREY,
         edgecolor=_LIGHT_GREY,
@@ -428,17 +407,17 @@ def _draw_stage(
     axis.add_patch(box)
     axis.add_patch(
         FancyBboxPatch(
-            (0.12, y_position),
-            0.012,
-            0.105,
+            (0.11, y_position),
+            0.008,
+            0.125,
             boxstyle="round,pad=0.0,rounding_size=0.004",
             facecolor=colour,
             edgecolor=colour,
         )
     )
     axis.text(
-        0.082,
-        y_position + 0.052,
+        0.06,
+        y_position + 0.0625,
         str(number),
         ha="center",
         va="center",
@@ -447,28 +426,16 @@ def _draw_stage(
         color="white",
         bbox={"boxstyle": "circle,pad=0.35", "facecolor": colour, "edgecolor": colour},
     )
-    axis.text(0.15, y_position + 0.076, title, fontsize=11, fontweight="bold", color=_INK)
-    for x_position in (0.415, 0.695):
-        axis.plot(
-            (x_position, x_position),
-            (y_position + 0.015, y_position + 0.06),
-            color=_LIGHT_GREY,
-            linewidth=0.7,
-        )
-    for x_position, value in zip(
-        (0.15, 0.43, 0.71),
-        (left_text, middle_text, right_text),
-        strict=True,
-    ):
-        axis.text(
-            x_position,
-            y_position + 0.034,
-            textwrap.fill(value, width=37),
-            fontsize=9.2,
-            color=_MUTED,
-            va="center",
-            linespacing=1.25,
-        )
+    axis.text(0.14, y_position + 0.101, title, fontsize=11.5, fontweight="bold")
+    axis.text(
+        0.14,
+        y_position + 0.079,
+        textwrap.fill(" ".join((left_text, middle_text, right_text)), width=64),
+        fontsize=10.5,
+        color=_MUTED,
+        va="top",
+        linespacing=1.15,
+    )
 
 
 def _validate_sources(

@@ -65,9 +65,9 @@ def test_renders_commit_before_reveal_flow_and_retries_exactly(tmp_path: Path) -
     assert first.missing_criterion_count == 1
     assert (output_root / "external_study_design.pdf").read_bytes().startswith(b"%PDF")
     svg = (output_root / "external_study_design.svg").read_text(encoding="utf-8")
-    assert "No human learner took part" in svg
-    assert "Fix four predictions per case" in svg
-    assert "No prediction request was allowed afterwards" in svg
+    assert "No human learning outcome was measured" in svg
+    assert "Save four predictions per case" in svg
+    assert "After verifying the saved predictions, request the separate" in svg
     csv_text = (output_root / "study_design_stages.csv").read_text(encoding="utf-8")
     assert "sealed_predictions,condition_predictions,96" in csv_text
     assert "post_seal_criterion,missing_criterion_executions,1" in csv_text
