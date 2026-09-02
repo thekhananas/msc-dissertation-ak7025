@@ -349,7 +349,7 @@ def _build_figure(report: CSEDMAnalysisReport) -> Figure:
     figure.text(
         0.055,
         0.865,
-        "The same 50% review budget was used for both approaches.",
+        "Both approaches select 361 of 729 predictions, using the same fold-level allocation.",
         fontsize=9.5,
         color=MUTED,
         ha="left",
@@ -369,8 +369,7 @@ def _build_figure(report: CSEDMAnalysisReport) -> Figure:
     figure.text(
         0.055,
         0.065,
-        "This evaluates error review; it does not test executable probes, tutoring effects, "
-        "or learning.",
+        "No corrective review, executable-probe intervention or learning gain was tested.",
         fontsize=8.4,
         color=MUTED,
         ha="left",
@@ -425,13 +424,13 @@ def _draw_difference_panel(axis: Axes, report: CSEDMAnalysisReport) -> None:
     axis.set_xlim(-0.04, 0.34)
     axis.set_ylim(0.0, 1.0)
     axis.set_yticks(())
-    axis.set_xlabel("Difference in errors found")
-    axis.xaxis.set_major_formatter(PercentFormatter(1.0, decimals=0))
+    axis.set_xlabel("Difference in errors found\n(percentage points)")
+    axis.xaxis.set_major_formatter(PercentFormatter(1.0, decimals=0, symbol=""))
     axis.set_xticks((0.0, 0.1, 0.2, 0.3))
     axis.text(
         difference,
         0.72,
-        f"+{difference:.1%}",
+        f"{difference * 100:+.1f} points",
         ha="center",
         va="bottom",
         fontsize=10.0,
@@ -441,7 +440,7 @@ def _draw_difference_panel(axis: Axes, report: CSEDMAnalysisReport) -> None:
     axis.text(
         0.15,
         0.14,
-        f"95% learner interval\n{lower:.1%} to {upper:.1%}",
+        f"95% learner interval\n{lower * 100:.1f} to {upper * 100:.1f} points",
         ha="center",
         va="bottom",
         fontsize=8.4,

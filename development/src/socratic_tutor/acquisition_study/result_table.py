@@ -18,7 +18,10 @@ from pydantic import ValidationError
 from socratic_tutor.acquisition_study.canonical_primary_analysis import (
     CanonicalPrimaryAnalysisReport,
 )
-from socratic_tutor.acquisition_study.contracts import PolicyId
+from socratic_tutor.acquisition_study.publication_labels import (
+    COMPARATOR_LABELS,
+    signed_percentage_points,
+)
 from socratic_tutor.benchmark.artifacts import (
     artifact_locations,
     write_immutable_bytes,
@@ -28,11 +31,6 @@ from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
 from socratic_tutor.filesystem import read_bytes
 from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 
-_COMPARATOR_LABELS = {
-    PolicyId.SEEDED_RANDOM_BOUNDED: "Random selection",
-    PolicyId.UNCERTAINTY_ONLY_BOUNDED: "Highest uncertainty",
-    PolicyId.PLUG_IN_EVSI_BOUNDED: "Standard value of information",
-}
 _CAPTION = (
     "Primary comparison at the fixed 50\\% executable-probe budget across six "
     "held-out simulated settings."
@@ -40,8 +38,9 @@ _CAPTION = (
 _NOTE = (
     "Difference is proposed minus comparator classification error, so negative values favour "
     "the proposed selector. The six settings receive equal weight, with 2,000 paired episodes "
-    "per setting. The planned 98.3\\% intervals account for the three primary comparisons. "
-    "These results come from a hand-specified simulator and do not measure human learning."
+    "per setting. The planned 98.3% intervals account for the three primary comparisons. "
+    "Intervals hold the calibration fit fixed. These hand-specified simulations do not "
+    "measure human learning."
 )
 
 
@@ -137,7 +136,7 @@ def _rows(report: CanonicalPrimaryAnalysisReport) -> tuple[PrimaryTableRow, ...]
     rows: list[PrimaryTableRow] = []
     candidate_errors: list[float] = []
     for comparison in report.held_out_primary_intervals:
-        if comparison.comparator_policy_id not in _COMPARATOR_LABELS:
+        if comparison.comparator_policy_id not in COMPARATOR_LABELS:
             raise AcquisitionResultTableError("Primary report contains an unknown comparator")
         candidate_error = fmean(
             item.candidate_mean_classification_error for item in comparison.environment_effects
@@ -155,7 +154,7 @@ def _rows(report: CanonicalPrimaryAnalysisReport) -> tuple[PrimaryTableRow, ...]
         rows.append(
             PrimaryTableRow(
                 comparator_id=comparison.comparator_policy_id.value,
-                comparator_label=_COMPARATOR_LABELS[comparison.comparator_policy_id],
+                comparator_label=COMPARATOR_LABELS[comparison.comparator_policy_id],
                 candidate_error=candidate_error,
                 comparator_error=comparator_error,
                 difference=comparison.macro_mean_paired_effect,
@@ -238,8 +237,9 @@ def _latex(rows: tuple[PrimaryTableRow, ...]) -> bytes:
         (
             f"{_latex_escape(row.comparator_label)} & "
             f"{row.comparator_error * 100:.2f} & "
-            f"{row.difference * 100:+.2f} "
-            f"[{row.interval_lower * 100:+.2f}, {row.interval_upper * 100:+.2f}] & "
+            f"{signed_percentage_points(row.difference)} "
+            f"[{signed_percentage_points(row.interval_lower)}, "
+            f"{signed_percentage_points(row.interval_upper)}] & "
             f"{'Lower' if row.difference < 0 else 'Higher'} \\\\"
         )
         for row in rows
@@ -250,7 +250,7 @@ def _latex(rows: tuple[PrimaryTableRow, ...]) -> bytes:
             r"\end{tabular}",
             r"\vspace{0.4em}",
             r"\begin{minipage}{0.98\linewidth}",
-            r"\footnotesize " + _NOTE,
+            r"\footnotesize " + _latex_escape(_NOTE),
             r"\end{minipage}",
             r"\end{table}",
             "",
@@ -274,8 +274,9 @@ def _markdown(rows: tuple[PrimaryTableRow, ...]) -> bytes:
     lines.extend(
         (
             f"| {row.comparator_label} | {row.candidate_error:.2%} | "
-            f"{row.comparator_error:.2%} | {row.difference * 100:+.2f} pp | "
-            f"[{row.interval_lower * 100:+.2f}, {row.interval_upper * 100:+.2f}] pp | "
+            f"{row.comparator_error:.2%} | {signed_percentage_points(row.difference)} pp | "
+            f"[{signed_percentage_points(row.interval_lower)}, "
+            f"{signed_percentage_points(row.interval_upper)}] pp | "
             f"{row.outcome} |"
         )
         for row in rows
@@ -283,12 +284,7 @@ def _markdown(rows: tuple[PrimaryTableRow, ...]) -> bytes:
     lines.extend(
         (
             "",
-            (
-                "Difference is proposed minus comparator error, so negative values favour the "
-                "proposed selector. Six held-out simulated settings receive equal weight, with "
-                "2,000 paired episodes per setting. The planned 98.3% intervals account for the "
-                "three comparisons. This does not measure human learning or tutoring quality."
-            ),
+            _NOTE,
             "",
         )
     )

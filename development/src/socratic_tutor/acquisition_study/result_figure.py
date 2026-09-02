@@ -10,6 +10,7 @@ import csv
 import io
 import json
 import sys
+import textwrap
 from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
@@ -24,6 +25,10 @@ from socratic_tutor.acquisition_study.canonical_primary_analysis import (
     CanonicalPrimaryAnalysisReport,
 )
 from socratic_tutor.acquisition_study.contracts import PolicyId
+from socratic_tutor.acquisition_study.publication_labels import (
+    COMPARATOR_LABELS,
+    signed_percentage_points,
+)
 from socratic_tutor.benchmark.artifacts import (
     artifact_locations,
     write_immutable_bytes,
@@ -48,16 +53,11 @@ from socratic_tutor.repository_state import current_clean_revision
 
 _CANDIDATE = PolicyId.RELIABILITY_AWARE_BOUNDED.value
 _BUDGETS = (0.0, 0.25, 0.5, 0.75, 1.0)
-_COMPARATOR_LABELS = {
-    PolicyId.SEEDED_RANDOM_BOUNDED: "Random choice",
-    PolicyId.UNCERTAINTY_ONLY_BOUNDED: "Highest uncertainty",
-    PolicyId.PLUG_IN_EVSI_BOUNDED: "Standard value of information",
-}
-_TITLE = "Executable checks helped only when evidence behaved as assumed"
+_TITLE = "More checks increased average error across the held-out settings"
 _SUBTITLE = "Prediction error across 2,000 simulated episodes per setting; lower values are better."
 _FOOTNOTE = (
-    "Hand-specified simulator; six altered failure settings receive equal weight. "
-    "This does not measure human learning or tutoring quality."
+    "Six hand-specified failure settings receive equal weight. Intervals hold calibration fixed. "
+    "These results do not measure human learning."
 )
 _STYLE: dict[str, object] = {
     "figure.facecolor": "white",
@@ -320,7 +320,7 @@ def _comparison_points(
     points = tuple(
         _ComparisonPoint(
             comparator=row.comparator_policy_id.value,
-            label=_COMPARATOR_LABELS[row.comparator_policy_id],
+            label=COMPARATOR_LABELS[row.comparator_policy_id],
             effect=row.macro_mean_paired_effect,
             lower=row.interval_lower,
             upper=row.interval_upper,
@@ -519,7 +519,7 @@ def _draw_budget_panel(
         fontsize="small",
         va="bottom",
     )
-    axis.set_title("A. More probing helped only in the matched setting", loc="left", pad=8)
+    axis.set_title("A. Matched setting and held-out average", loc="left", pad=8)
     axis.set_xlabel("Cases given an executable check (%)")
     axis.set_ylabel("Prediction error (%)")
     axis.set_xticks(budgets)
@@ -555,7 +555,7 @@ def _draw_comparison_panel(
         )
         label_x = lower if effect < 0.0 else upper
         axis.annotate(
-            f"{effect:+.2f}",
+            signed_percentage_points(point.effect),
             (label_x, y_position),
             xytext=(5 if effect >= 0 else -5, 0),
             textcoords="offset points",
@@ -566,7 +566,13 @@ def _draw_comparison_panel(
         )
     axis.axvline(0.0, color=INK, linewidth=1.0)
     axis.set_title("B. At 50%, only random choice performed worse", loc="left", pad=8)
-    axis.set_yticks(y_positions, [point.label for point in points])
+    labels = [
+        textwrap.fill(point.label, width=20, break_long_words=False, break_on_hyphens=False)
+        if profile == "presentation"
+        else point.label
+        for point in points
+    ]
+    axis.set_yticks(y_positions, labels)
     axis.set_xlabel("Change in prediction error (percentage points)")
     axis.set_xlim(-1.65, 1.25)
     axis.set_ylim(-0.75, len(points) - 0.15)
@@ -594,7 +600,7 @@ def _draw_comparison_panel(
     axis.text(
         0.5,
         0.88,
-        f"{100.0 * points[0].confidence_level:.1f}% simultaneous intervals",
+        f"{100.0 * points[0].confidence_level:.1f}% intervals\n(adjusted for three comparisons)",
         transform=axis.transAxes,
         color=MUTED,
         ha="center",

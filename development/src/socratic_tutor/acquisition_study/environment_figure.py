@@ -25,6 +25,7 @@ from socratic_tutor.acquisition_study.canonical_primary_analysis import (
     CanonicalPrimaryAnalysisReport,
 )
 from socratic_tutor.acquisition_study.contracts import PolicyId
+from socratic_tutor.acquisition_study.publication_labels import COMPARATOR_LABELS
 from socratic_tutor.benchmark.artifacts import (
     artifact_locations,
     write_immutable_bytes,
@@ -44,10 +45,13 @@ from socratic_tutor.publication.figure_style import (
 )
 from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 
-_COMPARATORS = (
-    (PolicyId.SEEDED_RANDOM_BOUNDED, "Random choice", "o"),
-    (PolicyId.UNCERTAINTY_ONLY_BOUNDED, "Highest uncertainty", "s"),
-    (PolicyId.PLUG_IN_EVSI_BOUNDED, "Standard value of information", "D"),
+_COMPARATORS = tuple(
+    (policy_id, COMPARATOR_LABELS[policy_id], marker)
+    for policy_id, marker in (
+        (PolicyId.SEEDED_RANDOM_BOUNDED, "o"),
+        (PolicyId.UNCERTAINTY_ONLY_BOUNDED, "s"),
+        (PolicyId.PLUG_IN_EVSI_BOUNDED, "D"),
+    )
 )
 _ENVIRONMENTS = (
     ("matched", "Evidence behaves as assumed"),
@@ -65,9 +69,8 @@ _SUBTITLE = (
     "values left of zero favour the proposed selector."
 )
 _FOOTNOTE = (
-    "Setting rows show paired means; the held-out row shows multiplicity-adjusted 98.3% "
-    "intervals. Outlined points mark each comparison's worst setting. "
-    "This hand-specified simulator does not measure human learning."
+    "Setting rows show paired means; held-out intervals hold calibration fixed and adjust for "
+    "three comparisons. Outlined points mark worst settings. No human learning was measured."
 )
 _STYLE: dict[str, object] = {
     "figure.facecolor": "white",
