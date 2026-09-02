@@ -23,3 +23,4 @@ class Settings(BaseSettings):
     wandb_mode: Literal["disabled", "offline", "online"] = "disabled"
     event_log_path: Path = Path(".local/demo-events.jsonl")
     benchmark_replay_path: Path = Path("data/demo/benchmark-replay-v1.json")
+    experiment_summary_path: Path = Path("data/demo/experiment-summary-v1.json")

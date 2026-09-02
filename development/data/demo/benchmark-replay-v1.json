@@ -7,6 +7,24 @@
   "case_id": "h-c2m1-02",
   "evaluation_model": "cerebras/gpt-oss-120b",
   "public_summary": "The model first wrote \"True 3\", then ended with \"False 2\". Two reviewers saw only this answer; both called it conflicting.",
+  "evidence": [
+    {
+      "condition": "probe_informed",
+      "label": "Related coding task",
+      "response_summary": "The model returned [\"read\", \"write\"]. This was the expected result because permissions and granted referred to the same set.",
+      "execution_summary": "The submitted function passed its one automatic check.",
+      "passed_checks": 1,
+      "failed_checks": 0
+    },
+    {
+      "condition": "unrelated_probe",
+      "label": "Comparison coding task",
+      "response_summary": "The model returned [\"checked\", \"new\"]. This task was intended to cover a different skill, although it also changed a shared set.",
+      "execution_summary": "This submitted function also passed its one automatic check.",
+      "passed_checks": 1,
+      "failed_checks": 0
+    }
+  ],
   "predictions": [
     {
       "condition": "dialogue_only",
@@ -52,6 +70,7 @@
     "failed_checks": 0,
     "revealed_at_utc": "2026-09-01T09:03:39.348417Z"
   },
+  "interpretation": "The related coding task changed the prediction from failure to success. The comparison task caused the same change, and the later test accepted an incomplete solution. This case therefore cannot show that relevant evidence caused a better prediction.",
   "predictions_sealed_before_outcome_reveal": true,
   "claim_boundary": "This replay examines one response from one model run. It demonstrates prediction ordering and an evaluation weakness; it does not measure student learning or tutoring quality."
 }

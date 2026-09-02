@@ -7,11 +7,12 @@ import json
 from pathlib import Path
 from typing import cast
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from socratic_tutor.contracts.replay import (
     BenchmarkReplayArtifact,
     BenchmarkReplaySnapshot,
+    ExperimentSummaryArtifact,
     ReplayPhase,
     StartBenchmarkReplayRequest,
 )
@@ -23,6 +24,16 @@ class ReplayArtifactError(ValueError):
 
 class ReplayNotStartedError(KeyError):
     """The requested replay has not been started in this process."""
+
+
+def _load_contract[ContractT: BaseModel](
+    path: Path, model: type[ContractT], label: str
+) -> ContractT:
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        return model.model_validate(cast(object, raw))
+    except (OSError, json.JSONDecodeError, ValidationError) as error:
+        raise ReplayArtifactError(f"Could not load {label}: {path}") from error
 
 
 class BenchmarkReplayService:
@@ -49,13 +60,11 @@ class BenchmarkReplayService:
     def _load_artifact(self) -> BenchmarkReplayArtifact:
         if self._artifact is not None:
             return self._artifact
-        try:
-            raw = json.loads(self._artifact_path.read_text(encoding="utf-8"))
-            self._artifact = BenchmarkReplayArtifact.model_validate(cast(object, raw))
-        except (OSError, json.JSONDecodeError, ValidationError) as error:
-            raise ReplayArtifactError(
-                f"Could not load benchmark replay artifact: {self._artifact_path}"
-            ) from error
+        self._artifact = _load_contract(
+            self._artifact_path,
+            BenchmarkReplayArtifact,
+            "benchmark replay artifact",
+        )
         return self._artifact
 
     def _snapshot(self, replay_id: str, *, reveal_outcome: bool) -> BenchmarkReplaySnapshot:
@@ -73,7 +82,26 @@ class BenchmarkReplayService:
             case_id=artifact.case_id,
             evaluation_model=artifact.evaluation_model,
             public_summary=artifact.public_summary,
+            evidence=artifact.evidence,
             predictions=artifact.predictions,
             outcome=artifact.outcome if reveal_outcome else None,
+            interpretation=artifact.interpretation if reveal_outcome else None,
             claim_boundary=artifact.claim_boundary,
         )
+
+
+class ExperimentSummaryService:
+    """Load the checked public result summary without recalculating statistics."""
+
+    def __init__(self, artifact_path: Path) -> None:
+        self._artifact_path = artifact_path
+        self._artifact: ExperimentSummaryArtifact | None = None
+
+    def get(self) -> ExperimentSummaryArtifact:
+        if self._artifact is None:
+            self._artifact = _load_contract(
+                self._artifact_path,
+                ExperimentSummaryArtifact,
+                "experiment summary artifact",
+            )
+        return self._artifact

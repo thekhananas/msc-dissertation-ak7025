@@ -20,11 +20,14 @@ def test_replay_hides_outcome_until_fixed_predictions_are_returned() -> None:
     committed = service.start(StartBenchmarkReplayRequest(idempotency_key="demo-replay-1"))
     assert committed.phase is ReplayPhase.PREDICTIONS_COMMITTED
     assert committed.outcome is None
+    assert committed.interpretation is None
+    assert len(committed.evidence) == 2
     assert len(committed.predictions) == 4
 
     revealed = service.reveal(committed.replay_id)
     assert revealed.phase is ReplayPhase.OUTCOME_REVEALED
     assert revealed.outcome is not None
+    assert revealed.interpretation is not None
     assert revealed.predictions == committed.predictions
     assert all(
         prediction.committed_at_utc < revealed.outcome.revealed_at_utc

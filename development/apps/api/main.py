@@ -10,6 +10,7 @@ from socratic_tutor import __version__
 from socratic_tutor.contracts import (
     BenchmarkReplaySnapshot,
     CreateSessionRequest,
+    ExperimentSummaryArtifact,
     SessionSnapshot,
     StartBenchmarkReplayRequest,
     SubmitTurnRequest,
@@ -17,6 +18,7 @@ from socratic_tutor.contracts import (
 )
 from socratic_tutor.demo_replay import (
     BenchmarkReplayService,
+    ExperimentSummaryService,
     ReplayArtifactError,
     ReplayNotStartedError,
 )
@@ -48,9 +50,14 @@ def _benchmark_replay_service(request: Request) -> BenchmarkReplayService:
     return cast(BenchmarkReplayService, request.app.state.benchmark_replay_service)
 
 
+def _experiment_summary_service(request: Request) -> ExperimentSummaryService:
+    return cast(ExperimentSummaryService, request.app.state.experiment_summary_service)
+
+
 def create_app(
     event_log_path: Path | None = None,
     benchmark_replay_path: Path | None = None,
+    experiment_summary_path: Path | None = None,
 ) -> FastAPI:
     """Build an app with an injectable event log for tests and local recovery."""
 
@@ -61,9 +68,15 @@ def create_app(
         if benchmark_replay_path is not None
         else settings.benchmark_replay_path
     )
+    summary_path = (
+        experiment_summary_path
+        if experiment_summary_path is not None
+        else settings.experiment_summary_path
+    )
     application = FastAPI(title="Socratic Tutor API", version=__version__)
     application.state.session_service = SessionService(JsonlEventStore(path))
     application.state.benchmark_replay_service = BenchmarkReplayService(replay_path)
+    application.state.experiment_summary_service = ExperimentSummaryService(summary_path)
 
     @application.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:  # pyright: ignore[reportUnusedFunction]
@@ -129,6 +142,18 @@ def create_app(
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Benchmark replay is unavailable",
+            ) from error
+
+    @application.get("/api/experiment-summary", response_model=ExperimentSummaryArtifact)
+    async def get_experiment_summary(  # pyright: ignore[reportUnusedFunction]
+        request: Request,
+    ) -> ExperimentSummaryArtifact:
+        try:
+            return _experiment_summary_service(request).get()
+        except ReplayArtifactError as error:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Experiment summary is unavailable",
             ) from error
 
     @application.post(

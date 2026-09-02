@@ -13,10 +13,11 @@ from apps.api.main import create_app
 
 WORKSPACE_ROOT = Path(__file__).parents[2]
 REPLAY_ARTIFACT = WORKSPACE_ROOT / "data" / "demo" / "benchmark-replay-v1.json"
+SUMMARY_ARTIFACT = WORKSPACE_ROOT / "data" / "demo" / "experiment-summary-v1.json"
 
 
 async def _exercise_replay_api(log_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
-    app = create_app(log_path, REPLAY_ARTIFACT)
+    app = create_app(log_path, REPLAY_ARTIFACT, SUMMARY_ARTIFACT)
     transport = httpx.ASGITransport(app=app)  # pyright: ignore[reportUnknownMemberType]
     async with httpx.AsyncClient(  # pyright: ignore[reportUnknownMemberType]
         transport=transport,
@@ -36,6 +37,14 @@ async def _exercise_replay_api(log_path: Path) -> tuple[dict[str, Any], dict[str
         assert started["phase"] == "predictions_committed"
         assert started["outcome"] is None
         assert "test_warning" not in json.dumps(started)
+        assert "cannot show that relevant evidence" not in json.dumps(started)
+
+        summary_response = await client.get("/api/experiment-summary")
+        assert summary_response.status_code == 200
+        summary = cast(dict[str, Any], summary_response.json())
+        assert len(summary["findings"]) == 4
+        assert summary["findings"][2]["status"] == "Canonical primary result"
+        assert "do not show improved human learning" in summary["claim_boundary"]
 
         revealed_response = await client.post(  # pyright: ignore[reportUnknownMemberType]
             f"/api/benchmark-replays/{started['replay_id']}/reveal"

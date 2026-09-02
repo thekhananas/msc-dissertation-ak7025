@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "schema_id": "demo.experiment_summary.v1",
+  "overarching_question": "When should an adaptive tutoring system request executable programming evidence, and how much should it trust the result?",
+  "findings": [
+    {
+      "study_id": "v1-external-model",
+      "label": "External-model benchmark",
+      "question": "Did requesting executable evidence for every case improve prediction?",
+      "result": "After correcting the scoring fault, the dialogue-only condition was correct for 18 of 23 eligible cases. Adding the related coding task increased this to 19 of 23.",
+      "interpretation": "The extra evidence changed one prediction, and unrelated passing evidence performed equally well. This run did not show a practical or relevance-specific advantage.",
+      "sample": "23 eligible authored cases; one pinned external-model run per response channel.",
+      "evidence_type": "external_model_benchmark",
+      "status": "Completed post-hoc correction",
+      "source_report_hash": "cb49557da8e3933ac8d7826960c2d0c85ee6ef3d92fe5532b8f5d36e33d639ff"
+    },
+    {
+      "study_id": "m7a-bounded-tracker",
+      "label": "Bayesian tracker study",
+      "question": "Can a bounded update reduce harm when evidence becomes unreliable?",
+      "result": "Across 500 adverse simulated episodes, bounding the update reduced average squared probability error by 0.0094. In the clean setting, the error increased by 0.0033, below the declared 0.0100 limit.",
+      "interpretation": "The safeguard helped under the declared failures and imposed a small cost when evidence was clean. This is a simulator result, not evidence about real learners.",
+      "sample": "500 independent simulated episodes per declared condition.",
+      "evidence_type": "glass_box_simulation",
+      "status": "Canonical simulator result",
+      "source_report_hash": "868b7d8d175636ae8ed0a388e087cca8fd42e733ebd97bc269757b752c7e2624"
+    },
+    {
+      "study_id": "m7b-selective-acquisition",
+      "label": "Selective probing study",
+      "question": "At a fixed 50% budget, did the reliability-aware policy choose better probes?",
+      "result": "Across six held-out simulated environments, the proposed policy reduced error by 1.19 percentage points against random selection. It was 0.86 points worse than uncertainty-only selection and 0.54 points worse than ordinary value-of-information selection.",
+      "interpretation": "The proposed policy beat random selection, but it did not beat the stronger simple policies. The planned claim of an overall advantage was therefore unsupported.",
+      "sample": "2,000 independent simulated episodes in each of six held-out environments.",
+      "evidence_type": "glass_box_simulation",
+      "status": "Canonical primary result",
+      "source_report_hash": "edec72e5a8764d4df5e52c5c09a1de213efeb3e22d4c5972708ec441e70a9d34"
+    },
+    {
+      "study_id": "m7c-csedm",
+      "label": "External learner-record study",
+      "question": "Did model uncertainty identify predictions that were more likely to be wrong?",
+      "result": "Selecting the most uncertain half of 729 predictions captured 141 of 195 errors (72.3%). Random selection would be expected to capture 49.5%; the learner-level 95% interval for the difference was 16.4 to 29.0 percentage points.",
+      "interpretation": "Uncertainty was useful for prioritising review on this historical dataset. The study did not request executable probes or measure whether tutoring improved learning.",
+      "sample": "729 predictions from 86 learners across 19 programming problems.",
+      "evidence_type": "external_learner_records",
+      "status": "Completed exploratory result",
+      "source_report_hash": "e395e3e0acbea20ffd21da80644e7a2bdf68a192e8c03952c6c2cd0acbcfb7d6"
+    }
+  ],
+  "claim_boundary": "These studies examine prediction, evidence reliability, and selective evidence collection. They do not show improved human learning, better live tutoring, reduced cognitive offloading, or deployed cost savings."
+}
