@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
+from socratic_tutor.repository_state import (
+    current_clean_revision,
+    validate_git_revision,
+    worktree_status,
+)
 
 
 def test_returns_full_revision_for_clean_repository(tmp_path: Path) -> None:
@@ -90,6 +94,25 @@ def test_revision_validation_requires_explicit_abbreviation_permission() -> None
             invalid_message="Invalid revision",
             allow_abbreviated=True,
         )
+
+
+def test_worktree_status_can_be_limited_to_selected_paths(tmp_path: Path) -> None:
+    _initialise_repository(tmp_path)
+    (tmp_path / "tracked.txt").write_text("changed\n", encoding="utf-8")
+
+    assert "tracked.txt" in worktree_status(
+        tmp_path,
+        untracked_files="all",
+        pathspecs=("tracked.txt",),
+    )
+    assert (
+        worktree_status(
+            tmp_path,
+            untracked_files="all",
+            pathspecs=("unrelated",),
+        )
+        == ""
+    )
 
 
 def _initialise_repository(path: Path) -> str:

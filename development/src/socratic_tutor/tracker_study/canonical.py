@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
+from subprocess import CalledProcessError
 from typing import Literal
 
 import yaml
@@ -12,6 +12,11 @@ from pydantic import ValidationError, model_validator
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import model_content_hash
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.repository_state import (
+    git_head_revision,
+    validate_git_revision,
+    worktree_status,
+)
 from socratic_tutor.tracker_study.analysis import (
     TrackerCanonicalAnalysisReport,
     run_canonical_analysis,
@@ -103,10 +108,11 @@ def run_canonical_study(
         raise CanonicalExecutionError("Execution plan has the wrong test episode count")
     if configuration.experiment.turns_per_episode != plan.turns_per_episode:
         raise CanonicalExecutionError("Execution plan has the wrong turn count")
-    if len(code_revision) != 40 or any(
-        character not in "0123456789abcdef" for character in code_revision
-    ):
-        raise CanonicalExecutionError("Canonical code revision must be a full lowercase Git SHA")
+    validate_git_revision(
+        code_revision,
+        invalid_message="Canonical code revision must be a full lowercase Git SHA",
+        error_factory=CanonicalExecutionError,
+    )
     _verify_committed_revision(project_root, code_revision)
 
     output_root = project_root / plan.output_root
@@ -134,31 +140,18 @@ def run_canonical_study(
 
 def _verify_committed_revision(project_root: Path, expected_revision: str) -> None:
     try:
-        actual_revision = subprocess.run(
-            ["git", "-C", str(project_root), "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        relevant_status = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(project_root),
-                "status",
-                "--porcelain",
-                "--untracked-files=all",
-                "--",
+        actual_revision = git_head_revision(project_root)
+        relevant_status = worktree_status(
+            project_root,
+            untracked_files="all",
+            pathspecs=(
                 "src/socratic_tutor/tracker_study",
                 "configs/tracker-study",
                 "scripts/tracker_study_cli.py",
                 "pixi.lock",
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError) as error:
+            ),
+        )
+    except (OSError, CalledProcessError) as error:
         raise CanonicalExecutionError("Could not verify the canonical Git revision") from error
     if actual_revision != expected_revision:
         raise CanonicalExecutionError(

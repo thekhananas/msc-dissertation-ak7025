@@ -32,13 +32,10 @@ def current_clean_revision(
                 f"{operation_name} requires branch {required_branch}, not {actual_branch}"
             )
 
-    status_arguments = ["status", "--porcelain"]
-    if untracked_files != "default":
-        status_arguments.append(f"--untracked-files={untracked_files}")
-    if _git(project_root, *status_arguments):
+    if worktree_status(project_root, untracked_files=untracked_files):
         raise error_factory(dirty_message)
 
-    revision = _git(project_root, "rev-parse", "HEAD")
+    revision = git_head_revision(project_root)
     return validate_git_revision(
         revision,
         invalid_message=invalid_revision_message,
@@ -58,6 +55,26 @@ def validate_git_revision(
     if re.fullmatch(pattern, value) is None:
         raise error_factory(invalid_message)
     return value
+
+
+def git_head_revision(project_root: Path) -> str:
+    """Return the repository's current HEAD without applying policy checks."""
+    return _git(project_root, "rev-parse", "HEAD")
+
+
+def worktree_status(
+    project_root: Path,
+    *,
+    untracked_files: UntrackedFiles = "default",
+    pathspecs: tuple[str, ...] = (),
+) -> str:
+    """Return porcelain status for the whole worktree or selected paths."""
+    arguments = ["status", "--porcelain"]
+    if untracked_files != "default":
+        arguments.append(f"--untracked-files={untracked_files}")
+    if pathspecs:
+        arguments.extend(("--", *pathspecs))
+    return _git(project_root, *arguments)
 
 
 def _git(project_root: Path, *arguments: str) -> str:
