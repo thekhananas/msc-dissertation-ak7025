@@ -353,67 +353,63 @@ def _build_figure(
     analysis: HarnessCorrectionAnalysisReport,
     closure: HarnessCorrectionClosureReport,
 ) -> Figure:
-    figure = Figure(figsize=(13.4, 8.7))
+    figure = Figure(figsize=(6.8, 10.8))
     grid = figure.add_gridspec(
-        1,
         3,
-        left=0.07,
+        1,
+        left=0.29,
         right=0.98,
-        top=0.67,
-        bottom=0.23,
-        width_ratios=(1.1, 1.0, 1.15),
-        wspace=0.38,
+        top=0.82,
+        bottom=0.16,
+        hspace=0.65,
     )
     accuracy_axis = figure.add_subplot(grid[0, 0])
-    effect_axis = figure.add_subplot(grid[0, 1])
-    relevance_axis = figure.add_subplot(grid[0, 2])
-    figure.suptitle(_TITLE, x=0.07, y=0.965, ha="left", fontsize=22, fontweight="bold")
+    effect_axis = figure.add_subplot(grid[1, 0])
+    relevance_axis = figure.add_subplot(grid[2, 0])
+    figure.suptitle(_TITLE, x=0.03, y=0.98, ha="left", fontsize=13, fontweight="bold")
     figure.text(
-        0.07,
-        0.895,
-        "The original result is shown for transparency; the complete replay corrects the "
-        "test without making new model or sandbox calls.",
+        0.03,
+        0.935,
+        "Recorded responses were rescored after repairing the tests.\n"
+        "No new model responses or sandbox executions were collected.",
         color=_MUTED,
-        fontsize=12,
+        fontsize=10,
     )
     figure.text(
-        0.07,
-        0.835,
-        "Repairing the tuple/list comparison changed "
+        0.03,
+        0.9,
+        "The repair changed "
         f"{closure.changed_execution_outcome_count} of 48 "
-        "recorded execution outcomes.",
+        "execution records.",
         color=_ORANGE,
-        fontsize=12,
+        fontsize=10,
         fontweight="bold",
     )
     figure.text(
-        0.07,
-        0.775,
-        "After correction, the relevant probe changed one net prediction; unrelated passing "
-        "evidence produced the same decisions.",
+        0.03,
+        0.87,
+        "After correction, adding evidence gave one extra correct prediction.",
         color=_INK,
-        fontsize=12,
+        fontsize=10,
         fontweight="bold",
     )
     _plot_accuracy(accuracy_axis, closure)
     _plot_primary_effect(effect_axis, analysis)
     _plot_relevance(relevance_axis, analysis)
     figure.text(
-        0.07,
-        0.115,
-        "Reading the result: the corrected benchmark does not show a prediction advantage "
-        "from the probe. The contrast with deliberately inverted evidence is descriptive; "
-        "it does not show that the tracker recognises relevance.",
+        0.03,
+        0.06,
+        "The interval includes no improvement. Related and unrelated\n"
+        "passing checks produced identical predictions.",
         color=_INK,
-        fontsize=10.5,
+        fontsize=10,
         fontweight="bold",
     )
     figure.text(
-        0.07,
-        0.055,
-        "Scope: one pinned evaluation model; 24 authored cases; 23 eligible; one model "
-        "run per case. This does not show human learning, tutoring effectiveness, or "
-        "reduced dependence on a tutor.",
+        0.03,
+        0.015,
+        "One model run; 23 eligible authored cases.\n"
+        "This does not show human learning or tutoring effectiveness.",
         color=_MUTED,
         fontsize=10,
     )
@@ -558,7 +554,7 @@ def _plot_relevance(axis: Axes, report: HarnessCorrectionAnalysisReport) -> None
             color=_INK,
         )
     axis.axvline(0.0, color=_INK, linewidth=1)
-    axis.set_title("C. Passing evidence was not relevance-sensitive", loc="left", pad=10)
+    axis.set_title("C. Comparison with control evidence", loc="left", pad=10)
     axis.set_xlabel("Lower error with relevant evidence")
     axis.set_yticks(y, labels)
     axis.set_xlim(-0.08, 1.02)
