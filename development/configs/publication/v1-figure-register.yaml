@@ -1,12 +1,16 @@
 schema_id: publication.figure_register.v1
 schema_version: 1
 register_id: dissertation-results-v1
-register_status: frozen_for_m8_generation
+register_status: amended_for_completed_m7c
 frozen_on: 2026-09-07
+last_amended_on: 2026-09-10
+amendment: >-
+  M7C added one real-data uncertainty figure and one model table after its
+  bounded companion study closed. The original registered items did not change.
 purpose: >-
   Freeze the small set of visuals and tables used to explain the implemented
   system, corrected external-model benchmark, Bayesian tracker study, and
-  reliability-aware acquisition study.
+  reliability-aware acquisition study, plus the separate CSEDM companion result.
 selection_rule: >-
   Each main-text item must answer a distinct question. Supporting diagnostics
   belong in an appendix or presentation backup; they must not repeat a primary
@@ -227,6 +231,27 @@ figures:
       This is a development-only diagnostic; it cannot replace or strengthen
       the frozen canonical result.
 
+  - figure_id: FIG-M7C-01
+    title: Prediction errors found within a fixed review budget
+    question: Does uncertainty find more prediction errors than random selection at the same review budget?
+    source: >-
+      artifacts/csedm-study/reproduction-7c5499f/analysis/uncertainty_analysis_report.json
+    output_manifest: >-
+      artifacts/csedm-study/reproduction-7c5499f/publication/publication_manifest.json
+    output_manifest_hash: 9b8ed5d5212ce9175c59d2341451ce86b1418940a1a4d48b3174ab9774ca8d4b
+    generation_revision: 7c5499f1b5a04d53ccc5ecbe179de2bf4f521786
+    command: pixi run python scripts/csedm_study_reproduce.py
+    outputs: uncertainty_error_review.pdf, uncertainty_error_review.svg, uncertainty_error_review_source.csv
+    destination: report-results-real-data-companion-and-presentation-backup
+    status: primary
+    availability: complete
+    intended_claim: >-
+      On the historical CSEDM records, reviewing the most uncertain half of
+      predictions found more errors than random selection was expected to find.
+    claim_boundary: >-
+      This is error review on historical records from 86 learners; it does not
+      test executable probes, tutoring effects, or learning.
+
   - figure_id: FIG-08
     title: Why an extra coding task appeared to improve one prediction
     question: Why can this case not show that the related coding task helped?
@@ -281,6 +306,27 @@ tables:
     claim_boundary: >-
       Estimates apply to the frozen simulated environments and fixed 50% probe
       budget; they do not measure human learning or deployed cost.
+
+  - table_id: TAB-M7C-01
+    title: CSEDM out-of-fold model comparison
+    question: How did the fixed learner-history model compare with the two simple predictors?
+    source: >-
+      artifacts/csedm-study/reproduction-7c5499f/analysis/uncertainty_analysis_report.json
+    output_manifest: >-
+      artifacts/csedm-study/reproduction-7c5499f/publication/publication_manifest.json
+    output_manifest_hash: 9b8ed5d5212ce9175c59d2341451ce86b1418940a1a4d48b3174ab9774ca8d4b
+    generation_revision: 7c5499f1b5a04d53ccc5ecbe179de2bf4f521786
+    command: pixi run python scripts/csedm_study_reproduce.py
+    outputs: model_comparison.csv, model_comparison.tex
+    destination: report-results-real-data-companion
+    status: primary
+    availability: complete
+    intended_claim: >-
+      The fixed logistic model was slightly more accurate than the
+      training-problem-frequency predictor on the same out-of-fold targets.
+    claim_boundary: >-
+      The table describes prediction quality on 729 targets from 86 learners;
+      it is not evidence of a tutoring or learning effect.
 
 profiles:
   report:
