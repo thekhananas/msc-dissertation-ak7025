@@ -42,6 +42,12 @@ figures:
     claim_boundary: >-
       Describes implemented paths and ownership; does not establish tutoring
       effectiveness or human learning.
+    caption: >-
+      The project uses separate paths for the local tutoring demo, the sealed
+      external-model benchmark, and offline simulator studies. They exchange
+      saved records rather than hidden live state. The diagram describes system
+      boundaries; it does not provide evidence of tutoring effectiveness or
+      human learning.
 
   - figure_id: FIG-02
     title: Benchmark design and commit-reveal sequence
@@ -62,6 +68,11 @@ figures:
     claim_boundary: >-
       Explains the measurement procedure; it is not evidence that the procedure
       improves learning.
+    caption: >-
+      Study sequence for 24 authored programming cases. Four predictions per
+      case were saved before the later coding task was requested; 23 cases had
+      a scored later outcome. The pinned language model was evaluated as a
+      model, not treated as a learner, and no person took part.
 
   - figure_id: FIG-03
     title: Original and corrected benchmark result
@@ -83,6 +94,12 @@ figures:
     claim_boundary: >-
       Reports one pinned evaluation-model run over the authored cases; the
       corrected result is post-hoc and does not support human-learning claims.
+    caption: >-
+      Effect of correcting the test harness on 23 eligible authored cases. The
+      original replay suggested a 30.4 percentage-point reduction in error; the
+      corrected difference was 4.3 points, from 18/23 to 19/23 correct
+      predictions, with an interval that included no difference. This post-hoc
+      correction describes one pinned model run and does not measure learning.
 
   - figure_id: FIG-04
     title: Corrected result for every authored case
@@ -104,6 +121,11 @@ figures:
     claim_boundary: >-
       Shows case-level benchmark decisions and missingness; repeated cases are
       not independent learners.
+    caption: >-
+      Corrected decisions for all 24 authored cases. Of the 23 cases with a
+      scored later outcome, one changed from wrong to right after the relevant
+      probe and none became worse; relevant and unrelated evidence produced the
+      same decisions throughout. Case h-c2m2-03 had no scored outcome.
 
   - figure_id: FIG-05
     title: Corrected quality beside measured workload
@@ -125,6 +147,12 @@ figures:
     claim_boundary: >-
       Describes measured workload for this run, not deployment cost, latency
       guarantees, or tutoring benefit.
+    caption: >-
+      Prediction quality and recorded workload for one external-model run. The
+      relevant-probe condition changed one of 23 eligible decisions while the
+      full study used 72 model responses, 32,583 tokens, and 47 completed
+      sandbox attempts out of 48. Provider cost was unavailable; these values
+      describe experimental workload, not deployment cost or tutoring benefit.
 
   - figure_id: FIG-06
     title: Bounded evidence updating under stress
@@ -145,6 +173,12 @@ figures:
     claim_boundary: >-
       Reports a glass-box simulator study of tracker robustness; it is not a
       human-learning or tutoring-efficacy result.
+    caption: >-
+      Ordinary and bounded Bayesian updates across 500 matched simulated
+      episodes per condition. Bounded updating reduced probability error across
+      the five noisy or misleading conditions, but was slightly worse in the
+      clean condition. This is a tracker stress test under simulation, not a
+      study of people or tutoring effectiveness.
 
   - figure_id: FIG-07
     title: Failure taxonomy and review outcomes
@@ -165,6 +199,12 @@ figures:
     claim_boundary: >-
       Summarises observable failure records; hidden model reasoning is neither
       inferred nor treated as a measured cause.
+    caption: >-
+      Independent review of six deliberately selected benchmark records. Both
+      reviewers assigned the same category to all six: four exposed an authored
+      task or test defect, while two showed no observed failure. Agreement on
+      this small selected set does not prove that the categories are objectively
+      correct or representative of all cases.
 
   - figure_id: FIG-M7B-01
     title: Prediction error as executable probes are added
@@ -188,6 +228,13 @@ figures:
     claim_boundary: >-
       Reports paired outcomes from hand-specified simulated environments; it
       does not establish behaviour with people or realised deployment savings.
+    caption: >-
+      Prediction error across 2,000 simulated episodes per setting. At the
+      planned 50% probe budget, the proposed selector reduced error by 1.19
+      percentage points relative to random choice, but increased it by 0.85
+      points relative to uncertainty selection and by 0.54 points relative to
+      standard value of information. These hand-specified simulations do not
+      measure human learning or realised deployment savings.
 
   - figure_id: FIG-M7B-02
     title: Acquisition policy effects across evidence failures
@@ -209,6 +256,12 @@ figures:
     claim_boundary: >-
       Environment settings are designed stress tests, not estimates of how
       often these failures occur in real tutoring.
+    caption: >-
+      Paired policy differences at the fixed 50% probe budget. The proposed
+      selector helped when evidence behaved as assumed, yet its advantage did
+      not survive several held-out evidence failures and it was worse than the
+      simpler targeted selectors on average. The failure settings are designed
+      stress tests, not estimates of real tutoring conditions.
 
   - figure_id: FIG-M7B-03
     title: Development ablation of reliability and bounded updating
@@ -230,6 +283,12 @@ figures:
     claim_boundary: >-
       This is a development-only diagnostic; it cannot replace or strengthen
       the frozen canonical result.
+    caption: >-
+      Development ablation over 300 paired simulated episodes and six held-out
+      settings. Conservative reliability estimation and bounded updating did
+      not improve prediction when combined; their estimated interaction was
+      0.02 percentage points. This diagnostic was examined during development
+      and cannot strengthen the frozen canonical result.
 
   - figure_id: FIG-M7C-01
     title: Prediction errors found within a fixed review budget
@@ -251,6 +310,13 @@ figures:
     claim_boundary: >-
       This is error review on historical records from 86 learners; it does not
       test executable probes, tutoring effects, or learning.
+    caption: >-
+      Error review on 729 historical predictions from 86 learners across 19
+      Python problems. Reviewing the 361 most uncertain predictions found
+      141/195 errors, or 72.3%, compared with a 49.5% expectation under random
+      selection; the 22.8 percentage-point difference had a learner-bootstrap
+      95% interval from 16.4 to 29.0 points. This study does not test executable
+      probes, tutoring effects, or learning.
 
   - figure_id: FIG-08
     title: Why an extra coding task appeared to improve one prediction
@@ -284,6 +350,12 @@ figures:
       The example examines a measurement weakness in one model run. It does not
       show that the related task caused a better prediction, or that any person
       learned from tutoring.
+    caption: >-
+      Worked example from one case in the 24-case benchmark. A conflicting
+      first answer scored as a failure; both the related and comparison coding
+      tasks passed and changed the fixed score from 0.40 to 0.60. The later
+      tests then accepted an incomplete solution, so this case cannot show that
+      the related task caused the apparent improvement.
 
 tables:
   - table_id: TAB-M7B-01
