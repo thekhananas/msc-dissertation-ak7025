@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from datetime import date
 from pathlib import Path, PurePosixPath
@@ -19,7 +18,7 @@ from socratic_tutor.benchmark.artifacts import artifact_locations, write_immutab
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256, model_content_hash
 from socratic_tutor.contracts import ContractModel
-from socratic_tutor.repository_state import current_clean_revision
+from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 
 
 class ImplementationFreezeError(ValueError):
@@ -198,7 +197,11 @@ def freeze_m7b_implementation(
         "result_classification": (
             "matched_setting_useful_harmful_under_important_misspecification"
         ),
-        "code_revision": _validate_revision(code_revision),
+        "code_revision": validate_git_revision(
+            code_revision,
+            invalid_message="Implementation revision must be a full Git SHA",
+            error_factory=ImplementationFreezeError,
+        ),
         "closed_on": specification.closed_on,
         "specification_sha256": file_sha256(specification_bytes),
         "source_groups": groups,
@@ -295,12 +298,6 @@ def _read_file(path: Path, label: str) -> bytes:
         return path.read_bytes()
     except OSError as error:
         raise ImplementationFreezeError(f"Could not read {label}: {path}") from error
-
-
-def _validate_revision(value: str) -> str:
-    if re.fullmatch(r"[0-9a-f]{40}", value) is None:
-        raise ImplementationFreezeError("Implementation revision must be a full Git SHA")
-    return value
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]

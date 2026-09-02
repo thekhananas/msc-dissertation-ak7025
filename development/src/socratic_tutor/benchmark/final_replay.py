@@ -5,7 +5,6 @@ from __future__ import annotations
 import io
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +33,7 @@ from socratic_tutor.benchmark.secondary_analysis import (
     SecondaryAnalysisReport,
 )
 from socratic_tutor.contracts import ContractModel
+from socratic_tutor.repository_state import validate_git_revision
 
 
 class FinalReplayError(ValueError):
@@ -370,8 +370,12 @@ def run_final_replay(
 
 
 def _extract_historical_source(*, repository_root: Path, revision: str, destination: Path) -> Path:
-    if re.fullmatch(r"[0-9a-f]{7,40}", revision) is None:
-        raise FinalReplayError("Historical source revision is not a Git object ID")
+    validate_git_revision(
+        revision,
+        invalid_message="Historical source revision is not a Git object ID",
+        error_factory=FinalReplayError,
+        allow_abbreviated=True,
+    )
     try:
         archive = subprocess.run(
             (

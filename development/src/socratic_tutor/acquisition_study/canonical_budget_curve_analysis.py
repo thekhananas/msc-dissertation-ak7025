@@ -8,7 +8,6 @@ import hashlib
 import io
 import json
 import math
-import re
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -49,7 +48,7 @@ from socratic_tutor.benchmark.artifacts import (
 from socratic_tutor.benchmark.common import Sha256
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
 from socratic_tutor.contracts import ContractModel
-from socratic_tutor.repository_state import current_clean_revision
+from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 
 _BUDGETS = (0.0, 0.25, 0.5, 0.75, 1.0)
 _POLICIES = BUDGET_CURVE_POLICY_ORDER
@@ -295,8 +294,11 @@ def run_canonical_budget_curve_analysis(
 ) -> dict[str, object]:
     """Verify the sealed sources and publish compact analysis outputs."""
 
-    if re.fullmatch(r"[0-9a-f]{40}", analysis_code_revision) is None:
-        raise CanonicalBudgetCurveAnalysisError("Analysis revision must be a full Git SHA")
+    validate_git_revision(
+        analysis_code_revision,
+        invalid_message="Analysis revision must be a full Git SHA",
+        error_factory=CanonicalBudgetCurveAnalysisError,
+    )
     source_manifest = _load(source_manifest_path, CanonicalBudgetCurveManifest)
     source_root = source_manifest_path.parent
     source_plan_path = source_root / source_manifest.execution_plan_file

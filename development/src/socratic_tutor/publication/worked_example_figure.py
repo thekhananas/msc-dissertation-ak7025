@@ -10,7 +10,6 @@ import csv
 import io
 import json
 import math
-import re
 import subprocess
 import textwrap
 from dataclasses import dataclass
@@ -73,7 +72,7 @@ from socratic_tutor.publication.figure_style import (
     FigureProfile,
     style_for,
 )
-from socratic_tutor.repository_state import current_clean_revision
+from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 from socratic_tutor.sandbox.python_tests import AuthoredFunctionTestBundle
 
 _CONDITION_LABELS = {
@@ -373,7 +372,12 @@ def render_worked_example_figure(
             sources.data.failure_review_reliability_report_hash
         ),
         "pixi_lock_sha256": file_sha256(pixi_lock),
-        "publication_code_revision": _validate_revision(publication_code_revision),
+        "publication_code_revision": validate_git_revision(
+            publication_code_revision,
+            invalid_message="Publication revision must be a Git SHA",
+            error_factory=WorkedExampleFigureError,
+            allow_abbreviated=True,
+        ),
         "files": files,
         "data_file": "benchmark_worked_example.json",
         "data_sha256": file_sha256(data_bytes),
@@ -1479,12 +1483,6 @@ def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> dateti
         _require_utc(existing, "Existing figure generation time")
         return existing
     return datetime.now(UTC)
-
-
-def _validate_revision(value: str) -> str:
-    if re.fullmatch(r"[0-9a-f]{7,40}", value) is None:
-        raise WorkedExampleFigureError("Publication revision must be a Git SHA")
-    return value
 
 
 def _require_utc(value: datetime, label: str) -> None:

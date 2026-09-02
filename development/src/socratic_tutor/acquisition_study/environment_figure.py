@@ -9,7 +9,6 @@ import argparse
 import csv
 import io
 import json
-import re
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -43,7 +42,7 @@ from socratic_tutor.publication.figure_style import (
     FigureProfile,
     style_for,
 )
-from socratic_tutor.repository_state import current_clean_revision
+from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 
 _COMPARATORS = (
     (PolicyId.SEEDED_RANDOM_BOUNDED, "Random choice", "o"),
@@ -144,7 +143,12 @@ def render_acquisition_environment_figure(
         "primary_report_hash": primary.report_hash,
         "primary_report_sha256": file_sha256(primary_bytes),
         "pixi_lock_sha256": file_sha256(pixi_lock_bytes),
-        "publication_code_revision": _validate_revision(publication_code_revision),
+        "publication_code_revision": validate_git_revision(
+            publication_code_revision,
+            invalid_message="Publication revision must be a Git SHA",
+            error_factory=AcquisitionEnvironmentFigureError,
+            allow_abbreviated=True,
+        ),
         "files": generated_files,
         "source_data_file": "acquisition_environment_figure_data.csv",
         "source_data_sha256": file_sha256(source_data),
@@ -448,12 +452,6 @@ def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> dateti
 def _require_utc(value: datetime) -> None:
     if value.tzinfo is None or value.utcoffset() != UTC.utcoffset(value):
         raise ValueError("Environment figure timestamp must be timezone-aware UTC")
-
-
-def _validate_revision(value: str) -> str:
-    if re.fullmatch(r"[0-9a-f]{7,40}", value) is None:
-        raise AcquisitionEnvironmentFigureError("Publication revision must be a Git SHA")
-    return value
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]

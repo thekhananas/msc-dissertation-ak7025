@@ -7,7 +7,6 @@ import csv
 import io
 import json
 import math
-import re
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -27,7 +26,7 @@ from socratic_tutor.benchmark.artifacts import (
 )
 from socratic_tutor.benchmark.hashing import canonical_sha256, file_sha256
 from socratic_tutor.filesystem import read_bytes
-from socratic_tutor.repository_state import current_clean_revision
+from socratic_tutor.repository_state import current_clean_revision, validate_git_revision
 
 _COMPARATOR_LABELS = {
     PolicyId.SEEDED_RANDOM_BOUNDED: "Random selection",
@@ -99,7 +98,12 @@ def publish_acquisition_result_table(
         "primary_report_hash": report.report_hash,
         "primary_report_sha256": file_sha256(report_bytes),
         "pixi_lock_sha256": file_sha256(lock_bytes),
-        "publication_code_revision": _validate_revision(publication_code_revision),
+        "publication_code_revision": validate_git_revision(
+            publication_code_revision,
+            invalid_message="Publication revision must be a Git SHA",
+            error_factory=AcquisitionResultTableError,
+            allow_abbreviated=True,
+        ),
         "files": files,
         "row_count": len(rows),
         "held_out_environment_count": rows[0].environment_count,
@@ -329,12 +333,6 @@ def _resolve_generated_at(value: datetime | None, manifest_path: Path) -> dateti
 def _require_utc(value: datetime) -> None:
     if value.tzinfo is None or value.utcoffset() != UTC.utcoffset(value):
         raise ValueError("Result table timestamp must be timezone-aware UTC")
-
-
-def _validate_revision(value: str) -> str:
-    if re.fullmatch(r"[0-9a-f]{7,40}", value) is None:
-        raise AcquisitionResultTableError("Publication revision must be a Git SHA")
-    return value
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
