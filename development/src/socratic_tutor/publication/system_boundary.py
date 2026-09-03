@@ -61,14 +61,30 @@ _FIGURE_DETAILS: dict[str, str] = {
     "evaluation_model": "Supplies evaluation responses.",
     "evidence_path": "Runs probe code; records results.",
     "decision_seal": "Saves four predictions before outcome.",
-    "criterion_gate": "Opens outcome after the seal.",
+    "criterion_gate": "Requests the later task after predictions.",
     "criterion_outcomes": "Runs outcome code; records completion.",
     "immutable_records": "Stores predictions and reviews.",
     "paired_analysis": "Compares paired results.",
     "report_outputs": "Creates report files.",
     "glass_box_simulator": "Creates known noisy states.",
-    "bayesian_trackers": "Compares bounded updates.",
+    "bayesian_trackers": "Compares update rules.",
     "robustness_outputs": "Reports accuracy and cost.",
+}
+
+_FIGURE_TITLES: dict[str, str] = {
+    "template_tutor": "Prompt template",
+    "local_log": "Saved turn log",
+    "frozen_cases": "Prepared cases",
+    "evaluation_model": "Evaluation model",
+    "evidence_path": "Code check + tracker",
+    "decision_seal": "Saved predictions",
+    "criterion_gate": "Outcome request",
+    "criterion_outcomes": "Outcome code check",
+    "immutable_records": "Saved benchmark",
+    "paired_analysis": "Result comparison",
+    "report_outputs": "Report figures",
+    "glass_box_simulator": "Controlled simulator",
+    "robustness_outputs": "Tracking results",
 }
 
 
@@ -86,22 +102,6 @@ _FIGURE_STATEMENTS: dict[BoundaryId, str] = {
     BoundaryId.INTERACTIVE_DEMO: "One local tutoring turn.",
     BoundaryId.EXTERNAL_BENCHMARK: "Predictions saved before outcome request.",
     BoundaryId.OFFLINE_ANALYSIS: "Reads saved records; makes no new calls.",
-}
-
-_FIGURE_EDGE_LABELS: dict[tuple[str, str], str] = {
-    ("demo_user", "web_api"): "answer",
-    ("web_api", "langgraph_turn"): "checked",
-    ("langgraph_turn", "template_tutor"): "action",
-    ("template_tutor", "local_log"): "visible",
-    ("frozen_cases", "evaluation_model"): "prompts",
-    ("evaluation_model", "evidence_path"): "responses",
-    ("evidence_path", "decision_seal"): "4 pred.",
-    ("decision_seal", "criterion_gate"): "seal",
-    ("criterion_gate", "criterion_outcomes"): "outcome",
-    ("immutable_records", "paired_analysis"): "read",
-    ("paired_analysis", "report_outputs"): "verified",
-    ("glass_box_simulator", "bayesian_trackers"): "matched",
-    ("bayesian_trackers", "robustness_outputs"): "stress",
 }
 
 
@@ -384,31 +384,27 @@ def _render_vector_files(
 
 
 def _build_figure(specification: SystemBoundarySpecification) -> Figure:
-    figure = Figure(figsize=(6.5, 8.5), facecolor="#FAFAF7")
+    figure = Figure(figsize=(6.0, 8.2), facecolor="white")
     axis = figure.add_axes((0, 0, 1, 1))
     axis.set_xlim(0, 1)
     axis.set_ylim(0, 1)
     axis.axis("off")
 
-    figure.text(0.055, 0.958, specification.title, fontsize=16, fontweight="bold", color=_INK)
-    figure.text(0.055, 0.918, specification.subtitle, fontsize=9.5, color=_MUTED)
+    figure.text(0.035, 0.970, specification.title, fontsize=13, fontweight="bold", color=_INK)
     figure.text(
-        0.055,
-        0.875,
+        0.035,
+        0.921,
         "The local demo is deterministic in the path shown here.\n"
         "The benchmark calls the model; analysis reads its saved responses.",
         fontsize=9.5,
-        fontweight="bold",
-        color=_ORANGE,
+        color=_MUTED,
     )
 
     layouts = {
         # Keep a uniform gap between the three sections.
-        BoundaryId.INTERACTIVE_DEMO: (0.590, 0.255, _PALE_BLUE, _BLUE),
-        BoundaryId.EXTERNAL_BENCHMARK: (0.320, 0.255, _PALE_ORANGE, _ORANGE),
-        # The tracker study has two rows; its boundary is taller so the
-        # larger descriptions retain a clear bottom margin.
-        BoundaryId.OFFLINE_ANALYSIS: (0.055, 0.255, _PALE_GREY, _PURPLE),
+        BoundaryId.INTERACTIVE_DEMO: (0.630, 0.265, _PALE_BLUE, _BLUE),
+        BoundaryId.EXTERNAL_BENCHMARK: (0.345, 0.265, _PALE_ORANGE, _ORANGE),
+        BoundaryId.OFFLINE_ANALYSIS: (0.060, 0.265, _PALE_GREY, _PURPLE),
     }
     coordinates: dict[str, tuple[float, float, float, float]] = {}
     for boundary in specification.boundaries:
@@ -424,21 +420,18 @@ def _build_figure(specification: SystemBoundarySpecification) -> Figure:
         for lane, nodes in sorted(grouped.items()):
             nodes.sort(key=lambda item: item.order)
             lane_height = (height - 0.060) / lane_count
-            lane_y = y_position + 0.018 + (lane_count - lane - 1) * lane_height
-            coordinates.update(_draw_lane(axis, nodes, lane_y, lane_height - 0.012, accent))
+            lane_y = y_position + 0.012 + (lane_count - lane - 1) * lane_height
+            coordinates.update(_draw_lane(axis, nodes, lane_y, lane_height - 0.018, accent))
 
-    node_lookup = {node.node_id: node for node in specification.nodes}
     for edge in specification.edges:
-        _draw_edge(axis, edge, coordinates, node_lookup)
+        _draw_edge(axis, edge, coordinates)
 
     figure.text(
-        0.055,
+        0.035,
         0.006,
-        "Claim boundary: benchmark prediction on authored cases; tracker estimation "
-        "under simulation.\n"
-        "Neither result measures human learning or tutoring efficacy.",
-        fontsize=7.2,
-        fontweight="bold",
+        "Results concern prepared cases and simulated states.\n"
+        "Neither study measures human learning.",
+        fontsize=9,
         color=_MUTED,
         va="bottom",
     )
@@ -455,8 +448,8 @@ def _draw_boundary(
 ) -> None:
     axis.add_patch(
         FancyBboxPatch(
-            (0.055, y_position),
-            0.89,
+            (0.035, y_position),
+            0.93,
             height,
             boxstyle="square,pad=0.006",
             facecolor=background,
@@ -464,11 +457,9 @@ def _draw_boundary(
             linewidth=1.1,
         )
     )
-    # Align the two header strings by baseline, not by their bounding-box top.
-    # This matters because the title and statement use different font sizes.
-    header_y = y_position + height - 0.047
+    header_y = y_position + height - 0.020
     axis.text(
-        0.073,
+        0.050,
         header_y,
         boundary.title,
         fontsize=10.5,
@@ -477,10 +468,10 @@ def _draw_boundary(
         va="baseline",
     )
     axis.text(
-        0.50,
-        header_y,
+        0.050,
+        header_y - 0.023,
         _FIGURE_STATEMENTS[boundary.boundary_id],
-        fontsize=7.5,
+        fontsize=9,
         color=_MUTED,
         va="baseline",
     )
@@ -493,12 +484,12 @@ def _draw_lane(
     height: float,
     accent: str,
 ) -> dict[str, tuple[float, float, float, float]]:
-    left = 0.06
-    right = 0.94
+    left = 0.05
+    right = 0.95
     columns = min(3, len(nodes))
     rows = (len(nodes) + columns - 1) // columns
-    horizontal_gap = 0.08
-    vertical_gap = 0.035 if rows > 1 else 0.0
+    horizontal_gap = 0.035
+    vertical_gap = 0.016 if rows > 1 else 0.0
     width = (right - left - horizontal_gap * (columns - 1)) / columns
     box_height = (height - vertical_gap * (rows - 1)) / rows
     coordinates: dict[str, tuple[float, float, float, float]] = {}
@@ -510,13 +501,16 @@ def _draw_lane(
         column = columns - column_index - 1 if row % 2 else column_index
         x_position = left + column * (width + horizontal_gap)
         box_y = y_position + (rows - row - 1) * (box_height + vertical_gap)
-        wrapped_title = textwrap.fill(node.title, width=max(14, int(width * 100)))
+        wrapped_title = textwrap.fill(_FIGURE_TITLES.get(node.node_id, node.title), width=20)
         display_detail = _FIGURE_DETAILS.get(node.node_id, node.detail)
-        wrapped_detail = textwrap.fill(display_detail, width=max(17, int(width * 92)))
-        title_top = box_y + box_height - 0.014
+        wrapped_detail = textwrap.fill(display_detail, width=23)
+        title_top = box_y + box_height - 0.012
         # Leave a visible gap below the heading and above the description;
         # this keeps the last line clear of the lower box edge.
-        detail_top = title_top - 0.0115 * len(wrapped_title.splitlines()) - 0.012
+        points_per_axis_height = axis.figure.get_figheight() * 72
+        detail_top = (
+            title_top - (11.4 * len(wrapped_title.splitlines()) + 4) / points_per_axis_height
+        )
         box = FancyBboxPatch(
             (x_position, box_y),
             width,
@@ -531,7 +525,7 @@ def _draw_lane(
             x_position + 0.009,
             title_top,
             wrapped_title,
-            fontsize=8.8,
+            fontsize=9.5,
             fontweight="bold",
             color=_INK,
             va="top",
@@ -540,7 +534,7 @@ def _draw_lane(
             x_position + 0.009,
             detail_top,
             wrapped_detail,
-            fontsize=8.2,
+            fontsize=9,
             color=_MUTED,
             va="top",
             linespacing=1.10,
@@ -559,7 +553,6 @@ def _draw_edge(
     axis: Axes,
     edge: SystemEdge,
     coordinates: dict[str, tuple[float, float, float, float]],
-    nodes: dict[str, SystemNode],
 ) -> None:
     source_x, source_y, source_width, source_height = coordinates[edge.source]
     target_x, target_y, _target_width, target_height = coordinates[edge.target]
@@ -572,11 +565,6 @@ def _draw_edge(
         else:
             start = (source_x - 0.003, source_mid_y)
             end = (target_x + _target_width + 0.003, target_mid_y)
-        label_x = (start[0] + end[0]) / 2
-        # Place the label in the horizontal gap, centred on the arrow.
-        label_y = start[1]
-        label_ha = "center"
-        label_va = "center"
     else:
         if source_mid_y > target_mid_y:
             start = (source_x + source_width / 2, source_y)
@@ -584,27 +572,11 @@ def _draw_edge(
         else:
             start = (source_x + source_width / 2, source_y + source_height)
             end = (target_x + _target_width / 2, target_y)
-        label_x = (start[0] + end[0]) / 2 + 0.014
-        label_y = (start[1] + end[1]) / 2
-        label_ha = "left"
-        label_va = "center"
     axis.annotate(
         "",
         xy=end,
         xytext=start,
         arrowprops={"arrowstyle": "-|>", "color": _GREY, "linewidth": 0.9},
-    )
-    axis.text(
-        label_x,
-        label_y,
-        _FIGURE_EDGE_LABELS.get((edge.source, edge.target), edge.label),
-        ha=label_ha,
-        va=label_va,
-        fontsize=8.0,
-        color=_MUTED,
-        # Keep the label readable when an arrow passes through its gap.
-        # Transparent labels would expose the line through the letters.
-        bbox={"facecolor": "white", "edgecolor": "none", "pad": 2.0},
     )
 
 

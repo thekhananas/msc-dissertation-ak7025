@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from xml.etree import ElementTree
 
 import pytest
 import yaml
@@ -28,7 +29,6 @@ def test_horizontal_arrows_stay_between_boxes(source_x: float, target_x: float) 
         axis,
         SystemEdge(source="source", target="target", label="response"),
         {"source": (source_x, 0.2, width, 0.1), "target": (target_x, 0.2, width, 0.1)},
-        {},
     )
     arrow = next(item for item in axis.texts if isinstance(item, Annotation))
     left_edge = min(source_x, target_x) + width
@@ -67,7 +67,12 @@ def test_renders_system_boundaries_and_retries_exactly(tmp_path: Path) -> None:
     assert (output_root / "system_boundaries.pdf").read_bytes().startswith(b"%PDF")
     svg = (output_root / "system_boundaries.svg").read_text(encoding="utf-8")
     assert "The local demo is deterministic" in svg
-    assert "Five Bayesian trackers" in svg
+    rendered_text = " ".join(
+        text.strip()
+        for element in ElementTree.fromstring(svg).iter("{http://www.w3.org/2000/svg}text")
+        for text in element.itertext()
+    )
+    assert "Five Bayesian trackers" in rendered_text
     csv_text = (output_root / "system_boundary_components.csv").read_text(encoding="utf-8")
     assert "interactive_demo,0,3,langgraph_turn" in csv_text
     assert "external_benchmark,0,2,evaluation_model,Pinned evaluation model" in csv_text
