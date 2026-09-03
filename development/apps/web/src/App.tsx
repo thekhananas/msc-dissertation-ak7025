@@ -228,9 +228,9 @@ export function App() {
 
           <div className="state-summary" aria-label="Current tutor state">
             <div>
-              <span className="metric-label">Mastery estimate</span>
+              <span className="metric-label">Demo tracker score</span>
               <strong>{masteryPercent}%</strong>
-              <progress max="100" value={masteryPercent} aria-label="Mastery estimate" />
+              <progress max="100" value={masteryPercent} aria-label="Demo tracker score" />
             </div>
             <div>
               <span className="metric-label">Evidence</span>
