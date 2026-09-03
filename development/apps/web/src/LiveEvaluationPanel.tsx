@@ -129,10 +129,10 @@ export function LiveEvaluationPanel({ status, onUseRecorded }: LiveEvaluationPan
                     {snapshot.evidence_execution.failed_checks} failed in Modal.
                   </p>
                 )}
-                <p>
-                  These counts describe the authored tests. A passing result does not establish
-                  that the tests cover every requirement; test reliability is not estimated here.
-                </p>
+                  <p>
+                    These counts describe the authored tests. A passing result does not establish
+                    that the tests cover every requirement. Test reliability is not estimated here.
+                  </p>
               </div>
             </section>
           )}

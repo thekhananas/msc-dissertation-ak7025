@@ -6,7 +6,7 @@
   "benchmark_version": "v1",
   "case_id": "h-c2m1-02",
   "evaluation_model": "cerebras/gpt-oss-120b",
-  "public_summary": "The model first wrote \"True 3\", then ended with \"False 2\". Two reviewers saw only this answer; both called it conflicting.",
+  "public_summary": "The model first wrote \"True 3\", then ended with \"False 2\". Two reviewers saw only this answer. Both called it conflicting.",
   "evidence": [
     {
       "condition": "probe_informed",
@@ -65,12 +65,12 @@
   ],
   "outcome": {
     "summary": "The final task asked the model to remove a tag from the supplied list, then return the remaining tags in sorted order. Its answer passed both automatic tests.",
-    "test_warning": "The model created a new list, so the supplied list did not change. The tests checked only the returned values; they never checked the supplied list.",
+  "test_warning": "The model created a new list, so the supplied list did not change. The tests checked only the returned values. They never checked the supplied list.",
     "passed_checks": 2,
     "failed_checks": 0,
     "revealed_at_utc": "2026-09-01T09:03:39.348417Z"
   },
   "interpretation": "The related coding task changed the prediction from failure to success. The comparison task caused the same change, and the later test accepted an incomplete solution. This case therefore cannot show that relevant evidence caused a better prediction.",
   "predictions_sealed_before_outcome_reveal": true,
-  "claim_boundary": "This replay examines one response from one model run. It demonstrates prediction ordering and an evaluation weakness; it does not measure student learning or tutoring quality."
+  "claim_boundary": "This replay examines one response from one model run. It demonstrates prediction ordering and an evaluation weakness. It does not measure student learning or tutoring quality."
 }
