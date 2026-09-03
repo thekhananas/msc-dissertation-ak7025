@@ -334,7 +334,7 @@ def _build_figure(
         (
             "Collect the answer and probe",
             "Collect one public answer and one probe response per case.",
-            (f"Run {decision_report.evidence_execution_count} probe programmes in sandboxes."),
+            (f"Run {decision_report.evidence_execution_count} probe programs in sandboxes."),
             "The outcome response has not been requested.",
             _BLUE,
         ),
