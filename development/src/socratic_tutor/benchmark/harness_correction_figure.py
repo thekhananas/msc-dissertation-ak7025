@@ -460,8 +460,9 @@ def _plot_accuracy(axis: Axes, closure: HarnessCorrectionClosureReport) -> None:
     axis.set_title("A. Prediction accuracy changed", loc="left", pad=10)
     axis.set_ylabel("Correct predictions")
     axis.set_xticks(x, ("Dialogue only", "Passing probe"))
-    axis.set_ylim(0.0, 1.12)
-    axis.legend(frameon=False, loc="upper left")
+    axis.set_ylim(0.0, 1.35)
+    axis.set_yticks((0.0, 0.25, 0.5, 0.75, 1.0))
+    axis.legend(frameon=False, loc="upper center", ncols=2)
     _style_axis(axis, grid_axis="y")
 
 
