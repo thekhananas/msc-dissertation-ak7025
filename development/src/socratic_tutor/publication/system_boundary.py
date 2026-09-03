@@ -395,8 +395,8 @@ def _build_figure(specification: SystemBoundarySpecification) -> Figure:
     figure.text(
         0.055,
         0.875,
-        "The local demo is deterministic. The external model is used only in the sealed "
-        "benchmark, and offline analysis does not call it again.",
+        "The local demo is deterministic in the path shown here.\n"
+        "The benchmark calls the model; analysis reads its saved responses.",
         fontsize=9.5,
         fontweight="bold",
         color=_ORANGE,
@@ -566,8 +566,12 @@ def _draw_edge(
     source_mid_y = source_y + source_height / 2
     target_mid_y = target_y + target_height / 2
     if abs(source_mid_y - target_mid_y) < 0.01:
-        start = (source_x + source_width + 0.003, source_y + source_height / 2)
-        end = (target_x - 0.003, target_y + target_height / 2)
+        if target_x > source_x:
+            start = (source_x + source_width + 0.003, source_mid_y)
+            end = (target_x - 0.003, target_mid_y)
+        else:
+            start = (source_x - 0.003, source_mid_y)
+            end = (target_x + _target_width + 0.003, target_mid_y)
         label_x = (start[0] + end[0]) / 2
         # Place the label in the horizontal gap, centred on the arrow.
         label_y = start[1]

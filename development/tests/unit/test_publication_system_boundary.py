@@ -5,15 +5,37 @@ from pathlib import Path
 
 import pytest
 import yaml
+from matplotlib.figure import Figure
+from matplotlib.text import Annotation
 
 from socratic_tutor.publication.system_boundary import (
     SystemBoundaryFigureError,
+    SystemEdge,
+    _draw_edge,
     render_system_boundary_figure,
 )
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 SPECIFICATION = WORKSPACE_ROOT / "configs" / "publication" / "v1-system-boundary.yaml"
 PIXI_LOCK = WORKSPACE_ROOT / "pixi.lock"
+
+
+@pytest.mark.parametrize("source_x,target_x", [(0.1, 0.6), (0.6, 0.1)])
+def test_horizontal_arrows_stay_between_boxes(source_x: float, target_x: float) -> None:
+    axis = Figure().subplots()
+    width = 0.2
+    _draw_edge(
+        axis,
+        SystemEdge(source="source", target="target", label="response"),
+        {"source": (source_x, 0.2, width, 0.1), "target": (target_x, 0.2, width, 0.1)},
+        {},
+    )
+    arrow = next(item for item in axis.texts if isinstance(item, Annotation))
+    left_edge = min(source_x, target_x) + width
+    right_edge = max(source_x, target_x)
+    assert left_edge < arrow.xy[0] < right_edge
+    assert left_edge < arrow.get_position()[0] < right_edge
+    assert (arrow.xy[0] > arrow.get_position()[0]) == (target_x > source_x)
 
 
 def test_renders_system_boundaries_and_retries_exactly(tmp_path: Path) -> None:
