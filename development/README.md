@@ -86,6 +86,13 @@ retained inputs. Keep the original analysis outputs available for comparison; a 
 provenance fields and trigger an immutable-output conflict. Record the restored revision and any remaining dependency
 differences before reporting successful reproduction.
 
+The retained primary analysis records code revision `5d6e76b099f8904d5a70aca5909b49d6fa0d86af`. Its Git version of
+`development/pixi.lock` has SHA-256 `7d68ee21e33528dc9f3423311f461736f0151ef71f9990607e641876526c7b83`,
+matching the frozen plan. The reference analysis reads 98,000 public rows. Its report content hash is
+`edec72e5a8764d4df5e52c5c09a1de213efeb3e22d4c5972708ec441e70a9d34`; the report file SHA-256 is
+`86ecdd05d4a43111cd7c12f0032667fc898d3d62243804ff13fcc928377ca91e`. These identify the retained result;
+verification of the historical dependencies and a new analysis execution are still required.
+
 `pixi run csedm-reproduce` requires the authorised CSEDM archive specified by its plan. Dataset access and sharing conditions
 must be confirmed before distributing inputs. See [the report build instructions](../dissertation/README.md) for building
 the PDF from its bundled figures and tables.
