@@ -78,9 +78,35 @@ Commands that generate responses or execute code through Modal also require prov
 The acquisition study uses controlled simulation. Its frozen run and analysis require the plans, calibration and seal records
 specified by the command. Preserve those records when reproducing a result; creating another seal is a separate run.
 
+The canonical acquisition analysis enforces the original lockfile hash recorded in
+`configs/acquisition-study/v1-canonical-primary-analysis.yaml`. Later publication dependencies changed `pixi.lock`, so
+the current checkout cannot automatically reproduce that sealed analysis. Its CLI accepts `--plan` only, and its output
+directory is fixed by the validated plan. Reproduce it in a separate checkout with the matching historical lockfile and
+retained inputs. Keep the original analysis outputs available for comparison; a different analysis revision can change
+provenance fields and trigger an immutable-output conflict. Record the restored revision and any remaining dependency
+differences before reporting successful reproduction.
+
 `pixi run csedm-reproduce` requires the authorised CSEDM archive specified by its plan. Dataset access and sharing conditions
 must be confirmed before distributing inputs. See [the report build instructions](../dissertation/README.md) for building
 the PDF from its bundled figures and tables.
+
+Run the complete CSEDM analysis from `development/` with:
+
+```bash
+pixi run csedm-reproduce
+```
+
+This rebuilds the inventory, features, fitted predictions, analysis and publication outputs. It records the current code
+revision and uses `artifacts/csedm-study/reproduction-<revision>/` by default. For a separate reproduction attempt, choose
+an unused directory through the underlying CLI:
+
+```bash
+pixi run python scripts/csedm_study_reproduce.py --output-root artifacts/csedm-study/reproduction-review-001
+```
+
+Compare sample counts, predictions and reported statistics with the retained reference run. New revision metadata and
+updated figure wording can change hashes even when scientific results agree. Save the terminal output and the generated
+`pipeline_manifest.json` as the reproduction record.
 
 ## Common Failures
 
