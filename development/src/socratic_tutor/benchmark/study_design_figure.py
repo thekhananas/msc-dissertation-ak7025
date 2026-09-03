@@ -348,8 +348,8 @@ def _build_figure(
         (
             "Request and execute the outcome task",
             "After verifying the saved predictions, request the separate outcome response.",
-            f"{criterion_report.completed_execution_count} completed; "
-            f"{criterion_report.sandbox_missing_count} missing after execution.",
+            f"{criterion_report.completed_execution_count} executions completed. "
+            f"{criterion_report.sandbox_missing_count} outcome remained unavailable.",
             "Retain the original prediction records.",
             _GREEN,
         ),
