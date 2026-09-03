@@ -408,7 +408,7 @@ def _build_figure(
     figure.text(
         0.03,
         0.015,
-        "One model run; 23 eligible authored cases.\n"
+        "One model run on 23 eligible authored cases.\n"
         "This does not show human learning or tutoring effectiveness.",
         color=_MUTED,
         fontsize=10,

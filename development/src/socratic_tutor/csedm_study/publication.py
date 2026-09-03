@@ -247,9 +247,11 @@ def _model_table_tex(report: CSEDMAnalysisReport) -> bytes:
 \\begin{{table}}[tb]
 \\centering
 \\caption{{Prediction results on 729 historical targets from 86 learners and 19 Python problems.
-Each learner was evaluated using models fitted on other learners. Higher accuracy and lower errors, Brier score,
-log loss and calibration error indicate better predictions. Values are descriptive estimates without intervals.}}
+Each learner was evaluated using models fitted on other learners. Higher accuracy and lower errors,
+Brier score, log loss and calibration error indicate better predictions.
+Values are descriptive estimates without intervals.}}
 \\label{{tab:csedm-model-comparison}}
+\\medskip
 \\begin{{tabular}}{{lrrrrr}}
 \\toprule
 Model & Errors & Accuracy & Brier & Log loss & Cal. error \\\\
@@ -259,7 +261,7 @@ Model & Errors & Accuracy & Brier & Log loss & Cal. error \\\\
 \\end{{tabular}}
 \\begin{{minipage}}{{0.96\\linewidth}}
 \\footnotesize Historical observations were separated by learner. These figures describe
-prediction quality; they do not measure executable-probe benefit, tutoring effects, or learning.
+prediction quality. No executable probe, tutoring intervention or learning effect was evaluated.
 \\end{{minipage}}
 \\end{{table}}
 """
