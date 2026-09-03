@@ -53,22 +53,22 @@ _STYLE: dict[str, object] = {
 # summaries so the report-sized export remains readable at normal print size.
 _FIGURE_DETAILS: dict[str, str] = {
     "demo_user": "Sends an answer to a prepared task.",
-    "web_api": "Shows the session; checks each request.",
-    "langgraph_turn": "Updates the tracker; chooses an action.",
-    "template_tutor": "Returns the next prompt; no live model.",
+    "web_api": "Shows the session and checks requests.",
+    "langgraph_turn": "Updates the tracker and chooses an action.",
+    "template_tutor": "Uses a template to ask the next question.",
     "local_log": "Saves each turn for replay.",
     "frozen_cases": "Separates three task views.",
     "evaluation_model": "Supplies evaluation responses.",
-    "evidence_path": "Runs probe code; records results.",
+    "evidence_path": "Runs probe code and records results.",
     "decision_seal": "Saves four predictions before outcome.",
     "criterion_gate": "Requests the later task after predictions.",
-    "criterion_outcomes": "Runs outcome code; records completion.",
+    "criterion_outcomes": "Runs outcome code and records completion.",
     "immutable_records": "Stores predictions and reviews.",
     "paired_analysis": "Compares paired results.",
     "report_outputs": "Creates report files.",
-    "glass_box_simulator": "Creates known noisy states.",
+    "glass_box_simulator": "Creates states and noisy evidence.",
     "bayesian_trackers": "Compares update rules.",
-    "robustness_outputs": "Reports accuracy and cost.",
+    "robustness_outputs": "Reports prediction error and runtime.",
 }
 
 _FIGURE_TITLES: dict[str, str] = {
@@ -101,7 +101,7 @@ class BoundaryId(StrEnum):
 _FIGURE_STATEMENTS: dict[BoundaryId, str] = {
     BoundaryId.INTERACTIVE_DEMO: "One local tutoring turn.",
     BoundaryId.EXTERNAL_BENCHMARK: "Predictions saved before outcome request.",
-    BoundaryId.OFFLINE_ANALYSIS: "Reads saved records; makes no new calls.",
+    BoundaryId.OFFLINE_ANALYSIS: "Analyses saved records without external calls.",
 }
 
 
@@ -395,7 +395,7 @@ def _build_figure(specification: SystemBoundarySpecification) -> Figure:
         0.035,
         0.921,
         "The local demo is deterministic in the path shown here.\n"
-        "The benchmark calls the model; analysis reads its saved responses.",
+        "The benchmark calls the model. Analysis reads its saved responses.",
         fontsize=9.5,
         color=_MUTED,
     )
