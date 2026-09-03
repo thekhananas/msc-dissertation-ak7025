@@ -20,6 +20,18 @@ function readableLabel(value: string): string {
   return value.replaceAll("-", " ").replace(/^./, (character) => character.toUpperCase());
 }
 
+function assessmentLabel(category: string): string {
+  return {
+    correct: "Matches the task checks",
+    incorrect: "Does not match the task checks",
+    misconception: "Matches a known misconception",
+    conflicting: "Contains mixed signals",
+    uncertain: "The demo checker needs more evidence",
+    incomplete: "The output is right but the explanation is missing",
+    empty: "No response was provided",
+  }[category] ?? "The demo checker could not classify this response";
+}
+
 export function App() {
   const initialCreateKey = useRef(newIdempotencyKey());
   const selectedTaskId = useRef<string | null>(null);
@@ -233,10 +245,12 @@ export function App() {
               <progress max="100" value={masteryPercent} aria-label="Demo tracker score" />
             </div>
             <div>
-              <span className="metric-label">Evidence</span>
-              <strong>{latestTurn ? readableLabel(latestTurn.evidence.category) : "Pending"}</strong>
+              <span className="metric-label">Response check</span>
+              <strong>{latestTurn ? assessmentLabel(latestTurn.evidence.category) : "Pending"}</strong>
               <span className="metric-detail">
-                {latestTurn ? latestTurn.evidence.rationale : "No response assessed"}
+                {latestTurn
+                  ? `Based on the demo's authored checks: ${latestTurn.evidence.rationale}`
+                  : "No response assessed"}
               </span>
             </div>
             <div>

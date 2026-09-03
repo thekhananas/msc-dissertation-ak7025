@@ -10,6 +10,7 @@ export type EvidenceCategory =
   | "misconception"
   | "conflicting"
   | "uncertain"
+  | "incomplete"
   | "empty";
 
 export type TutorAction = "transfer" | "hint" | "clarify" | "probe" | "encourage";
