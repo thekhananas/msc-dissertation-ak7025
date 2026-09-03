@@ -91,7 +91,10 @@ The retained primary analysis records code revision `5d6e76b099f8904d5a70aca5909
 matching the frozen plan. The reference analysis reads 98,000 public rows. Its report content hash is
 `edec72e5a8764d4df5e52c5c09a1de213efeb3e22d4c5972708ec441e70a9d34`; the report file SHA-256 is
 `86ecdd05d4a43111cd7c12f0032667fc898d3d62243804ff13fcc928377ca91e`. These identify the retained result;
-verification of the historical dependencies and a new analysis execution are still required.
+on 11 September 2026, the historical revision was installed in a separate local clone with `pixi install --locked` and
+the primary analysis completed successfully. All six output files matched the retained originals byte for byte. Installation
+used available package caches. This check covers analysis of retained public observations; simulation regeneration and
+installation on another machine remain unverified.
 
 `pixi run csedm-reproduce` requires the authorised CSEDM archive specified by its plan. Dataset access and sharing conditions
 must be confirmed before distributing inputs. See [the report build instructions](../dissertation/README.md) for building
