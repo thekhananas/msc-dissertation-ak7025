@@ -353,60 +353,59 @@ def _render_figure(
 
 
 def _build_figure(report: TrackerCanonicalAnalysisReport) -> Figure:
-    figure = Figure(figsize=(13.4, 7.6), facecolor="#FAFAF7")
-    condition_axis = figure.add_subplot(1, 2, 1)
-    comparison_axis = figure.add_subplot(1, 2, 2)
-    figure.subplots_adjust(left=0.07, right=0.98, top=0.72, bottom=0.20, wspace=0.30)
-    figure.suptitle(_TITLE, x=0.07, y=0.96, ha="left", fontsize=22, fontweight="bold")
+    figure = Figure(figsize=(7.2, 9.2), facecolor="#FAFAF7")
+    condition_axis = figure.add_subplot(2, 1, 1)
+    comparison_axis = figure.add_subplot(2, 1, 2)
+    figure.subplots_adjust(left=0.26, right=0.98, top=0.77, bottom=0.18, hspace=0.55)
+    figure.suptitle(_TITLE, x=0.04, y=0.97, ha="left", fontsize=13, fontweight="bold")
     figure.text(
-        0.07,
-        0.89,
-        "Held-out simulation; lower Brier error means the tracker estimates mastery more "
-        "accurately.",
+        0.04,
+        0.915,
+        "Lower Brier error means better probability predictions\n"
+        "of the simulated state.",
         color=_MUTED,
-        fontsize=12,
+        fontsize=10,
     )
     figure.text(
-        0.07,
-        0.845,
-        f"Each condition contains {report.primary_adverse_brier.episode_count} matched episodes; "
-        "both trackers saw the same hidden states and observations.",
+        0.04,
+        0.855,
+        f"{report.primary_adverse_brier.episode_count} paired episodes per condition. "
+        "Both trackers received\nthe same hidden states and observations.",
         color=_MUTED,
-        fontsize=12,
+        fontsize=10,
     )
     decision_text = (
-        "Decision: passed the rule set before the test."
+        "The result met the declared evaluation rule."
         if report.primary_decision_status == "robust_under_declared_simulator"
-        else "Decision: did not pass the rule set before the test."
+        else "The result did not meet the declared evaluation rule."
     )
     figure.text(
-        0.07,
-        0.80,
+        0.04,
+        0.81,
         decision_text,
         color=(
             _GREEN
             if report.primary_decision_status == "robust_under_declared_simulator"
             else _ORANGE
         ),
-        fontsize=12,
+        fontsize=10,
         fontweight="bold",
     )
     _plot_condition_brier(condition_axis, report)
     _plot_primary_comparisons(comparison_axis, report)
     figure.text(
-        0.07,
+        0.04,
         0.075,
-        "Scope: this result concerns robustness inside the stated simulator. It is not evidence "
-        "of student learning, tutoring effectiveness, or reduced dependence on a tutor.",
+        "The result concerns the specified simulator.\n"
+        "It does not measure student learning or tutoring effectiveness.",
         color=_MUTED,
-        fontsize=10.5,
+        fontsize=10,
         fontweight="bold",
     )
     figure.text(
-        0.07,
+        0.04,
         0.035,
-        "The two trackers were fixed before this test run; no parameters were chosen from these "
-        "results.",
+        "Both trackers were fixed before the evaluation run.",
         color=_MUTED,
         fontsize=10,
     )
@@ -452,7 +451,7 @@ def _plot_condition_brier(axis: Axes, report: TrackerCanonicalAnalysisReport) ->
     axis.set_xticks(positions, [labels[condition] for condition in conditions], fontsize=9)
     maximum = max((*ordinary, *bounded))
     axis.set_ylim(0.0, min(1.0, maximum * 1.22))
-    axis.legend(frameon=False, fontsize=9.5, loc="upper left")
+    axis.legend(frameon=False, fontsize=9.5, loc="upper right")
     _style_axis(axis)
 
 
