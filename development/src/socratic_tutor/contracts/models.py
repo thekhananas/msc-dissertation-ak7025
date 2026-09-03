@@ -19,6 +19,7 @@ class EvidenceCategory(StrEnum):
     MISCONCEPTION = "misconception"
     CONFLICTING = "conflicting"
     UNCERTAIN = "uncertain"
+    INCOMPLETE = "incomplete"
     EMPTY = "empty"
 
 
@@ -41,12 +42,25 @@ class EvidenceRules(ContractModel):
     misconception_explanation_markers: tuple[str, ...]
 
 
+class FollowUpEvidenceRule(ContractModel):
+    """Reviewed signals for one question asked after an earlier response."""
+
+    after_observations: int = Field(ge=1)
+    question_prompt_markers: tuple[str, ...] = Field(min_length=1)
+    required_correct_markers: tuple[str, ...] = ()
+    misconception_markers: tuple[str, ...] = ()
+    rationale_if_correct: str = Field(min_length=1)
+    rationale_if_misconception: str = Field(min_length=1)
+    follow_up_prompt: str = Field(min_length=1)
+
+
 class TutorPromptTemplates(ContractModel):
     """Task-specific Socratic prompts for each transparent policy action."""
 
     transfer: tuple[str, ...] = Field(min_length=1)
     hint: tuple[str, ...] = Field(min_length=1)
     clarify: tuple[str, ...] = Field(min_length=1)
+    incomplete: tuple[str, ...] = Field(min_length=1)
     probe: tuple[str, ...] = Field(min_length=1)
     encourage: tuple[str, ...] = Field(min_length=1)
 
@@ -74,6 +88,7 @@ class TaskDefinition(ContractModel):
     starter_code: str = Field(min_length=1)
     initial_prompt: str = Field(min_length=1)
     evidence_rules: EvidenceRules
+    follow_up_evidence_rules: tuple[FollowUpEvidenceRule, ...] = ()
     tutor_prompts: TutorPromptTemplates
 
     def public_view(self) -> "TaskView":

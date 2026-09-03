@@ -23,6 +23,10 @@ _ACTIONS: dict[EvidenceCategory, tuple[TutorAction, str]] = {
         TutorAction.PROBE,
         "Insufficient evidence calls for a focused diagnostic question.",
     ),
+    EvidenceCategory.INCOMPLETE: (
+        TutorAction.CLARIFY,
+        "The response contains part of the answer, so the missing explanation should be clarified.",
+    ),
     EvidenceCategory.EMPTY: (
         TutorAction.ENCOURAGE,
         "An empty response calls for a smaller, low-pressure first step.",
@@ -30,8 +34,14 @@ _ACTIONS: dict[EvidenceCategory, tuple[TutorAction, str]] = {
 }
 
 
-def choose_action(evidence: Evidence) -> PolicyDecision:
-    """Select one deterministic tutoring move from the evidence category."""
+def choose_action(evidence: Evidence, *, observation_number: int = 1) -> PolicyDecision:
+    """Select a tutoring move and recover from repeated unresolved evidence."""
+
+    if evidence.category is EvidenceCategory.UNCERTAIN and observation_number > 3:
+        return PolicyDecision(
+            action=TutorAction.CLARIFY,
+            rationale="Repeated uncertainty calls for a clear restatement of the key distinction.",
+        )
 
     action, rationale = _ACTIONS[evidence.category]
     return PolicyDecision(action=action, rationale=rationale)

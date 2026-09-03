@@ -12,16 +12,29 @@ def run_turn(
     task: TaskDefinition,
     submission: StudentSubmission,
     tracker: TrackerState,
+    *,
+    question_prompt: str | None = None,
 ) -> TurnResult:
     """Produce a complete turn result without I/O or hidden mutable state."""
 
     if tracker.concept != task.concept:
         raise ValueError("Tracker concept must match the task concept")
 
-    evidence = classify_evidence(task, submission)
+    evidence = classify_evidence(
+        task,
+        submission,
+        observation_number=tracker.observations,
+        question_prompt=question_prompt,
+    )
     tracker_after = update_tracker(tracker, evidence)
-    decision = choose_action(evidence)
-    candidate_prompt = generate_prompt(task, decision, tracker_after.observations)
+    decision = choose_action(evidence, observation_number=tracker_after.observations)
+    candidate_prompt = generate_prompt(
+        task,
+        decision,
+        tracker_after.observations,
+        evidence_category=evidence.category,
+        question_prompt=question_prompt,
+    )
     guardrail = check_prompt(candidate_prompt)
     return TurnResult(
         evidence=evidence,

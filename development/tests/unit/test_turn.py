@@ -115,6 +115,59 @@ def test_repeated_evidence_advances_prompt_variants() -> None:
     assert len(set(prompts)) == 3
 
 
+def test_repeated_uncertainty_moves_from_probe_to_clarify() -> None:
+    task = load_task()
+    state = initial_tracker_state(task.concept)
+    submission = StudentSubmission(response_text="I am not sure.")
+    actions: list[TutorAction] = []
+
+    for _ in range(4):
+        result = run_turn(task, submission, state)
+        actions.append(result.decision.action)
+        state = result.tracker_after
+
+    assert actions == [
+        TutorAction.PROBE,
+        TutorAction.PROBE,
+        TutorAction.PROBE,
+        TutorAction.CLARIFY,
+    ]
+
+
+def test_matching_output_without_explanation_requests_clarification() -> None:
+    task = load_task("none-versus-falsy")
+    result = run_turn(
+        task,
+        StudentSubmission(response_text="score=0\nmissing"),
+        initial_tracker_state(task.concept),
+    )
+
+    assert result.evidence.category is EvidenceCategory.INCOMPLETE
+    assert result.tracker_after.mastery_probability == 0.5
+    assert result.decision.action is TutorAction.CLARIFY
+    assert "explanation is missing" in result.evidence.rationale
+    assert "identified both printed lines" in result.next_prompt
+
+
+def test_follow_up_answer_is_checked_against_its_current_question() -> None:
+    task = load_task("none-versus-falsy")
+    state = initial_tracker_state(task.concept)
+    incomplete = run_turn(
+        task,
+        StudentSubmission(response_text="score=0\nmissing"),
+        state,
+    )
+    follow_up = run_turn(
+        task,
+        StudentSubmission(response_text="False for zero and true for None."),
+        incomplete.tracker_after,
+        question_prompt="For the first call only, what Boolean value does score is None produce when score is zero?",
+    )
+
+    assert follow_up.evidence.category is EvidenceCategory.CONFLICTING
+    assert follow_up.decision.action is TutorAction.CLARIFY
+
+
 @pytest.mark.parametrize(
     ("response", "category", "mastery", "action", "prompt_fragment"),
     [

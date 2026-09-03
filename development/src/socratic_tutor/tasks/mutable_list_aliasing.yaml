@@ -72,6 +72,10 @@ tutor_prompts:
     - >-
       Choose one model: shared object or independent copy. Trace all four lines
       using only that model, then report the resulting output.
+  incomplete:
+    - >-
+      You have identified part of the result. Now explain whether `alias` refers
+      to the same list as `numbers`, and why that affects the output.
   probe:
     - >-
       Focus on `alias = numbers`. After that line, how many list objects do you

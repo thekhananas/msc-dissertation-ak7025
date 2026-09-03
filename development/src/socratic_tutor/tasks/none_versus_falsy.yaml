@@ -35,6 +35,40 @@ evidence_rules:
     - "zero is missing"
     - "0 is missing"
     - "both are falsy"
+follow_up_evidence_rules:
+  - after_observations: 1
+    question_prompt_markers:
+      - "For the first call only"
+    required_correct_markers:
+      - "false"
+    misconception_markers:
+      - "true"
+    rationale_if_correct: "For zero, score is None is False because zero is not None."
+    rationale_if_misconception: "For zero, score is None is False. True applies when score is None."
+    follow_up_prompt: "You mentioned both False and true. For the first call only, which value does score is None produce when score is zero?"
+  - after_observations: 2
+    question_prompt_markers:
+      - "What is the difference between checking"
+    required_correct_markers:
+      - "identity"
+      - "truthiness"
+    misconception_markers:
+      - "data type"
+      - "type"
+    rationale_if_correct: "Identity checks whether a value is the same object. Truthiness checks how it behaves in a Boolean condition."
+    rationale_if_misconception: "Identity does not check a data type. It checks whether two references point to the same object."
+    follow_up_prompt: "Identity does not mean data type. Explain whether identity asks if two references point to the same object, then contrast that with truthiness."
+  - after_observations: 3
+    question_prompt_markers:
+      - "Name one falsy Python value"
+    required_correct_markers:
+      - "false"
+    misconception_markers:
+      - "zero is missing"
+      - "both are falsy"
+    rationale_if_correct: "A falsy value such as False is not None, so it takes the normal return branch."
+    rationale_if_misconception: "A falsy value is not automatically missing. This function treats only None as missing."
+    follow_up_prompt: "Give one falsy value other than None. Then say whether it follows the missing branch or the normal return branch."
 tutor_prompts:
   transfer:
     - >-
@@ -67,6 +101,10 @@ tutor_prompts:
     - >-
       Choose either `is None` or `not score` as the condition you are tracing,
       then make your predicted output consistent with that choice.
+  incomplete:
+    - >-
+      You have identified both printed lines. Now explain what `score is None`
+      checks, and why zero follows the other branch.
   probe:
     - >-
       For the first call, what Boolean value does `score is None` produce when

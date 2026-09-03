@@ -8,6 +8,7 @@ _EVIDENCE_DELTAS: dict[EvidenceCategory, float] = {
     EvidenceCategory.MISCONCEPTION: -0.20,
     EvidenceCategory.CONFLICTING: -0.10,
     EvidenceCategory.UNCERTAIN: 0.0,
+    EvidenceCategory.INCOMPLETE: 0.0,
     EvidenceCategory.EMPTY: 0.0,
 }
 

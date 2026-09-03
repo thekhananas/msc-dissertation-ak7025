@@ -103,6 +103,11 @@ class SessionService:
                 task,
                 StudentSubmission(response_text=request.response_text),
                 snapshot.tracker,
+                question_prompt=(
+                    snapshot.initial_prompt
+                    if not snapshot.turns
+                    else snapshot.turns[-1].tutor_prompt
+                ),
             )
             completed_at = datetime.now(UTC)
             turn = TurnRecord(

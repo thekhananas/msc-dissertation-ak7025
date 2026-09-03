@@ -27,6 +27,7 @@ class TurnGraphState(TypedDict):
 
     task: TaskDefinition
     submission: StudentSubmission
+    question_prompt: str | None
     tracker_before: TrackerState
     evidence: Evidence | None
     tracker_after: TrackerState | None
@@ -36,7 +37,14 @@ class TurnGraphState(TypedDict):
 
 
 def _classify(state: TurnGraphState) -> dict[str, Evidence]:
-    return {"evidence": classify_evidence(state["task"], state["submission"])}
+    return {
+        "evidence": classify_evidence(
+            state["task"],
+            state["submission"],
+            observation_number=state["tracker_before"].observations,
+            question_prompt=state["question_prompt"],
+        )
+    }
 
 
 def _track(state: TurnGraphState) -> dict[str, TrackerState]:
@@ -48,9 +56,17 @@ def _track(state: TurnGraphState) -> dict[str, TrackerState]:
 
 def _decide(state: TurnGraphState) -> dict[str, PolicyDecision]:
     evidence = state["evidence"]
+    tracker_after = state["tracker_after"]
     if evidence is None:
         raise RuntimeError("Evidence node did not produce a result")
-    return {"decision": choose_action(evidence)}
+    if tracker_after is None:
+        raise RuntimeError("Tracker node did not produce a result")
+    return {
+        "decision": choose_action(
+            evidence,
+            observation_number=tracker_after.observations,
+        )
+    }
 
 
 def _generate(state: TurnGraphState) -> dict[str, str]:
@@ -63,6 +79,8 @@ def _generate(state: TurnGraphState) -> dict[str, str]:
             state["task"],
             decision,
             tracker_after.observations,
+            evidence_category=state["evidence"].category,
+            question_prompt=state["question_prompt"],
         ),
     }
 
@@ -97,6 +115,8 @@ def run_graph_turn(
     task: TaskDefinition,
     submission: StudentSubmission,
     tracker: TrackerState,
+    *,
+    question_prompt: str | None = None,
 ) -> TurnResult:
     """Run exactly one bounded graph pass and return its validated result."""
 
@@ -106,6 +126,7 @@ def run_graph_turn(
     initial: TurnGraphState = {
         "task": task,
         "submission": submission,
+        "question_prompt": question_prompt,
         "tracker_before": tracker,
         "evidence": None,
         "tracker_after": None,
