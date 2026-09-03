@@ -246,7 +246,9 @@ def _model_table_tex(report: CSEDMAnalysisReport) -> bytes:
     content = f"""% Generated from the frozen aggregate CSEDM analysis report.
 \\begin{{table}}[tb]
 \\centering
-\\caption{{Out-of-fold prediction results on 729 targets from 86 learners and 19 Python problems.}}
+\\caption{{Prediction results on 729 historical targets from 86 learners and 19 Python problems.
+Each learner was evaluated using models fitted on other learners. Higher accuracy and lower errors, Brier score,
+log loss and calibration error indicate better predictions. Values are descriptive estimates without intervals.}}
 \\label{{tab:csedm-model-comparison}}
 \\begin{{tabular}}{{lrrrrr}}
 \\toprule
